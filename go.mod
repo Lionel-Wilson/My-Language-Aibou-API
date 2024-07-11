@@ -5,15 +5,12 @@ go 1.21.5
 require github.com/gin-gonic/gin v1.10.0
 
 require (
-	github.com/Lionel-Wilson/My-Fitness-Aibou v0.0.0-20240701170439-748a18b09008 // indirect
-	github.com/go-sql-driver/mysql v1.7.1 // indirect
 	github.com/gorilla/context v1.1.2 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
 	github.com/gorilla/sessions v1.2.2 // indirect
 )
 
 require (
-	github.com/Lionel-Wilson/My-Fitness-Aibou-API v0.0.0-20240711121909-673cf37328f3
 	github.com/bytedance/sonic v1.11.9 // indirect
 	github.com/bytedance/sonic/loader v0.1.1 // indirect
 	github.com/cloudwego/base64x v0.1.4 // indirect

@@ -136,7 +136,7 @@ func constructWordDefinitionBody(word, userTier, userNativeLanguage string) *str
 	"max_tokens": %s
 	}`, content, MaxTokens)
 
-	fmt.Println("Word definition body:")
+	fmt.Println("Word definition json body:")
 	fmt.Println(body)
 
 	return strings.NewReader(body)

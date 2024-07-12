@@ -29,14 +29,14 @@ func (app *Application) DefineWord(c *gin.Context) {
 
 	jsonBody := constructWordDefinitionBody(requestBody.Word, requestBody.Tier, requestBody.NativeLanguage)
 
-	wordDefinition, err := utils.MakeOpenAIApiRequest(jsonBody, c, *app.OpenApiKey)
+	OpenAIApiResponse, err := utils.MakeOpenAIApiRequest(jsonBody, c, *app.OpenApiKey)
 	if err != nil {
 		app.ErrorLog.Println(err.Error())
 		utils.ServerErrorResponse(c, err, "Failed to make request to OpenAI API")
 		return
 	}
 
-	c.JSON(http.StatusOK, wordDefinition)
+	c.JSON(http.StatusOK, OpenAIApiResponse.Choices[0].Message.Content)
 }
 
 func (app *Application) DefinePhrase(c *gin.Context) {
@@ -51,14 +51,19 @@ func (app *Application) DefinePhrase(c *gin.Context) {
 
 	jsonBody := constructPhraseBody(requestBody.Phrase, requestBody.Tier, requestBody.TargetLanguage, requestBody.NativeLanguage)
 
-	PhraseBreakdown, err := utils.MakeOpenAIApiRequest(jsonBody, c, *app.OpenApiKey)
+	OpenAIApiResponse, err := utils.MakeOpenAIApiRequest(jsonBody, c, *app.OpenApiKey)
 	if err != nil {
 		app.ErrorLog.Println(err.Error())
 		utils.ServerErrorResponse(c, err, "Failed to make request to OpenAI API")
 		return
 	}
 
-	c.JSON(http.StatusOK, PhraseBreakdown)
+	fmt.Println(OpenAIApiResponse)
+	fmt.Printf(`Prompt Tokens: %d`, OpenAIApiResponse.Usage.PromptTokens)
+	fmt.Printf(`Response Tokens: %d`, OpenAIApiResponse.Usage.CompletionTokens)
+	fmt.Printf(`Total Tokens used: %d`, OpenAIApiResponse.Usage.TotalTokens)
+
+	c.JSON(http.StatusOK, OpenAIApiResponse.Choices[0].Message.Content)
 }
 
 func constructPhraseBody(phrase, userTier, userTargetLanguage, userNativeLanguage string) *strings.Reader {

@@ -77,11 +77,11 @@ func ExtractIntegerCookie(c *gin.Context, cookieName string) (int, error) {
 	return cookieValueAsInt, nil
 }
 
-func MakeOpenAIApiRequest(body *strings.Reader, context *gin.Context, apiKey string) (string, error) {
+func MakeOpenAIApiRequest(body *strings.Reader, context *gin.Context, apiKey string) (models.ChatCompletion, error) {
 	req, err := http.NewRequest("POST", "https://api.openai.com/v1/chat/completions", body)
 	if err != nil {
 		ServerErrorResponse(context, err, "Failed to create request")
-		return "", err
+		return models.ChatCompletion{}, err
 	}
 
 	req.Header.Add("Content-Type", `application/json`)
@@ -91,19 +91,19 @@ func MakeOpenAIApiRequest(body *strings.Reader, context *gin.Context, apiKey str
 	resp, err := client.Do(req)
 	if err != nil {
 		ServerErrorResponse(context, err, "Failed to breakdown phrase")
-		return "", err
+		return models.ChatCompletion{}, err
 	}
 	defer resp.Body.Close()
 
 	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		ServerErrorResponse(context, err, "Failed to read AI response body")
-		return "", err
+		return models.ChatCompletion{}, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		ServerErrorResponse(context, err, "OpenAI API returned non-OK status: "+resp.Status)
-		return "", err
+		return models.ChatCompletion{}, err
 	}
 
 	var aiResponse models.ChatCompletion
@@ -111,18 +111,14 @@ func MakeOpenAIApiRequest(body *strings.Reader, context *gin.Context, apiKey str
 	err = json.Unmarshal(responseBody, &aiResponse)
 	if err != nil {
 		ServerErrorResponse(context, err, "Failed to unmarshal json body")
-		return "", err
+		return models.ChatCompletion{}, err
 	}
 
 	if len(aiResponse.Choices) == 0 {
 		err = fmt.Errorf("OpenAI API response contains no choices")
 		ServerErrorResponse(context, err, "OpenAI API response contains no choices")
-		return "", err
+		return models.ChatCompletion{}, err
 	}
 
-	fmt.Printf(`Prompt Tokens: %d`, aiResponse.Usage.PromptTokens)
-	fmt.Printf(`Response Tokens: %d`, aiResponse.Usage.CompletionTokens)
-	fmt.Printf(`Total Tokens used: %d`, aiResponse.Usage.TotalTokens)
-
-	return aiResponse.Choices[0].Message.Content, nil
+	return aiResponse, nil
 }

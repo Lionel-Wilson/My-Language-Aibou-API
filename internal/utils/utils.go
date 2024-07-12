@@ -101,10 +101,9 @@ func MakeOpenAIApiRequest(body *strings.Reader, context *gin.Context, apiKey str
 		return models.ChatCompletion{}, err
 	}
 
-	fmt.Println("OpenAI response body:")
-	fmt.Println(string(responseBody))
-
 	if resp.StatusCode != http.StatusOK {
+		fmt.Println("OpenAI error response body:")
+		fmt.Println(string(responseBody))
 		ServerErrorResponse(context, err, "OpenAI API returned non-OK status: "+resp.Status)
 		return models.ChatCompletion{}, err
 	}

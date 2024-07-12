@@ -93,7 +93,7 @@ func MakeOpenAIApiRequest(body *strings.Reader, context *gin.Context, apiKey str
 		ServerErrorResponse(context, err, "Failed to breakdown phrase")
 		return "", err
 	}
-	defer resp.Body.Close()
+	//defer resp.Body.Close()
 
 	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {

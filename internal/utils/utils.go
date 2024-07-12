@@ -69,11 +69,11 @@ func ExtractIntegerCookie(c *gin.Context, cookieName string) (int, error) {
 	return cookieValueAsInt, nil
 }
 
-func MakeOpenAIApiRequest(body *strings.Reader, context *gin.Context, apiKey string) string {
+func MakeOpenAIApiRequest(body *strings.Reader, context *gin.Context, apiKey string) (string, error) {
 	req, err := http.NewRequest("POST", "https://api.openai.com/v1/chat/completions", body)
 	if err != nil {
 		ServerErrorResponse(context, err, "Failed to create request")
-		return ""
+		return "", err
 	}
 
 	req.Header.Add("Content-Type", `application/json`)
@@ -83,22 +83,22 @@ func MakeOpenAIApiRequest(body *strings.Reader, context *gin.Context, apiKey str
 	resp, err := client.Do(req)
 	if err != nil {
 		ServerErrorResponse(context, err, "Failed to breakdown phrase")
-		return ""
+		return "", err
 	}
 	defer resp.Body.Close()
 
 	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		ServerErrorResponse(context, err, "Failed to read AI response body")
-		return ""
+		return "", err
 	}
 	var aiResponse models.ChatCompletion
 
 	err = json.Unmarshal(responseBody, &aiResponse)
 	if err != nil {
 		ServerErrorResponse(context, err, "Failed to unmarshal json body")
-		return ""
+		return "", err
 	}
 
-	return aiResponse.Choices[0].Message.Content
+	return aiResponse.Choices[0].Message.Content, nil
 }

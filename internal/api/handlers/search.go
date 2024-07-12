@@ -15,13 +15,19 @@ func (app *Application) DefineWord(c *gin.Context) {
 
 	err := c.ShouldBindJSON(&requestBody)
 	if err != nil {
+		app.ErrorLog.Println(err.Error())
 		utils.ServerErrorResponse(c, err, "")
 		return
 	}
 
 	jsonBody := constructWordDefinitionBody(requestBody.Word, requestBody.Tier, requestBody.TargetLanguage, requestBody.NativeLanguage)
 
-	wordDefinition := utils.MakeOpenAIApiRequest(jsonBody, c, *app.OpenApiKey)
+	wordDefinition, err := utils.MakeOpenAIApiRequest(jsonBody, c, *app.OpenApiKey)
+	if err != nil {
+		app.ErrorLog.Println(err.Error())
+		utils.ServerErrorResponse(c, err, "Failed to make request to OpenAI API")
+		return
+	}
 
 	c.JSON(http.StatusOK, wordDefinition)
 }
@@ -31,13 +37,19 @@ func (app *Application) DefinePhrase(c *gin.Context) {
 
 	err := c.ShouldBindJSON(&requestBody)
 	if err != nil {
+		app.ErrorLog.Println(err.Error())
 		utils.ServerErrorResponse(c, err, "")
 		return
 	}
 
 	jsonBody := constructPhraseBody(requestBody.Phrase, requestBody.Tier, requestBody.TargetLanguage, requestBody.NativeLanguage)
 
-	PhraseBreakdown := utils.MakeOpenAIApiRequest(jsonBody, c, *app.OpenApiKey)
+	PhraseBreakdown, err := utils.MakeOpenAIApiRequest(jsonBody, c, *app.OpenApiKey)
+	if err != nil {
+		app.ErrorLog.Println(err.Error())
+		utils.ServerErrorResponse(c, err, "Failed to make request to OpenAI API")
+		return
+	}
 
 	c.JSON(http.StatusOK, PhraseBreakdown)
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/models"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/utils"
@@ -17,6 +18,12 @@ func (app *Application) DefineWord(c *gin.Context) {
 	if err != nil {
 		app.ErrorLog.Println(err.Error())
 		utils.ServerErrorResponse(c, err, "")
+		return
+	}
+
+	if utf8.RuneCountInString(requestBody.Word) > 20 {
+		app.ErrorLog.Printf(`Word ""%s length too long. Must be less than 20 characters.`, requestBody.Word)
+		utils.NewErrorResponse(c, http.StatusBadRequest, "Word length too long. Must be less than 20 characters. Could this be a phrase?", []string{})
 		return
 	}
 

@@ -11,8 +11,19 @@ import (
 )
 
 func (app *Application) DefineWord(c *gin.Context) {
+	var requestBody models.DefineWordRequest
 
-	c.JSON(http.StatusOK, "Here's your definition")
+	err := c.ShouldBindJSON(&requestBody)
+	if err != nil {
+		utils.ServerErrorResponse(c, err, "")
+		return
+	}
+
+	jsonBody := constructWordDefinitionBody(requestBody.Word, requestBody.Tier, requestBody.TargetLanguage, requestBody.NativeLanguage)
+
+	wordDefinition := utils.MakeOpenAIApiRequest(jsonBody, c, *app.OpenApiKey)
+
+	c.JSON(http.StatusOK, wordDefinition)
 }
 
 func (app *Application) DefinePhrase(c *gin.Context) {
@@ -44,7 +55,40 @@ func constructPhraseBody(phrase, userTier, userTargetLanguage, userNativeLanguag
 		maxWordCount = "170"
 	}
 
-	content := fmt.Sprintf("Break down the meaning and grammar used in the below %s sentence. Write your breakdown in %s and a maximum of %s words - %s", userTargetLanguage, userNativeLanguage, maxWordCount, phrase)
+	content := fmt.Sprintf("Break down the meaning and grammar used in the following %s sentence. Write your breakdown in %s and a maximum of %s words - %s", userTargetLanguage, userNativeLanguage, maxWordCount, phrase)
+
+	body := fmt.Sprintf(`{
+	"model":"gpt-3.5-turbo",
+	"messages": [{
+		"role": "system",
+		"content": "You are a helpful assistant."
+	  },
+	  {
+		"role": "user",
+		"content": "%s"
+	  }],
+	"temperature": 0.7,
+	"max_tokens": %s
+	}`, content, MaxTokens)
+
+	return strings.NewReader(body)
+}
+
+func constructWordDefinitionBody(word, userTier, userTargetLanguage, userNativeLanguage string) *strings.Reader {
+	var maxWordCount string
+	var MaxTokens string
+	var content string
+
+	if userTier == "Basic" {
+		MaxTokens = "50"
+		maxWordCount = "20"
+		content = fmt.Sprintf("Define the following %s word. Define it in %s and a maximum of %s words - %s", userTargetLanguage, userNativeLanguage, maxWordCount, word)
+
+	} else if userTier == "Premium" {
+		MaxTokens = "210"
+		maxWordCount = "100"
+		content = fmt.Sprintf("Define the following %s word. Define it in %s and a maximum of %s words. Make sure to include 3 example sentences and explain the dictionary form - %s", userTargetLanguage, userNativeLanguage, maxWordCount, word)
+	}
 
 	body := fmt.Sprintf(`{
 	"model":"gpt-3.5-turbo",

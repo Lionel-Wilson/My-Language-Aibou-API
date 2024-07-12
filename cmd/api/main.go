@@ -48,22 +48,8 @@ func main() {
 
 	apiV1 := router.Group("/api/v1")
 	{
-		//apiV1.POST("/user/signup", app.SignUpUser)
-		//apiV1.POST("/user/login", app.LoginUser)
-		//apiV1.POST("/user/logout", app.LogoutUser)
-
 		apiV1.GET("/search/word", app.DefineWord)
 		apiV1.GET("/search/phrase", app.DefinePhrase)
-
-		/* Uncomment for when we add premium features
-		authorized := apiV1.Group("/")
-		authorized.Use(middlewares.AuthRequired())
-		{
-			authorized.GET("/search/word", app.DefineWord)
-			authorized.PUT("/search/phrase", app.DefinePhrase)
-		}
-		*/
-
 	}
 	infoLog.Printf("Starting server on %s", addr)
 

@@ -20,7 +20,7 @@ func (app *Application) DefineWord(c *gin.Context) {
 		return
 	}
 
-	jsonBody := constructWordDefinitionBody(requestBody.Word, requestBody.Tier, requestBody.TargetLanguage)
+	jsonBody := constructWordDefinitionBody(requestBody.Word, requestBody.Tier, requestBody.NativeLanguage)
 
 	wordDefinition, err := utils.MakeOpenAIApiRequest(jsonBody, c, *app.OpenApiKey)
 	if err != nil {

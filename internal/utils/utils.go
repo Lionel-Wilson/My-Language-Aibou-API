@@ -93,13 +93,16 @@ func MakeOpenAIApiRequest(body *strings.Reader, context *gin.Context, apiKey str
 		ServerErrorResponse(context, err, "Failed to breakdown phrase")
 		return models.ChatCompletion{}, err
 	}
-	//defer resp.Body.Close()
+	defer resp.Body.Close()
 
 	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		ServerErrorResponse(context, err, "Failed to read AI response body")
 		return models.ChatCompletion{}, err
 	}
+
+	println("OpenAI response body:\n")
+	fmt.Println(responseBody)
 
 	if resp.StatusCode != http.StatusOK {
 		ServerErrorResponse(context, err, "OpenAI API returned non-OK status: "+resp.Status)

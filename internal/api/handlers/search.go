@@ -64,9 +64,9 @@ func (app *Application) DefinePhrase(c *gin.Context) {
 	}
 
 	fmt.Println(OpenAIApiResponse)
-	fmt.Printf(`Prompt Tokens: %d`, OpenAIApiResponse.Usage.PromptTokens)
-	fmt.Printf(`Response Tokens: %d`, OpenAIApiResponse.Usage.CompletionTokens)
-	fmt.Printf(`Total Tokens used: %d`, OpenAIApiResponse.Usage.TotalTokens)
+	fmt.Printf("Prompt Tokens: %d\n", OpenAIApiResponse.Usage.PromptTokens)
+	fmt.Printf("Response Tokens: %d\n", OpenAIApiResponse.Usage.CompletionTokens)
+	fmt.Printf("Total Tokens used: %d\n", OpenAIApiResponse.Usage.TotalTokens)
 
 	c.JSON(http.StatusOK, OpenAIApiResponse.Choices[0].Message.Content)
 }
@@ -84,7 +84,7 @@ func constructPhraseBody(phrase, userTier, userTargetLanguage, userNativeLanguag
 		maxWordCount = "200"
 	}
 
-	content := fmt.Sprintf(`Explain the meaning & grammar used in this %s sentence in max %s words. Respond in %s."%s"`, userTargetLanguage, maxWordCount, userNativeLanguage, phrase)
+	content := fmt.Sprintf(`Explain the meaning & grammar used in this %s sentence in max %s words.Respond in %s."%s"`, userTargetLanguage, maxWordCount, userNativeLanguage, phrase)
 
 	body := fmt.Sprintf(`{
 	"model":"gpt-3.5-turbo",

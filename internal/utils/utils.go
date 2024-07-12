@@ -49,10 +49,17 @@ func ServerErrorResponse(c *gin.Context, err error, msg string) {
 	} else {
 		message = "Something went wrong. Please try again later."
 	}
+
+	var errorDetails []string
+	if err != nil {
+		errorDetails = append(errorDetails, err.Error())
+	} else {
+		errorDetails = append(errorDetails, "Unknown error")
+	}
 	c.JSON(http.StatusInternalServerError, ErrorResponse{
 		StatusCode: http.StatusInternalServerError,
 		Message:    message,
-		Errors:     []string{err.Error()},
+		Errors:     errorDetails,
 	})
 }
 

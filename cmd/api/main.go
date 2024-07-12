@@ -9,15 +9,14 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 )
 
 func main() {
-	// Load environment variables. Uncomment when running locally and not in container
+	/* Load environment variables. Uncomment when running locally and not in container
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
-	}
+	}*/
 
 	addr := os.Getenv("DEV_ADDRESS")
 	secret := os.Getenv("SECRET")
@@ -54,7 +53,7 @@ func main() {
 	infoLog.Printf("Starting server on %s", addr)
 
 	//router.RunTLS(addr, "./tls/cert.pem", "./tls/key.pem") TO-DO: Server over HTTPS when figure out how to get certificates
-	router.Run(addr)
+	err := router.Run(addr)
 	if err != nil {
 		errorLog.Fatal(err)
 	}

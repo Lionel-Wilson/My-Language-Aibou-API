@@ -94,7 +94,7 @@ func constructPhraseBody(phrase, userTier, userTargetLanguage, userNativeLanguag
 	  },
 	  {
 		"role": "user",
-		"content": "%q"
+		"content": "%s"
 	  }],
 	"temperature": 0.7,
 	"max_tokens": %s
@@ -127,7 +127,7 @@ func constructWordDefinitionBody(word, userTier, userNativeLanguage string) *str
 	  },
 	  {
 		"role": "user",
-		"content": "%q"
+		"content": "%s"
 	  }],
 	"temperature": 0.7,
 	"max_tokens": %s

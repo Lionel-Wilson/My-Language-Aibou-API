@@ -31,7 +31,7 @@ func main() {
 		OpenApiKey: &openAiKey,
 	}
 
-	//gin.SetMode(gin.ReleaseMode)
+	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 
 	store := cookie.NewStore([]byte(secret))

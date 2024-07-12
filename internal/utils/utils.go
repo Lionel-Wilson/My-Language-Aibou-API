@@ -2,6 +2,7 @@ package utils
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"reflect"
@@ -92,11 +93,26 @@ func MakeOpenAIApiRequest(body *strings.Reader, context *gin.Context, apiKey str
 		ServerErrorResponse(context, err, "Failed to read AI response body")
 		return "", err
 	}
+
+	if resp.StatusCode != http.StatusOK {
+		ServerErrorResponse(context, err, "OpenAI API returned non-OK status: "+resp.Status)
+		return "", err
+	}
+
+	// Log the raw response body for debugging
+	fmt.Printf("OpenAI API Response: %s\n", string(responseBody))
+
 	var aiResponse models.ChatCompletion
 
 	err = json.Unmarshal(responseBody, &aiResponse)
 	if err != nil {
 		ServerErrorResponse(context, err, "Failed to unmarshal json body")
+		return "", err
+	}
+
+	if len(aiResponse.Choices) == 0 {
+		err = fmt.Errorf("OpenAI API response contains no choices")
+		ServerErrorResponse(context, err, "OpenAI API response contains no choices")
 		return "", err
 	}
 

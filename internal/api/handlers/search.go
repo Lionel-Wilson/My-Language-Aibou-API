@@ -36,6 +36,11 @@ func (app *Application) DefineWord(c *gin.Context) {
 		return
 	}
 
+	fmt.Println(OpenAIApiResponse)
+	fmt.Printf(`Prompt Tokens: %d`, OpenAIApiResponse.Usage.PromptTokens)
+	fmt.Printf(`Response Tokens: %d`, OpenAIApiResponse.Usage.CompletionTokens)
+	fmt.Printf(`Total Tokens used: %d`, OpenAIApiResponse.Usage.TotalTokens)
+
 	c.JSON(http.StatusOK, OpenAIApiResponse.Choices[0].Message.Content)
 }
 

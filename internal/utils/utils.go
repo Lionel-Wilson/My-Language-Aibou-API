@@ -120,5 +120,9 @@ func MakeOpenAIApiRequest(body *strings.Reader, context *gin.Context, apiKey str
 		return "", err
 	}
 
+	fmt.Printf(`Prompt Tokens: %d`, aiResponse.Usage.PromptTokens)
+	fmt.Printf(`Response Tokens: %d`, aiResponse.Usage.CompletionTokens)
+	fmt.Printf(`Total Tokens used: %d`, aiResponse.Usage.TotalTokens)
+
 	return aiResponse.Choices[0].Message.Content, nil
 }

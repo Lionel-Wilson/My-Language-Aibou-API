@@ -64,10 +64,10 @@ func constructPhraseBody(phrase, userTier, userTargetLanguage, userNativeLanguag
 
 	} else if userTier == "Premium" {
 		MaxTokens = "330"
-		maxWordCount = "170"
+		maxWordCount = "200"
 	}
 
-	content := fmt.Sprintf("Break down the meaning and grammar used in the following %s sentence. Write your breakdown in %s and a maximum of %s words - %s", userTargetLanguage, userNativeLanguage, maxWordCount, phrase)
+	content := fmt.Sprintf(`Explain the meaning & grammar used in this %s sentence in max %s words. Respond in %s."%s"`, userTargetLanguage, maxWordCount, userNativeLanguage, phrase)
 
 	body := fmt.Sprintf(`{
 	"model":"gpt-3.5-turbo",
@@ -86,7 +86,7 @@ func constructPhraseBody(phrase, userTier, userTargetLanguage, userNativeLanguag
 	return strings.NewReader(body)
 }
 
-func constructWordDefinitionBody(word, userTier, userTargetLanguage, userNativeLanguage string) *strings.Reader {
+func constructWordDefinitionBody(word, userTier, userNativeLanguage string) *strings.Reader {
 	var maxWordCount string
 	var MaxTokens string
 	var content string
@@ -94,12 +94,12 @@ func constructWordDefinitionBody(word, userTier, userTargetLanguage, userNativeL
 	if userTier == "Basic" {
 		MaxTokens = "50"
 		maxWordCount = "20"
-		content = fmt.Sprintf("Define the following %s word. Define it in %s and a maximum of %s words - %s", userTargetLanguage, userNativeLanguage, maxWordCount, word)
+		content = fmt.Sprintf(`Define "%s" in %s & max %s words`, word, userNativeLanguage, maxWordCount)
 
 	} else if userTier == "Premium" {
 		MaxTokens = "210"
 		maxWordCount = "100"
-		content = fmt.Sprintf("Define the following %s word. Define it in %s and a maximum of %s words. Make sure to include 3 example sentences and explain the dictionary form - %s", userTargetLanguage, userNativeLanguage, maxWordCount, word)
+		content = fmt.Sprintf(`Define "%s" in %s & max %s words.Give 3 example sentences & explain the dictionary form`, word, userNativeLanguage, maxWordCount)
 	}
 
 	body := fmt.Sprintf(`{

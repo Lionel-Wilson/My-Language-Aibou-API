@@ -1,11 +1,14 @@
 package utils
 
 import (
+	"encoding/json"
+	"io"
 	"net/http"
 	"reflect"
 	"strconv"
 	"strings"
 
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/models"
 	"github.com/gin-gonic/gin"
 )
 
@@ -64,4 +67,38 @@ func ExtractIntegerCookie(c *gin.Context, cookieName string) (int, error) {
 	}
 
 	return cookieValueAsInt, nil
+}
+
+func MakeOpenAIApiRequest(body *strings.Reader, context *gin.Context, apiKey string) string {
+	req, err := http.NewRequest("POST", "https://api.openai.com/v1/chat/completions", body)
+	if err != nil {
+		ServerErrorResponse(context, err, "Failed to create request")
+		return ""
+	}
+
+	req.Header.Add("Content-Type", `application/json`)
+	req.Header.Add("Authorization", `Bearer `+apiKey)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		ServerErrorResponse(context, err, "Failed to breakdown phrase")
+		return ""
+	}
+	defer resp.Body.Close()
+
+	responseBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		ServerErrorResponse(context, err, "Failed to read AI response body")
+		return ""
+	}
+	var aiResponse models.ChatCompletion
+
+	err = json.Unmarshal(responseBody, &aiResponse)
+	if err != nil {
+		ServerErrorResponse(context, err, "Failed to unmarshal json body")
+		return ""
+	}
+
+	return aiResponse.Choices[0].Message.Content
 }

@@ -21,13 +21,15 @@ func main() {
 
 	addr := os.Getenv("DEV_ADDRESS")
 	secret := os.Getenv("SECRET")
+	openAiKey := os.Getenv("OPENAI_API_KEY")
 
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
 	app := &handlers.Application{
-		ErrorLog: errorLog,
-		InfoLog:  infoLog,
+		ErrorLog:   errorLog,
+		InfoLog:    infoLog,
+		OpenApiKey: &openAiKey,
 	}
 
 	//gin.SetMode(gin.ReleaseMode)
@@ -49,8 +51,9 @@ func main() {
 		//apiV1.POST("/user/signup", app.SignUpUser)
 		//apiV1.POST("/user/login", app.LoginUser)
 		//apiV1.POST("/user/logout", app.LogoutUser)
+
 		apiV1.GET("/search/word", app.DefineWord)
-		apiV1.PUT("/search/phrase", app.DefinePhrase)
+		apiV1.GET("/search/phrase", app.DefinePhrase)
 
 		/* Uncomment for when we add premium features
 		authorized := apiV1.Group("/")

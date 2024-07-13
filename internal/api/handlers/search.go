@@ -81,7 +81,7 @@ func constructPhraseBody(phrase, userTier, userTargetLanguage, userNativeLanguag
 
 	} else if userTier == "Premium" {
 		MaxTokens = "330"
-		maxWordCount = "200"
+		maxWordCount = "230"
 	}
 
 	content := fmt.Sprintf("Explain the meaning & grammar used in this %s sentence in max %s words.Respond in %s-'%s'", userTargetLanguage, maxWordCount, userNativeLanguage, phrase)
@@ -112,13 +112,13 @@ func constructWordDefinitionBody(word, userTier, userNativeLanguage string) *str
 	var content string
 
 	if userTier == "Basic" {
-		MaxTokens = "50"
-		maxWordCount = "20"
+		MaxTokens = "60"
+		maxWordCount = "40"
 		content = fmt.Sprintf("Define '%s' in %s & max %s words", word, userNativeLanguage, maxWordCount)
 
 	} else if userTier == "Premium" {
 		MaxTokens = "210"
-		maxWordCount = "100"
+		maxWordCount = "110"
 		content = fmt.Sprintf("Define '%s' in max %s words.Give 3 example sentences & explain the dictionary form.Respond in %s", word, maxWordCount, userNativeLanguage)
 	}
 

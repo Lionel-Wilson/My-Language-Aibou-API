@@ -100,9 +100,9 @@ func constructPhraseBody(phrase, userTier, userTargetLanguage, userNativeLanguag
 	"max_tokens": %s
 	}`, content, MaxTokens)
 
-	fmt.Println("Phrase definition body:")
+	fmt.Printf("Tier: %s\n", userTier)
+	fmt.Printf("Phrase prompt: %s\n", content)
 
-	fmt.Println(body)
 	return strings.NewReader(body)
 }
 
@@ -136,8 +136,8 @@ func constructWordDefinitionBody(word, userTier, userNativeLanguage string) *str
 	"max_tokens": %s
 	}`, content, MaxTokens)
 
-	fmt.Println("Word definition body:")
-	fmt.Println(body)
+	fmt.Printf("Tier: %s\n", userTier)
+	fmt.Printf("Word prompt: %s\n", content)
 
 	return strings.NewReader(body)
 }

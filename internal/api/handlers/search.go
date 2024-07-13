@@ -36,7 +36,7 @@ func (app *Application) DefineWord(c *gin.Context) {
 		return
 	}
 
-	fmt.Println(OpenAIApiResponse)
+	fmt.Printf("Word Definition: %s\n", OpenAIApiResponse.Choices[0].Message.Content)
 	fmt.Printf(`Prompt Tokens: %d`, OpenAIApiResponse.Usage.PromptTokens)
 	fmt.Printf(`Response Tokens: %d`, OpenAIApiResponse.Usage.CompletionTokens)
 	fmt.Printf(`Total Tokens used: %d`, OpenAIApiResponse.Usage.TotalTokens)
@@ -63,7 +63,7 @@ func (app *Application) DefinePhrase(c *gin.Context) {
 		return
 	}
 
-	fmt.Println(OpenAIApiResponse)
+	fmt.Printf("Phrase explanation: %s\n", OpenAIApiResponse.Choices[0].Message.Content)
 	fmt.Printf("Prompt Tokens: %d\n", OpenAIApiResponse.Usage.PromptTokens)
 	fmt.Printf("Response Tokens: %d\n", OpenAIApiResponse.Usage.CompletionTokens)
 	fmt.Printf("Total Tokens used: %d\n", OpenAIApiResponse.Usage.TotalTokens)

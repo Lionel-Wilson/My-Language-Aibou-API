@@ -119,7 +119,7 @@ func constructWordDefinitionBody(word, userTier, userNativeLanguage string) *str
 	} else if userTier == "Premium" {
 		MaxTokens = "210"
 		maxWordCount = "100"
-		content = fmt.Sprintf("Define '%s' in %s & max %s words.Give 3 example sentences & explain the dictionary form", word, userNativeLanguage, maxWordCount)
+		content = fmt.Sprintf("Define '%s' in max %s words.Give 3 example sentences & explain the dictionary form.Respond in %s", word, maxWordCount, userNativeLanguage)
 	}
 
 	body := fmt.Sprintf(`{

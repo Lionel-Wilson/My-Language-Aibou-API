@@ -84,13 +84,13 @@ func constructPhraseBody(phrase, userTier, userNativeLanguage string) *strings.R
 		maxWordCount = "230"
 	}
 
-	content := fmt.Sprintf("Explain the meaning & grammar used in the following sentence in max %s words - '%s'", maxWordCount, phrase)
+	//content := fmt.Sprintf("Explain the meaning & grammar used in the following sentence in max %s words - '%s'", maxWordCount, phrase)
 
 	body := fmt.Sprintf(`{
 	"model":"gpt-3.5-turbo",
 	"messages": [{
 		"role": "system",
-		"content": "You are a language teacher who responds only in %s."
+		"content": "You will be provided with a sentence in a certain language, and your task is to explain the meaning & grammar used in the sentence in max %s words. Responding in %s"
 	  },
 	  {
 		"role": "user",
@@ -98,10 +98,11 @@ func constructPhraseBody(phrase, userTier, userNativeLanguage string) *strings.R
 	  }],
 	"temperature": 0.7,
 	"max_tokens": %s
-	}`, userNativeLanguage, content, MaxTokens)
+	}`, maxWordCount, userNativeLanguage, phrase, MaxTokens)
 
 	fmt.Printf("Tier: %s\n", userTier)
-	fmt.Printf("Phrase prompt: %s\n", content)
+	fmt.Printf("Body: %s\n", body)
+	//fmt.Printf("Phrase prompt: %s\n", content)
 
 	return strings.NewReader(body)
 }
@@ -126,10 +127,7 @@ func constructWordDefinitionBody(word, userTier, userNativeLanguage string) *str
 	"model":"gpt-3.5-turbo",
 	"messages": [{
 		"role": "system",
-		"content": "You will be provided a word and your tasks are to do the following in a max total of %s words: 
-		1. Define the word in %s.
-		2. Give 3 example sentences that use that word.
-		3. Translate the example sentences into %s for the user."
+		"content": "You will be provided a word and your tasks are to do the following in max %s words. First, define the word in %s. Second, give 3 example sentences that use that word. Third, translate the example sentences into %s for the user."
 	  },
 	  {
 		"role": "user",

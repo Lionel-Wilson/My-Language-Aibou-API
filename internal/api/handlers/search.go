@@ -84,13 +84,13 @@ func constructPhraseBody(phrase, userTier, userNativeLanguage string) *strings.R
 		maxWordCount = "230"
 	}
 
-	content := fmt.Sprintf("Explain the meaning & grammar used in the following sentence in max %s words.Respond in %s-'%s'", maxWordCount, userNativeLanguage, phrase)
+	content := fmt.Sprintf("Explain the meaning & grammar used in the following sentence in max %s words - '%s'", maxWordCount, phrase)
 
 	body := fmt.Sprintf(`{
 	"model":"gpt-3.5-turbo",
 	"messages": [{
 		"role": "system",
-		"content": "You are a helpful assistant."
+		"content": "You are a helpful language teacher who responds only in %s."
 	  },
 	  {
 		"role": "user",
@@ -98,7 +98,7 @@ func constructPhraseBody(phrase, userTier, userNativeLanguage string) *strings.R
 	  }],
 	"temperature": 0.7,
 	"max_tokens": %s
-	}`, content, MaxTokens)
+	}`, userNativeLanguage, content, MaxTokens)
 
 	fmt.Printf("Tier: %s\n", userTier)
 	fmt.Printf("Phrase prompt: %s\n", content)

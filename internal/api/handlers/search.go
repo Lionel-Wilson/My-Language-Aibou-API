@@ -72,16 +72,16 @@ func (app *Application) DefinePhrase(c *gin.Context) {
 }
 
 func constructPhraseBody(phrase, userTier, userNativeLanguage string) *strings.Reader {
-	var maxWordCount string
+	//var maxWordCount string
 	var MaxTokens string
 
 	if userTier == "Basic" {
 		MaxTokens = "110"
-		maxWordCount = "80"
+		//maxWordCount = "80"
 
 	} else if userTier == "Premium" {
 		MaxTokens = "330"
-		maxWordCount = "230"
+		//maxWordCount = "230"
 	}
 
 	//content := fmt.Sprintf("Explain the meaning & grammar used in the following sentence in max %s words - '%s'", maxWordCount, phrase)
@@ -90,15 +90,15 @@ func constructPhraseBody(phrase, userTier, userNativeLanguage string) *strings.R
 	"model":"gpt-3.5-turbo",
 	"messages": [{
 		"role": "system",
-		"content": "You will be provided with a sentence in a certain language, and your task is to explain the meaning & grammar used in the sentence in max %s words. Responding in %s"
+		"content": "You will be provided with a sentence in a certain language, and your task is to explain the meaning & grammar used in the sentence in %s"
 	  },
 	  {
 		"role": "user",
 		"content": "%s"
 	  }],
-	"temperature": 0.7,
+	"temperature": 0.2,
 	"max_tokens": %s
-	}`, maxWordCount, userNativeLanguage, phrase, MaxTokens)
+	}`, userNativeLanguage, phrase, MaxTokens)
 
 	fmt.Printf("Tier: %s\n", userTier)
 	fmt.Printf("Body: %s\n", body)
@@ -133,7 +133,7 @@ func constructWordDefinitionBody(word, userTier, userNativeLanguage string) *str
 		"role": "user",
 		"content": "%s"
 	  }],
-	"temperature": 0.7,
+	"temperature": 0.2,
 	"max_tokens": %s
 	}`, userNativeLanguage, userNativeLanguage, userNativeLanguage, word, MaxTokens)
 

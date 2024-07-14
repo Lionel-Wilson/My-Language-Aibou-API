@@ -90,7 +90,7 @@ func constructPhraseBody(phrase, userTier, userNativeLanguage string) *strings.R
 	"model":"gpt-3.5-turbo",
 	"messages": [{
 		"role": "system",
-		"content": "You are a helpful language teacher who responds only in %s."
+		"content": "You are a language teacher who responds only in %s."
 	  },
 	  {
 		"role": "user",
@@ -119,14 +119,14 @@ func constructWordDefinitionBody(word, userTier, userNativeLanguage string) *str
 	} else if userTier == "Premium" {
 		MaxTokens = "210"
 		maxWordCount = "110"
-		content = fmt.Sprintf("Define '%s' in max %s words.Give 3 example sentences & explain the word's origin.Make sure to give translatons of the example sentences", word, maxWordCount)
+		content = fmt.Sprintf("Define '%s' in max %s words.Give 3 example sentences in the word's language with their translations in %s", userNativeLanguage, word, maxWordCount)
 	}
 
 	body := fmt.Sprintf(`{
 	"model":"gpt-3.5-turbo",
 	"messages": [{
 		"role": "system",
-		"content": "You are a helpful language teacher who responds only in %s."
+		"content": "You are a language teacher who responds only in %s."
 	  },
 	  {
 		"role": "user",

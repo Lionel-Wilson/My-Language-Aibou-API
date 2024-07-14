@@ -54,7 +54,7 @@ func (app *Application) DefinePhrase(c *gin.Context) {
 		return
 	}
 
-	jsonBody := constructPhraseBody(requestBody.Phrase, requestBody.Tier, requestBody.TargetLanguage, requestBody.NativeLanguage)
+	jsonBody := constructPhraseBody(requestBody.Phrase, requestBody.Tier, requestBody.NativeLanguage)
 
 	OpenAIApiResponse, err := utils.MakeOpenAIApiRequest(jsonBody, c, *app.OpenApiKey)
 	if err != nil {
@@ -71,7 +71,7 @@ func (app *Application) DefinePhrase(c *gin.Context) {
 	c.JSON(http.StatusOK, OpenAIApiResponse.Choices[0].Message.Content)
 }
 
-func constructPhraseBody(phrase, userTier, userTargetLanguage, userNativeLanguage string) *strings.Reader {
+func constructPhraseBody(phrase, userTier, userNativeLanguage string) *strings.Reader {
 	var maxWordCount string
 	var MaxTokens string
 
@@ -84,7 +84,7 @@ func constructPhraseBody(phrase, userTier, userTargetLanguage, userNativeLanguag
 		maxWordCount = "230"
 	}
 
-	content := fmt.Sprintf("Explain the meaning & grammar used in this %s sentence in max %s words.Respond in %s-'%s'", userTargetLanguage, maxWordCount, userNativeLanguage, phrase)
+	content := fmt.Sprintf("Explain the meaning & grammar used in the following sentence in max %s words.Respond in %s-'%s'", maxWordCount, userNativeLanguage, phrase)
 
 	body := fmt.Sprintf(`{
 	"model":"gpt-3.5-turbo",

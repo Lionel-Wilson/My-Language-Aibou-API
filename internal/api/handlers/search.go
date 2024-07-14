@@ -108,18 +108,18 @@ func constructPhraseBody(phrase, userTier, userNativeLanguage string) *strings.R
 }
 
 func constructWordDefinitionBody(word, userTier, userNativeLanguage string) *strings.Reader {
-	var maxWordCount string
+	//var maxWordCount string
 	var MaxTokens string
 	//var content string
 
 	if userTier == "Basic" {
 		MaxTokens = "60"
-		maxWordCount = "40"
+		//maxWordCount = "40"
 		//content = fmt.Sprintf("Define '%s' in max %s words", word, maxWordCount)
 
 	} else if userTier == "Premium" {
 		MaxTokens = "210"
-		maxWordCount = "110"
+		//maxWordCount = "110"
 		//content = fmt.Sprintf("Define '%s' in max %s words.Give 3 example sentences in the word's language with their translations in %s", userNativeLanguage, word, maxWordCount)
 	}
 
@@ -127,7 +127,7 @@ func constructWordDefinitionBody(word, userTier, userNativeLanguage string) *str
 	"model":"gpt-3.5-turbo",
 	"messages": [{
 		"role": "system",
-		"content": "You will be provided a word and your tasks are to do the following in max %s words and speaking only %s. Define the word, give 3 example sentences that use that word, and translate the example sentences into %s if the word is not a %s word."
+		"content": "You will be provided a word and your tasks are to do the following speaking only %s. Define the word & give 3 example sentences. If the word is not a %s word, then provide %s translations for the example sentences, otheriwise skip this final task."
 	  },
 	  {
 		"role": "user",
@@ -135,7 +135,7 @@ func constructWordDefinitionBody(word, userTier, userNativeLanguage string) *str
 	  }],
 	"temperature": 0.7,
 	"max_tokens": %s
-	}`, maxWordCount, userNativeLanguage, userNativeLanguage, userNativeLanguage, word, MaxTokens)
+	}`, userNativeLanguage, userNativeLanguage, userNativeLanguage, word, MaxTokens)
 
 	fmt.Printf("Tier: %s\n", userTier)
 	fmt.Printf("Body: %s\n", body)

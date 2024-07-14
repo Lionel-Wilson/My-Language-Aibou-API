@@ -90,7 +90,7 @@ func constructPhraseBody(phrase, userTier, userNativeLanguage string) *strings.R
 	"model":"gpt-3.5-turbo",
 	"messages": [{
 		"role": "system",
-		"content": "You will be provided with a sentence in a certain language, and your task is to explain the meaning & grammar used in the sentence in %s"
+		"content": "You are a great language teacher. You will be provided with a sentence in a certain language, and your task is to explain the meaning & grammar used in the sentence in %s"
 	  },
 	  {
 		"role": "user",
@@ -127,7 +127,7 @@ func constructWordDefinitionBody(word, userTier, userNativeLanguage string) *str
 	"model":"gpt-3.5-turbo",
 	"messages": [{
 		"role": "system",
-		"content": "You will be provided a word and your tasks are to do the following speaking only %s. Define the word & give 3 example sentences. If the word is not a %s word, then provide %s translations for the example sentences, otheriwise skip this final task."
+		"content": "You are a %s dictionary.You will be provided a word and your task is to define the word & give 3 example sentences. If the word is not a %s word, then also provide %s translations for the example sentences. Otherwise, don't provide translations."
 	  },
 	  {
 		"role": "user",

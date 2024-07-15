@@ -21,13 +21,21 @@ func (app *Application) DefineWord(c *gin.Context) {
 		return
 	}
 
-	if utf8.RuneCountInString(requestBody.Word) > 20 {
-		app.ErrorLog.Printf(`Word ""%s length too long. Must be less than 20 characters.`, requestBody.Word)
+	word := strings.TrimSpace(requestBody.Word)
+
+	if word == "" {
+		app.ErrorLog.Printf("User didn't provide a word: %s", word)
+		utils.NewErrorResponse(c, http.StatusBadRequest, "Please provide a word", []string{})
+		return
+	}
+
+	if utf8.RuneCountInString(word) > 20 {
+		app.ErrorLog.Printf("Word '%s' length too long. Must be less than 20 characters.", word)
 		utils.NewErrorResponse(c, http.StatusBadRequest, "Word length too long. Must be less than 20 characters. Could this be a phrase?", []string{})
 		return
 	}
 
-	jsonBody := constructWordDefinitionBody(requestBody.Word, requestBody.Tier, requestBody.NativeLanguage)
+	jsonBody := constructWordDefinitionBody(word, requestBody.Tier, requestBody.NativeLanguage)
 
 	OpenAIApiResponse, err := utils.MakeOpenAIApiRequest(jsonBody, c, *app.OpenApiKey)
 	if err != nil {
@@ -54,7 +62,15 @@ func (app *Application) DefinePhrase(c *gin.Context) {
 		return
 	}
 
-	jsonBody := constructPhraseBody(requestBody.Phrase, requestBody.Tier, requestBody.NativeLanguage)
+	phrase := strings.TrimSpace(requestBody.Phrase)
+
+	if phrase == "" {
+		app.ErrorLog.Printf("User didn't provide a sentence: %s", phrase)
+		utils.NewErrorResponse(c, http.StatusBadRequest, "Please provide a sentence", []string{})
+		return
+	}
+
+	jsonBody := constructPhraseBody(phrase, requestBody.Tier, requestBody.NativeLanguage)
 
 	OpenAIApiResponse, err := utils.MakeOpenAIApiRequest(jsonBody, c, *app.OpenApiKey)
 	if err != nil {

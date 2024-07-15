@@ -76,9 +76,9 @@ func (app *Application) DefineSentence(c *gin.Context) {
 		return
 	}
 
-	if utf8.RuneCountInString(sentence) > 100 {
-		app.ErrorLog.Printf("Sentence '%s' length too long. Must be less than 100 characters.", sentence)
-		utils.NewErrorResponse(c, http.StatusBadRequest, "Provided sentence is too long.I must be less than 100 characters. Try breaking down the sentence into smaller parts", []string{})
+	if utf8.RuneCountInString(sentence) > 150 {
+		app.ErrorLog.Printf("Sentence '%s' length too long. Must be less than 150 characters.", sentence)
+		utils.NewErrorResponse(c, http.StatusBadRequest, "The provided sentence is too long(must be less than 150 characters). Try breaking down the sentence into smaller parts", []string{})
 		return
 	}
 

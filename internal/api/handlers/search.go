@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/models"
@@ -37,6 +38,11 @@ func (app *Application) DefineWord(c *gin.Context) {
 	if isNotAWord(word) {
 		app.ErrorLog.Printf("User provided a phrase(%s) instead of a word.", word)
 		utils.NewErrorResponse(c, http.StatusBadRequest, "This looks like a phrase. Please use the 'Analyzer'.", []string{})
+		return
+	}
+	if isNonsensical(word) {
+		app.ErrorLog.Printf("User provided nonsense(%s) instead of a word.", word)
+		utils.NewErrorResponse(c, http.StatusBadRequest, "This doesn't look like a word. Please provide a valid word.", []string{})
 		return
 	}
 
@@ -181,4 +187,27 @@ func constructWordDefinitionBody(word, userNativeLanguage string) *strings.Reade
 // isNotAWord is used to check if the user is using the dictionary to define phrases as opposed to a single word
 func isNotAWord(s string) bool {
 	return strings.Count(s, " ") > 1
+}
+
+func isNonsensical(s string) bool {
+	// Check condition 1: The string contains special characters
+	hasSpecialCharacters := false
+	for _, ch := range s {
+		if unicode.IsPunct(ch) || unicode.IsSymbol(ch) {
+			hasSpecialCharacters = true
+			break
+		}
+	}
+
+	// Check condition 2: The string contains the same character more than 3 times in a row
+	hasRepeatingCharacters := false
+	for i := 0; i < len(s)-3; i++ {
+		if s[i] == s[i+1] && s[i] == s[i+2] && s[i] == s[i+3] {
+			hasRepeatingCharacters = true
+			break
+		}
+	}
+
+	// Combine all conditions to determine if the string is nonsensical
+	return hasSpecialCharacters || hasRepeatingCharacters
 }

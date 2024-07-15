@@ -116,7 +116,7 @@ func constructPhraseBody(sentence, userNativeLanguage string) *strings.Reader {
 	content := fmt.Sprintf("Explain the meaning & grammar used in this sentence - '%s'.Respond in %s", sentence, userNativeLanguage)
 
 	body := fmt.Sprintf(`{
-	"model":"gpt-3.5-turbo-0125",
+	"model":"gpt-4o",
 	"messages": [{
 		"role": "system",
 		"content": "You are a helpful assistant."
@@ -150,10 +150,10 @@ func constructWordDefinitionBody(word, userNativeLanguage string) *strings.Reade
 		//maxWordCount = "180"
 
 	}*/
-	content := fmt.Sprintf("Explain the meaning of '%s'.Explain in %s. Provide 2 example sentences using the word '%s', ensuring you translate them into %s", word, userNativeLanguage, word, userNativeLanguage)
+	content := fmt.Sprintf("Explain the meaning of '%s'ensuring the explanation is in %s. Provide 2 example sentences using the word '%s', ensuring you translate them into %s", word, userNativeLanguage, word, userNativeLanguage)
 
 	body := fmt.Sprintf(`{
-	"model":"gpt-3.5-turbo",
+	"model":"gpt-4o",
 	"messages": [{
 		"role": "system",
 		"content": "You are a helpful assistant."

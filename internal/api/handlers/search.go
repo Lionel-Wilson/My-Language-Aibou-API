@@ -29,6 +29,12 @@ func (app *Application) DefineWord(c *gin.Context) {
 		return
 	}
 
+	if isNotAWord(word) {
+		app.ErrorLog.Printf("User provided a phrase(%s) instead of a word.", word)
+		utils.NewErrorResponse(c, http.StatusBadRequest, "This looks like a phrase. Please use the 'Analyzer'.", []string{})
+		return
+	}
+
 	if utf8.RuneCountInString(word) > 30 {
 		app.ErrorLog.Printf("Word '%s' length too long. Must be less than 30 characters.", word)
 		utils.NewErrorResponse(c, http.StatusBadRequest, "Word length too long. Must be less than 30 characters.If this is a sentence, please use the analyser.", []string{})
@@ -159,4 +165,9 @@ func constructWordDefinitionBody(word, userNativeLanguage string) *strings.Reade
 	fmt.Printf("Word prompt: %s\n", content)
 
 	return strings.NewReader(body)
+}
+
+// isNotAWord is used to check if the user is using the dictionary to define phrases as opposed to a single word
+func isNotAWord(s string) bool {
+	return strings.Count(s, " ") > 1
 }

@@ -138,7 +138,7 @@ func constructWordDefinitionBody(word, userNativeLanguage string) *strings.Reade
 		//maxWordCount = "180"
 
 	}*/
-	content := fmt.Sprintf("Explain the meaning of '%s', ensuring the explanation is in %s. Provide 3 example sentences using the word '%s', ensuring you translate them into %s", word, userNativeLanguage, word, userNativeLanguage)
+	content := fmt.Sprintf("Explain the meaning of '%s', ensuring the explanation is in %s. Provide 2 example sentences using the word '%s', ensuring you translate them into %s", word, userNativeLanguage, word, userNativeLanguage)
 
 	body := fmt.Sprintf(`{
 	"model":"gpt-3.5-turbo",

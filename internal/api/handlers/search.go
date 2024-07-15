@@ -84,13 +84,13 @@ func constructPhraseBody(phrase, userTier, userNativeLanguage string) *strings.R
 		//maxWordCount = "230"
 	}
 
-	//content := fmt.Sprintf("Explain the meaning & grammar used in the following sentence in max %s words - '%s'", maxWordCount, phrase)
+	content := fmt.Sprintf("I am a native %s speaker.Explain the meaning & grammar used in this sentence - '%s'", userNativeLanguage, phrase)
 
 	body := fmt.Sprintf(`{
 	"model":"gpt-3.5-turbo",
 	"messages": [{
 		"role": "system",
-		"content": "You are a great language teacher. You will be provided with a sentence in a certain language, and your task is to explain the meaning & grammar used in the sentence in %s"
+		"content": "You are a passionate language teacher who's fluent in all languages in the world."
 	  },
 	  {
 		"role": "user",
@@ -98,7 +98,7 @@ func constructPhraseBody(phrase, userTier, userNativeLanguage string) *strings.R
 	  }],
 	"temperature": 0.2,
 	"max_tokens": %s
-	}`, userNativeLanguage, phrase, MaxTokens)
+	}`, content, MaxTokens)
 
 	fmt.Printf("Tier: %s\n", userTier)
 	fmt.Printf("Body: %s\n", body)
@@ -115,7 +115,7 @@ func constructWordDefinitionBody(word, userTier, userNativeLanguage string) *str
 	if userTier == "Basic" {
 		MaxTokens = "60"
 		//maxWordCount = "40"
-		content = fmt.Sprintf("Define the word '%s' in %s", word, userNativeLanguage)
+		content = fmt.Sprintf("I am a native %s speaker.Define the word '%s' in %s", userNativeLanguage, word, userNativeLanguage)
 
 	} else if userTier == "Premium" {
 		MaxTokens = "210"

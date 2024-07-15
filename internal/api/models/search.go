@@ -1,6 +1,6 @@
 package models
 
-type DefineDefineSentenceRequest struct {
+type DefineSentenceRequest struct {
 	Sentence string `json:"sentence"`
 	//Tier   string `json:"tier"`
 	//TargetLanguage string `json:"targetLanguage"`

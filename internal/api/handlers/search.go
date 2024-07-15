@@ -59,7 +59,7 @@ func (app *Application) DefineWord(c *gin.Context) {
 }
 
 func (app *Application) DefineSentence(c *gin.Context) {
-	var requestBody models.DefineDefineSentenceRequest
+	var requestBody models.DefineSentenceRequest
 
 	err := c.ShouldBindJSON(&requestBody)
 	if err != nil {

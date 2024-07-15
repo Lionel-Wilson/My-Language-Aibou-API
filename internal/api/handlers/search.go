@@ -96,7 +96,7 @@ func constructPhraseBody(phrase, userTier, userNativeLanguage string) *strings.R
 		"role": "user",
 		"content": "%s"
 	  }],
-	"temperature": 0.2,
+	"temperature": 0.4,
 	"max_tokens": %s
 	}`, content, MaxTokens)
 
@@ -133,7 +133,7 @@ func constructWordDefinitionBody(word, userTier, userNativeLanguage string) *str
 		"role": "user",
 		"content": "%s"
 	  }],
-	"temperature": 0.0,
+	"temperature": 0.4,
 	"max_tokens": %s
 	}`, content, MaxTokens)
 

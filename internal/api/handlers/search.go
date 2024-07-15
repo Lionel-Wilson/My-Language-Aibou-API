@@ -101,8 +101,8 @@ func constructPhraseBody(phrase, userTier, userNativeLanguage string) *strings.R
 	}`, content, MaxTokens)
 
 	fmt.Printf("Tier: %s\n", userTier)
-	fmt.Printf("Body: %s\n", body)
-	//fmt.Printf("Phrase prompt: %s\n", content)
+	//fmt.Printf("Body: %s\n", body)
+	fmt.Printf("Phrase prompt: %s\n", content)
 
 	return strings.NewReader(body)
 }
@@ -138,8 +138,8 @@ func constructWordDefinitionBody(word, userTier, userNativeLanguage string) *str
 	}`, content, MaxTokens)
 
 	fmt.Printf("Tier: %s\n", userTier)
-	fmt.Printf("Body: %s\n", body)
-	//fmt.Printf("Word prompt: %s\n", content)
+	//fmt.Printf("Body: %s\n", body)
+	fmt.Printf("Word prompt: %s\n", content)
 
 	return strings.NewReader(body)
 }

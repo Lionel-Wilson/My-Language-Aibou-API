@@ -113,7 +113,7 @@ func constructPhraseBody(phrase, userNativeLanguage string) *strings.Reader {
 		maxWordCount = "230"
 	}*/
 
-	content := fmt.Sprintf("Breakdown & explain the meaning & grammar of following sentence: '%s'.Respond in %s", phrase, userNativeLanguage)
+	content := fmt.Sprintf("Explain the meaning & grammar used in this sentence - '%s'.Respond in %s", phrase, userNativeLanguage)
 
 	body := fmt.Sprintf(`{
 	"model":"gpt-3.5-turbo",

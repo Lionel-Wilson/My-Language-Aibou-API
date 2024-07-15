@@ -29,6 +29,11 @@ func (app *Application) DefineWord(c *gin.Context) {
 		return
 	}
 
+	if utils.ContainsNumber(word) {
+		app.ErrorLog.Printf("User provided a word(%s) that contained a number.", word)
+		utils.NewErrorResponse(c, http.StatusBadRequest, "Words should not contain numbers.", []string{})
+		return
+	}
 	if isNotAWord(word) {
 		app.ErrorLog.Printf("User provided a phrase(%s) instead of a word.", word)
 		utils.NewErrorResponse(c, http.StatusBadRequest, "This looks like a phrase. Please use the 'Analyzer'.", []string{})

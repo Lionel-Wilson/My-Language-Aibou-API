@@ -88,7 +88,7 @@ func (app *Application) DefinePhrase(c *gin.Context) {
 }
 
 func constructPhraseBody(phrase, userTier, userNativeLanguage string) *strings.Reader {
-	//var maxWordCount string
+	var maxWordCount string
 	var MaxTokens string
 
 	if userTier == "Basic" {
@@ -100,7 +100,7 @@ func constructPhraseBody(phrase, userTier, userNativeLanguage string) *strings.R
 		maxWordCount = "230"
 	}
 
-	content := fmt.Sprintf("Explain the meaning & grammar used in the following sentence: '%s'.Provide a detailed explanation to help understand the structure,syntax,& semantics of the sentence.Respond in %s & in max %s", phrase, userNativeLanguage,maxWordCount )
+	content := fmt.Sprintf("Explain the meaning & grammar used in the following sentence: '%s'.Provide a detailed explanation to help understand the structure,syntax,& semantics of the sentence.Respond in %s & in max %s words", phrase, userNativeLanguage,maxWordCount )
 
 	body := fmt.Sprintf(`{
 	"model":"gpt-3.5-turbo",
@@ -124,7 +124,7 @@ func constructPhraseBody(phrase, userTier, userNativeLanguage string) *strings.R
 }
 
 func constructWordDefinitionBody(word, userTier, userNativeLanguage string) *strings.Reader {
-	//var maxWordCount string
+	var maxWordCount string
 	var MaxTokens string
 	var content string
 

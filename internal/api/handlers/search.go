@@ -90,7 +90,7 @@ func constructPhraseBody(phrase, userTier, userNativeLanguage string) *strings.R
 	"model":"gpt-3.5-turbo",
 	"messages": [{
 		"role": "system",
-		"content": "You are a passionate language teacher who's fluent in all languages in the world."
+		"content": "You are a helpful assistant."
 	  },
 	  {
 		"role": "user",

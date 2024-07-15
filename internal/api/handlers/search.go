@@ -84,7 +84,7 @@ func constructPhraseBody(phrase, userTier, userNativeLanguage string) *strings.R
 		//maxWordCount = "230"
 	}
 
-	content := fmt.Sprintf("I am a native %s speaker.Explain the meaning & grammar used in this sentence - '%s'", userNativeLanguage, phrase)
+	content := fmt.Sprintf("Please explain the meaning and grammar used in the following sentence: '%s'.Provide a detailed explanation to help understand the structure,syntax,& semantics of the sentence.Respond in %s",phrase userNativeLanguage )
 
 	body := fmt.Sprintf(`{
 	"model":"gpt-3.5-turbo",

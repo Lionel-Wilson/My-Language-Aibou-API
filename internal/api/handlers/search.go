@@ -46,7 +46,7 @@ func (app *Application) DefineWord(c *gin.Context) {
 	OpenAIApiResponse, err := utils.MakeOpenAIApiRequest(jsonBody, c, *app.OpenApiKey)
 	if err != nil {
 		app.ErrorLog.Println(err.Error())
-		utils.ServerErrorResponse(c, err, "Failed to make request to OpenAI API")
+		utils.ServerErrorResponse(c, err, "Failed to process request. Please try again later")
 		return
 	}
 
@@ -87,7 +87,7 @@ func (app *Application) DefineSentence(c *gin.Context) {
 	OpenAIApiResponse, err := utils.MakeOpenAIApiRequest(jsonBody, c, *app.OpenApiKey)
 	if err != nil {
 		app.ErrorLog.Println(err.Error())
-		utils.ServerErrorResponse(c, err, "Failed to make request to OpenAI API")
+		utils.ServerErrorResponse(c, err, "Failed to process request. Please try again later")
 		return
 	}
 

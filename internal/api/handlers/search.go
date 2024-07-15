@@ -99,7 +99,7 @@ func (app *Application) DefineSentence(c *gin.Context) {
 	c.JSON(http.StatusOK, OpenAIApiResponse.Choices[0].Message.Content)
 }
 
-func constructPhraseBody(phrase, userNativeLanguage string) *strings.Reader {
+func constructPhraseBody(sentence, userNativeLanguage string) *strings.Reader {
 	//var maxWordCount string
 	//var MaxTokens string
 
@@ -113,7 +113,7 @@ func constructPhraseBody(phrase, userNativeLanguage string) *strings.Reader {
 		maxWordCount = "230"
 	}*/
 
-	content := fmt.Sprintf("Explain the meaning & grammar used in this sentence - '%s'.Respond in %s", phrase, userNativeLanguage)
+	content := fmt.Sprintf("Explain the meaning & grammar used in this sentence - '%s'.Respond in %s", sentence, userNativeLanguage)
 
 	body := fmt.Sprintf(`{
 	"model":"gpt-3.5-turbo",
@@ -126,7 +126,7 @@ func constructPhraseBody(phrase, userNativeLanguage string) *strings.Reader {
 		"content": "%s"
 	  }],
 	"temperature": 0.4,
-	"max_tokens": 1500
+	"max_tokens": 800
 	}`, content)
 
 	//fmt.Printf("Tier: %s\n", userTier)

@@ -29,7 +29,6 @@ func (app *Application) DefineWord(c *gin.Context) {
 		utils.NewErrorResponse(c, http.StatusBadRequest, "Please provide a word", []string{})
 		return
 	}
-
 	if utils.ContainsNumber(word) {
 		app.ErrorLog.Printf("User provided a word(%s) that contained a number.", word)
 		utils.NewErrorResponse(c, http.StatusBadRequest, "Words should not contain numbers.", []string{})
@@ -45,7 +44,6 @@ func (app *Application) DefineWord(c *gin.Context) {
 		utils.NewErrorResponse(c, http.StatusBadRequest, "This doesn't look like a word. Please provide a valid word.", []string{})
 		return
 	}
-
 	if utf8.RuneCountInString(word) > 30 {
 		app.ErrorLog.Printf("Word '%s' length too long. Must be less than 30 characters.", word)
 		utils.NewErrorResponse(c, http.StatusBadRequest, "Word length too long. Must be less than 30 characters.If this is a sentence, please use the analyser.", []string{})
@@ -174,7 +172,7 @@ func constructWordDefinitionBody(word, userNativeLanguage string) *strings.Reade
 		"content": "%s"
 	  }],
 	"temperature": 0.4,
-	"max_tokens": 500
+	"max_tokens": 300
 	}`, content)
 
 	//fmt.Printf("Tier: %s\n", userTier)

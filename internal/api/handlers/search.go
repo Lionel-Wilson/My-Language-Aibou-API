@@ -127,13 +127,13 @@ func constructWordDefinitionBody(word, userTier, userNativeLanguage string) *str
 	"model":"gpt-3.5-turbo",
 	"messages": [{
 		"role": "system",
-		"content": "You are a language teacher"
+		"content": "You are a helpful assistant."
 	  },
 	  {
 		"role": "user",
 		"content": "%s"
 	  }],
-	"temperature": 0.2,
+	"temperature": 0.0,
 	"max_tokens": %s
 	}`, content, MaxTokens)
 

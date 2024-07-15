@@ -35,7 +35,7 @@ func (app *Application) DefineWord(c *gin.Context) {
 		return
 	}
 
-	jsonBody := constructWordDefinitionBody(word, requestBody.Tier, requestBody.NativeLanguage)
+	jsonBody := constructWordDefinitionBody(word, requestBody.NativeLanguage)
 
 	OpenAIApiResponse, err := utils.MakeOpenAIApiRequest(jsonBody, c, *app.OpenApiKey)
 	if err != nil {
@@ -70,7 +70,7 @@ func (app *Application) DefinePhrase(c *gin.Context) {
 		return
 	}
 
-	jsonBody := constructPhraseBody(phrase, requestBody.Tier, requestBody.NativeLanguage)
+	jsonBody := constructPhraseBody(phrase, requestBody.NativeLanguage)
 
 	OpenAIApiResponse, err := utils.MakeOpenAIApiRequest(jsonBody, c, *app.OpenApiKey)
 	if err != nil {
@@ -87,10 +87,11 @@ func (app *Application) DefinePhrase(c *gin.Context) {
 	c.JSON(http.StatusOK, OpenAIApiResponse.Choices[0].Message.Content)
 }
 
-func constructPhraseBody(phrase, userTier, userNativeLanguage string) *strings.Reader {
-	var maxWordCount string
-	var MaxTokens string
+func constructPhraseBody(phrase, userNativeLanguage string) *strings.Reader {
+	//var maxWordCount string
+	//var MaxTokens string
 
+	/*Remove tier system.
 	if userTier == "Basic" {
 		MaxTokens = "110"
 		maxWordCount = "80"
@@ -98,9 +99,9 @@ func constructPhraseBody(phrase, userTier, userNativeLanguage string) *strings.R
 	} else if userTier == "Premium" {
 		MaxTokens = "330"
 		maxWordCount = "230"
-	}
+	}*/
 
-	content := fmt.Sprintf("Explain the meaning & grammar used in the following sentence: '%s'.Provide a detailed explanation to help understand the structure,syntax,& semantics of the sentence.Respond in %s & in max %s words", phrase, userNativeLanguage,maxWordCount )
+	content := fmt.Sprintf("Explain the meaning & grammar used in the following sentence: '%s'.Provide a detailed explanation to help understand the structure,syntax,& semantics of the sentence.Respond in %s", phrase, userNativeLanguage)
 
 	body := fmt.Sprintf(`{
 	"model":"gpt-3.5-turbo",
@@ -113,22 +114,21 @@ func constructPhraseBody(phrase, userTier, userNativeLanguage string) *strings.R
 		"content": "%s"
 	  }],
 	"temperature": 0.4,
-	"max_tokens": %s
-	}`, content, MaxTokens)
+	"max_tokens": 1000
+	}`, content)
 
-	fmt.Printf("Tier: %s\n", userTier)
+	//fmt.Printf("Tier: %s\n", userTier)
 	//fmt.Printf("Body: %s\n", body)
 	fmt.Printf("Phrase prompt: %s\n", content)
 
 	return strings.NewReader(body)
 }
 
-func constructWordDefinitionBody(word, userTier, userNativeLanguage string) *strings.Reader {
-	var maxWordCount string
-	var MaxTokens string
-	var content string
+func constructWordDefinitionBody(word, userNativeLanguage string) *strings.Reader {
+	//var maxWordCount string
+	//var MaxTokens string
 
-	if userTier == "Basic" {
+	/*if userTier == "Basic" {
 		MaxTokens = "75"
 		maxWordCount = "40"
 		content = fmt.Sprintf("Explain the meaning of '%s', ensuring the explanation is in %s & max %s words", word, userNativeLanguage, maxWordCount)
@@ -136,8 +136,9 @@ func constructWordDefinitionBody(word, userTier, userNativeLanguage string) *str
 	} else if userTier == "Premium" {
 		MaxTokens = "250"
 		//maxWordCount = "180"
-		content = fmt.Sprintf("Explain the meaning of '%s', ensuring the explanation is in %s. Provide 3 example sentences using the word '%s', ensuring you translate them into %s", word, userNativeLanguage, word, userNativeLanguage)
-	}
+
+	}*/
+	content := fmt.Sprintf("Explain the meaning of '%s', ensuring the explanation is in %s. Provide 3 example sentences using the word '%s', ensuring you translate them into %s", word, userNativeLanguage, word, userNativeLanguage)
 
 	body := fmt.Sprintf(`{
 	"model":"gpt-3.5-turbo",
@@ -150,10 +151,10 @@ func constructWordDefinitionBody(word, userTier, userNativeLanguage string) *str
 		"content": "%s"
 	  }],
 	"temperature": 0.4,
-	"max_tokens": %s
-	}`, content, MaxTokens)
+	"max_tokens": 500
+	}`, content)
 
-	fmt.Printf("Tier: %s\n", userTier)
+	//fmt.Printf("Tier: %s\n", userTier)
 	//fmt.Printf("Body: %s\n", body)
 	fmt.Printf("Word prompt: %s\n", content)
 

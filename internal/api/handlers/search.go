@@ -116,7 +116,7 @@ func constructPhraseBody(sentence, userNativeLanguage string) *strings.Reader {
 	content := fmt.Sprintf("Explain the meaning & grammar used in this sentence - '%s'.Respond in %s", sentence, userNativeLanguage)
 
 	body := fmt.Sprintf(`{
-	"model":"gpt-3.5-turbo",
+	"model":"gpt-3.5-turbo-0125",
 	"messages": [{
 		"role": "system",
 		"content": "You are a helpful assistant."

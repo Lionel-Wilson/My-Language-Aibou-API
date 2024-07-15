@@ -58,8 +58,8 @@ func (app *Application) DefineWord(c *gin.Context) {
 	c.JSON(http.StatusOK, OpenAIApiResponse.Choices[0].Message.Content)
 }
 
-func (app *Application) DefinePhrase(c *gin.Context) {
-	var requestBody models.DefinePhraseRequest
+func (app *Application) DefineSentence(c *gin.Context) {
+	var requestBody models.DefineDefineSentenceRequest
 
 	err := c.ShouldBindJSON(&requestBody)
 	if err != nil {
@@ -68,15 +68,21 @@ func (app *Application) DefinePhrase(c *gin.Context) {
 		return
 	}
 
-	phrase := strings.TrimSpace(requestBody.Phrase)
+	sentence := strings.TrimSpace(requestBody.Sentence)
 
-	if phrase == "" {
-		app.ErrorLog.Printf("User didn't provide a sentence: %s", phrase)
+	if sentence == "" {
+		app.ErrorLog.Printf("User didn't provide a sentence: %s", sentence)
 		utils.NewErrorResponse(c, http.StatusBadRequest, "Please provide a sentence", []string{})
 		return
 	}
 
-	jsonBody := constructPhraseBody(phrase, requestBody.NativeLanguage)
+	if utf8.RuneCountInString(sentence) > 100 {
+		app.ErrorLog.Printf("Sentence '%s' length too long. Must be less than 100 characters.", sentence)
+		utils.NewErrorResponse(c, http.StatusBadRequest, "Provided sentence is too long.I must be less than 100 characters. Try breaking down the sentence into smaller parts", []string{})
+		return
+	}
+
+	jsonBody := constructPhraseBody(sentence, requestBody.NativeLanguage)
 
 	OpenAIApiResponse, err := utils.MakeOpenAIApiRequest(jsonBody, c, *app.OpenApiKey)
 	if err != nil {

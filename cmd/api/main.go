@@ -48,7 +48,7 @@ func main() {
 	apiV1 := router.Group("/api/v1")
 	{
 		apiV1.POST("/search/word", app.DefineWord)
-		apiV1.POST("/search/phrase", app.DefinePhrase)
+		apiV1.POST("/search/sentence", app.DefineSentence)
 	}
 	infoLog.Printf("Starting server on %s", addr)
 

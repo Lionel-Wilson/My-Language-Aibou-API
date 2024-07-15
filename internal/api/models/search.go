@@ -1,7 +1,7 @@
 package models
 
-type DefinePhraseRequest struct {
-	Phrase string `json:"phrase"`
+type DefineDefineSentenceRequest struct {
+	Sentence string `json:"sentence"`
 	//Tier   string `json:"tier"`
 	//TargetLanguage string `json:"targetLanguage"`
 	NativeLanguage string `json:"nativeLanguage"`

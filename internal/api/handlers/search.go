@@ -29,9 +29,9 @@ func (app *Application) DefineWord(c *gin.Context) {
 		return
 	}
 
-	if utf8.RuneCountInString(word) > 20 {
-		app.ErrorLog.Printf("Word '%s' length too long. Must be less than 20 characters.", word)
-		utils.NewErrorResponse(c, http.StatusBadRequest, "Word length too long. Must be less than 20 characters. Could this be a phrase?", []string{})
+	if utf8.RuneCountInString(word) > 30 {
+		app.ErrorLog.Printf("Word '%s' length too long. Must be less than 30 characters.", word)
+		utils.NewErrorResponse(c, http.StatusBadRequest, "Word length too long. Must be less than 30 characters.If this is a sentence, please use the analyser.", []string{})
 		return
 	}
 

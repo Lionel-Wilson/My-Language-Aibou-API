@@ -55,7 +55,7 @@ func (app *Application) DefineWord(c *gin.Context) {
 	OpenAIApiResponse, err := utils.MakeOpenAIApiRequest(jsonBody, c, *app.OpenApiKey)
 	if err != nil {
 		app.ErrorLog.Println(err.Error())
-		utils.ServerErrorResponse(c, err, "Failed to process request. Please try again later")
+		utils.ServerErrorResponse(c, err, "Failed to process your sentence(s).Please make sure you remove any line breaks and large gaps between your sentences and try again")
 		return
 	}
 

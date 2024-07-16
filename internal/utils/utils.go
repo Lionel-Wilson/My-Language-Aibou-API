@@ -81,7 +81,7 @@ func ExtractIntegerCookie(c *gin.Context, cookieName string) (int, error) {
 func MakeOpenAIApiRequest(body *strings.Reader, context *gin.Context, apiKey string) (models.ChatCompletion, error) {
 	req, err := http.NewRequest("POST", "https://api.openai.com/v1/chat/completions", body)
 	if err != nil {
-		ServerErrorResponse(context, err, "Failed to create request")
+		fmt.Println("Failed to create request")
 		return models.ChatCompletion{}, err
 	}
 
@@ -91,21 +91,22 @@ func MakeOpenAIApiRequest(body *strings.Reader, context *gin.Context, apiKey str
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		ServerErrorResponse(context, err, "Failed to breakdown phrase")
+		fmt.Println("Failed to breakdown phrase")
 		return models.ChatCompletion{}, err
 	}
 	defer resp.Body.Close()
 
 	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		ServerErrorResponse(context, err, "Failed to read AI response body")
+		fmt.Println("Failed to read AI response body:")
+		fmt.Println(string(responseBody))
 		return models.ChatCompletion{}, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
+		fmt.Println("OpenAI API returned non-OK status. ")
 		fmt.Println("OpenAI error response body:")
 		fmt.Println(string(responseBody))
-		ServerErrorResponse(context, err, "OpenAI API returned non-OK status: "+resp.Status)
 		return models.ChatCompletion{}, err
 	}
 
@@ -113,13 +114,13 @@ func MakeOpenAIApiRequest(body *strings.Reader, context *gin.Context, apiKey str
 
 	err = json.Unmarshal(responseBody, &aiResponse)
 	if err != nil {
-		ServerErrorResponse(context, err, "Failed to unmarshal json body")
+		fmt.Println("Failed to unmarshal json body")
 		return models.ChatCompletion{}, err
 	}
 
 	if len(aiResponse.Choices) == 0 {
+		fmt.Println("OpenAI API response contains no choices")
 		err = fmt.Errorf("OpenAI API response contains no choices")
-		ServerErrorResponse(context, err, "OpenAI API response contains no choices")
 		return models.ChatCompletion{}, err
 	}
 

@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -75,11 +76,11 @@ func ExtractIntegerCookie(c *gin.Context, cookieName string) (int, error) {
 	return cookieValueAsInt, nil
 }
 
-func MakeOpenAIApiRequest(body *strings.Reader, context *gin.Context, apiKey string) (*http.Response, error) {
+func MakeOpenAIApiRequest(body *strings.Reader, context *gin.Context, apiKey string) (*http.Response, []byte, error) {
 	req, err := http.NewRequest("POST", "https://api.openai.com/v1/chat/completions", body)
 	if err != nil {
 		fmt.Println("Failed to create request")
-		return &http.Response{}, err
+		return &http.Response{}, []byte{}, err
 	}
 
 	req.Header.Add("Content-Type", `application/json`)
@@ -89,11 +90,18 @@ func MakeOpenAIApiRequest(body *strings.Reader, context *gin.Context, apiKey str
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println("Failed to make request to OpenAI API")
-		return &http.Response{}, err
+		return &http.Response{}, []byte{}, err
 	}
 	defer resp.Body.Close()
 
-	return resp, nil
+	responseBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Failed to read AI response body:")
+		fmt.Println(string(responseBody))
+		return &http.Response{}, []byte{}, err
+	}
+
+	return resp, responseBody, nil
 }
 
 // containsNumber checks if a given string contains a number.

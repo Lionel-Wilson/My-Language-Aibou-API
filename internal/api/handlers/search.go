@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"unicode"
@@ -52,9 +54,38 @@ func (app *Application) DefineWord(c *gin.Context) {
 
 	jsonBody := constructWordDefinitionBody(word, requestBody.NativeLanguage)
 
-	OpenAIApiResponse, err := utils.MakeOpenAIApiRequest(jsonBody, c, *app.OpenApiKey)
+	resp, err := utils.MakeOpenAIApiRequest(jsonBody, c, *app.OpenApiKey)
 	if err != nil {
 		app.ErrorLog.Println(err.Error())
+		utils.ServerErrorResponse(c, err, "Failed to process your word.Please make sure you remove any extra spaces & special characters and try again")
+		return
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		fmt.Println("OpenAI API returned non-OK status. ")
+		utils.ServerErrorResponse(c, err, "Failed to process your word.Please make sure you remove any extra spaces & special characters and try again")
+		return
+	}
+
+	responseBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Failed to read AI response body:")
+		fmt.Println(string(responseBody))
+		utils.ServerErrorResponse(c, err, "Failed to process your word.Please make sure you remove any extra spaces & special characters and try again")
+		return
+	}
+
+	var OpenAIApiResponse models.ChatCompletion
+
+	err = json.Unmarshal(responseBody, &OpenAIApiResponse)
+	if err != nil {
+		fmt.Println("Failed to unmarshal json body")
+		return
+	}
+
+	if len(OpenAIApiResponse.Choices) == 0 {
+		fmt.Println("OpenAI API response contains no choices")
+		err = fmt.Errorf("OpenAI API response contains no choices")
 		utils.ServerErrorResponse(c, err, "Failed to process your word.Please make sure you remove any extra spaces & special characters and try again")
 		return
 	}
@@ -93,9 +124,38 @@ func (app *Application) DefineSentence(c *gin.Context) {
 
 	jsonBody := constructPhraseBody(sentence, requestBody.NativeLanguage)
 
-	OpenAIApiResponse, err := utils.MakeOpenAIApiRequest(jsonBody, c, *app.OpenApiKey)
+	resp, err := utils.MakeOpenAIApiRequest(jsonBody, c, *app.OpenApiKey)
 	if err != nil {
 		app.ErrorLog.Println(err.Error())
+		utils.ServerErrorResponse(c, err, "Failed to process your sentence(s).Please make sure you remove any line breaks and large gaps between your sentences and try again")
+		return
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		fmt.Println("OpenAI API returned non-OK status. ")
+		utils.ServerErrorResponse(c, err, "Failed to process your sentence(s).Please make sure you remove any line breaks and large gaps between your sentences and try again")
+		return
+	}
+
+	responseBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Failed to read AI response body:")
+		fmt.Println(string(responseBody))
+		utils.ServerErrorResponse(c, err, "Failed to process your sentence(s).Please make sure you remove any line breaks and large gaps between your sentences and try again")
+		return
+	}
+
+	var OpenAIApiResponse models.ChatCompletion
+
+	err = json.Unmarshal(responseBody, &OpenAIApiResponse)
+	if err != nil {
+		fmt.Println("Failed to unmarshal json body")
+		return
+	}
+
+	if len(OpenAIApiResponse.Choices) == 0 {
+		fmt.Println("OpenAI API response contains no choices")
+		err = fmt.Errorf("OpenAI API response contains no choices")
 		utils.ServerErrorResponse(c, err, "Failed to process your sentence(s).Please make sure you remove any line breaks and large gaps between your sentences and try again")
 		return
 	}

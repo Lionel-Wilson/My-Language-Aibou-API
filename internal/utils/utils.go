@@ -1,16 +1,13 @@
 package utils
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"reflect"
 	"strconv"
 	"strings"
 	"unicode"
 
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/models"
 	"github.com/gin-gonic/gin"
 )
 
@@ -78,11 +75,11 @@ func ExtractIntegerCookie(c *gin.Context, cookieName string) (int, error) {
 	return cookieValueAsInt, nil
 }
 
-func MakeOpenAIApiRequest(body *strings.Reader, context *gin.Context, apiKey string) (models.ChatCompletion, error) {
+func MakeOpenAIApiRequest(body *strings.Reader, context *gin.Context, apiKey string) (*http.Response, error) {
 	req, err := http.NewRequest("POST", "https://api.openai.com/v1/chat/completions", body)
 	if err != nil {
 		fmt.Println("Failed to create request")
-		return models.ChatCompletion{}, err
+		return &http.Response{}, err
 	}
 
 	req.Header.Add("Content-Type", `application/json`)
@@ -91,40 +88,12 @@ func MakeOpenAIApiRequest(body *strings.Reader, context *gin.Context, apiKey str
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println("Failed to breakdown phrase")
-		return models.ChatCompletion{}, err
+		fmt.Println("Failed to make request to OpenAI API")
+		return &http.Response{}, err
 	}
 	defer resp.Body.Close()
 
-	responseBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println("Failed to read AI response body:")
-		fmt.Println(string(responseBody))
-		return models.ChatCompletion{}, err
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		fmt.Println("OpenAI API returned non-OK status. ")
-		fmt.Println("OpenAI error response body:")
-		fmt.Println(string(responseBody))
-		return models.ChatCompletion{}, err
-	}
-
-	var aiResponse models.ChatCompletion
-
-	err = json.Unmarshal(responseBody, &aiResponse)
-	if err != nil {
-		fmt.Println("Failed to unmarshal json body")
-		return models.ChatCompletion{}, err
-	}
-
-	if len(aiResponse.Choices) == 0 {
-		fmt.Println("OpenAI API response contains no choices")
-		err = fmt.Errorf("OpenAI API response contains no choices")
-		return models.ChatCompletion{}, err
-	}
-
-	return aiResponse, nil
+	return resp, nil
 }
 
 // containsNumber checks if a given string contains a number.

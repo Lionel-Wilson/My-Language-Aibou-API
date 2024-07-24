@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"reflect"
 	"strconv"
 	"strings"
 	"unicode"
@@ -18,17 +17,6 @@ type ErrorResponse struct {
 	StatusCode int      `json:"statusCode" example:"422"`
 	Message    string   `json:"message" example:"Validation failed"`
 	Errors     []string `json:"errors,omitempty"`
-}
-
-// TrimWhitespace trims leading and trailing whitespace from all string fields in a given struct.
-func TrimWhitespace(v interface{}) {
-	val := reflect.ValueOf(v).Elem()
-	for i := 0; i < val.NumField(); i++ {
-		field := val.Field(i)
-		if field.Kind() == reflect.String {
-			field.SetString(strings.TrimSpace(field.String()))
-		}
-	}
 }
 
 // NewErrorResponse creates a new error response with the provided status code, message, and errors.

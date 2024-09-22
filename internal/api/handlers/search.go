@@ -302,7 +302,11 @@ func constructWordDefinitionBody(word, userNativeLanguage string) *strings.Reade
 }
 
 func constructWordSynonymsBody(word, userNativeLanguage string) *strings.Reader {
-	content := fmt.Sprintf("List out for me some simple synonyms for the word '%s'. Respond in %s", word, userNativeLanguage)
+	content := fmt.Sprintf("List out for me some simple synonyms for the word '%s'", word)
+
+	if userNativeLanguage != "English" {
+		content = fmt.Sprintf("List out for me some simple synonyms for the word '%s'. Respond in %s", word, userNativeLanguage)
+	}
 
 	body := fmt.Sprintf(`{
 	"model":"gpt-4o",

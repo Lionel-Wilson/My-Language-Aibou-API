@@ -12,3 +12,7 @@ type DefineWordRequest struct {
 	//TargetLanguage string `json:"targetLanguage"`
 	NativeLanguage string `json:"nativeLanguage"`
 }
+type GetSynonymsRequest struct {
+	Word           string `json:"word"`
+	NativeLanguage string `json:"nativeLanguage"`
+}

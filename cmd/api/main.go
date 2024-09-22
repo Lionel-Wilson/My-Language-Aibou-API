@@ -49,6 +49,7 @@ func main() {
 	{
 		apiV1.POST("/search/word", app.DefineWord)
 		apiV1.POST("/search/sentence", app.DefineSentence)
+		apiV1.POST("/search/synonyms", app.GetSynonyms)
 	}
 	infoLog.Printf("Starting server on %s", addr)
 

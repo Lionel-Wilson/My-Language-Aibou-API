@@ -127,7 +127,7 @@ func (app *Application) GetSynonyms(c *gin.Context) {
 		return
 	}
 
-	jsonBody := constructWordDefinitionBody(word, requestBody.NativeLanguage)
+	jsonBody := constructWordSynonymsBody(word, requestBody.NativeLanguage)
 
 	resp, responseBody, err := utils.MakeOpenAIApiRequest(jsonBody, c, *app.OpenApiKey)
 	if err != nil {

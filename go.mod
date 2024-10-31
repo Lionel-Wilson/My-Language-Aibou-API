@@ -2,7 +2,10 @@ module github.com/Lionel-Wilson/My-Language-Aibou-API
 
 go 1.21.5
 
-require github.com/gin-gonic/gin v1.10.0
+require (
+	github.com/gin-gonic/gin v1.10.0
+	github.com/joho/godotenv v1.5.1
+)
 
 require (
 	github.com/gorilla/context v1.1.2 // indirect

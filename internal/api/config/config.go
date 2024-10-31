@@ -1,10 +1,7 @@
 package config
 
 import (
-	"log"
 	"os"
-
-	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -17,10 +14,10 @@ type Config struct {
 
 func New() *Config {
 	//Load environment variables. Uncomment when running locally and not in container TO-DO: put this in an if env="local" statement in the config NEW function
-	err := godotenv.Load()
+	/*err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
-	}
+	}*/
 
 	var cfg Config
 

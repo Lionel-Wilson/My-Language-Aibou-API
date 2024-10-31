@@ -34,7 +34,7 @@ func New(config *config.Config, logger *log.Logger) Service {
 	}
 }
 
-func (s service) GetWordSynonyms(c *gin.Context, word string, nativeLanguage string) (*models.ChatCompletion, error) {
+func (s *service) GetWordSynonyms(c *gin.Context, word string, nativeLanguage string) (*models.ChatCompletion, error) {
 	jsonBody := wordToOpenAiSynonymsRequestBody(word, nativeLanguage)
 
 	resp, responseBody, err := utils.MakeOpenAIApiRequest(jsonBody, c, s.config.OpenAi.Key)
@@ -73,7 +73,7 @@ func (s service) GetWordSynonyms(c *gin.Context, word string, nativeLanguage str
 	return &OpenAIApiResponse, nil
 }
 
-func (s service) GetWordDefinition(c *gin.Context, word string, nativeLanguage string) (*models.ChatCompletion, error) {
+func (s *service) GetWordDefinition(c *gin.Context, word string, nativeLanguage string) (*models.ChatCompletion, error) {
 
 	jsonBody := wordToOpenAiDefinitionRequestBody(word, nativeLanguage)
 
@@ -151,11 +151,11 @@ func (s *service) GetSentenceExplanation(c *gin.Context, sentence string, native
 }
 
 // isNotAWord is used to check if the user is using the dictionary to define phrases as opposed to a single word
-func (s service) IsNotAWord(word string) bool {
+func (s *service) IsNotAWord(word string) bool {
 	return strings.Count(word, " ") > 1
 }
 
-func (s service) IsNonsensical(word string) bool {
+func (s *service) IsNonsensical(word string) bool {
 	// Check condition 1: The string contains special characters
 	hasSpecialCharacters := false
 	for _, ch := range word {

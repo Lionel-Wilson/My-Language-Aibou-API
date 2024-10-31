@@ -2,10 +2,12 @@ package languagetools
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/config"
 	log "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/log"
@@ -15,11 +17,11 @@ import (
 )
 
 type Service interface {
-	IsNonsensical(s string) bool
-	IsNotAWord(s string) bool
 	GetWordDefinition(c *gin.Context, word string, nativeLanguage string) (*models.ChatCompletion, error)
 	GetWordSynonyms(c *gin.Context, word string, nativeLanguage string) (*models.ChatCompletion, error)
 	GetSentenceExplanation(c *gin.Context, sentence string, nativeLanguage string) (*models.ChatCompletion, error)
+	ValidateWord(word string) error
+	ValidateSentence(sentence string) error
 }
 
 type service struct {
@@ -34,7 +36,7 @@ func New(config *config.Config, logger *log.Logger) Service {
 	}
 }
 
-func (s service) GetWordSynonyms(c *gin.Context, word string, nativeLanguage string) (*models.ChatCompletion, error) {
+func (s *service) GetWordSynonyms(c *gin.Context, word string, nativeLanguage string) (*models.ChatCompletion, error) {
 	jsonBody := wordToOpenAiSynonymsRequestBody(word, nativeLanguage)
 
 	resp, responseBody, err := utils.MakeOpenAIApiRequest(jsonBody, c, s.config.OpenAi.Key)
@@ -73,7 +75,7 @@ func (s service) GetWordSynonyms(c *gin.Context, word string, nativeLanguage str
 	return &OpenAIApiResponse, nil
 }
 
-func (s service) GetWordDefinition(c *gin.Context, word string, nativeLanguage string) (*models.ChatCompletion, error) {
+func (s *service) GetWordDefinition(c *gin.Context, word string, nativeLanguage string) (*models.ChatCompletion, error) {
 
 	jsonBody := wordToOpenAiDefinitionRequestBody(word, nativeLanguage)
 
@@ -108,7 +110,6 @@ func (s service) GetWordDefinition(c *gin.Context, word string, nativeLanguage s
 	fmt.Printf(`Total Tokens used: %d`, OpenAIApiResponse.Usage.TotalTokens)
 
 	return &OpenAIApiResponse, nil
-
 }
 
 func (s *service) GetSentenceExplanation(c *gin.Context, sentence string, nativeLanguage string) (*models.ChatCompletion, error) {
@@ -150,32 +151,42 @@ func (s *service) GetSentenceExplanation(c *gin.Context, sentence string, native
 	return &OpenAIApiResponse, nil
 }
 
-// isNotAWord is used to check if the user is using the dictionary to define phrases as opposed to a single word
-func (s service) IsNotAWord(word string) bool {
-	return strings.Count(word, " ") > 1
+func (s *service) ValidateWord(word string) error {
+	if word == "" {
+		s.logger.ErrorLog.Printf("User didn't provide a word: %s", word)
+		return errors.New("Please provide a word")
+	}
+	if utils.ContainsNumber(word) {
+		s.logger.ErrorLog.Printf("User provided a word(%s) that contained a number.", word)
+		return errors.New("Words should not contain numbers.")
+	}
+	if utf8.RuneCountInString(word) > 30 {
+		s.logger.ErrorLog.Printf("Word '%s' length too long. Must be less than 30 characters.", word)
+		return errors.New("Word length too long. Must be less than 30 characters.If this is a sentence, please use the analyser.")
+	}
+	if isNotAWord(word) {
+		s.logger.ErrorLog.Printf("User provided a phrase(%s) instead of a word.", word)
+		return errors.New("This looks like a phrase. Please use the 'Analyzer'.")
+	}
+	if isNonsensical(word) {
+		s.logger.ErrorLog.Printf("User provided nonsense(%s) instead of a word.", word)
+		return errors.New("This doesn't look like a word. Please provide a valid word.")
+	}
+
+	return nil
 }
-
-func (s service) IsNonsensical(word string) bool {
-	// Check condition 1: The string contains special characters
-	hasSpecialCharacters := false
-	for _, ch := range word {
-		if unicode.IsPunct(ch) || unicode.IsSymbol(ch) {
-			hasSpecialCharacters = true
-			break
-		}
+func (s *service) ValidateSentence(sentence string) error {
+	if sentence == "" {
+		s.logger.ErrorLog.Printf("User didn't provide a sentence: %s", sentence)
+		return errors.New("Please provide a sentence")
 	}
 
-	// Check condition 2: The string contains the same character more than 3 times in a row
-	hasRepeatingCharacters := false
-	for i := 0; i < len(word)-3; i++ {
-		if word[i] == word[i+1] && word[i] == word[i+2] && word[i] == word[i+3] {
-			hasRepeatingCharacters = true
-			break
-		}
+	if utf8.RuneCountInString(sentence) > 100 {
+		s.logger.ErrorLog.Printf("Sentence '%s' length too long. Must be less than 100 characters.", sentence)
+		return errors.New("The sentence must be less than 100 characters.")
 	}
 
-	// Combine all conditions to determine if the string is nonsensical
-	return hasSpecialCharacters || hasRepeatingCharacters
+	return nil
 }
 
 func wordToOpenAiDefinitionRequestBody(word, userNativeLanguage string) *strings.Reader {
@@ -276,4 +287,32 @@ func sentenceToOpenAiExplanationRequestBody(sentence, userNativeLanguage string)
 	fmt.Printf("Phrase prompt: %s\n", content)
 
 	return strings.NewReader(body)
+}
+
+// isNotAWord is used to check if the user is using the dictionary to define phrases as opposed to a single word
+func isNotAWord(word string) bool {
+	return strings.Count(word, " ") > 1
+}
+
+func isNonsensical(word string) bool {
+	// Check condition 1: The string contains special characters
+	hasSpecialCharacters := false
+	for _, ch := range word {
+		if unicode.IsPunct(ch) || unicode.IsSymbol(ch) {
+			hasSpecialCharacters = true
+			break
+		}
+	}
+
+	// Check condition 2: The string contains the same character more than 3 times in a row
+	hasRepeatingCharacters := false
+	for i := 0; i < len(word)-3; i++ {
+		if word[i] == word[i+1] && word[i] == word[i+2] && word[i] == word[i+3] {
+			hasRepeatingCharacters = true
+			break
+		}
+	}
+
+	// Combine all conditions to determine if the string is nonsensical
+	return hasSpecialCharacters || hasRepeatingCharacters
 }

@@ -3,7 +3,6 @@ package handler
 import (
 	"net/http"
 	"strings"
-	"unicode/utf8"
 
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/language_tools/dto"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/log"
@@ -45,29 +44,9 @@ func (h *languageToolsHandler) DefineWord(c *gin.Context) {
 
 	word := strings.TrimSpace(requestBody.Word)
 
-	if word == "" {
-		h.logger.ErrorLog.Printf("User didn't provide a word: %s", word)
-		utils.NewErrorResponse(c, http.StatusBadRequest, "Please provide a word", []string{})
-		return
-	}
-	if utils.ContainsNumber(word) {
-		h.logger.ErrorLog.Printf("User provided a word(%s) that contained a number.", word)
-		utils.NewErrorResponse(c, http.StatusBadRequest, "Words should not contain numbers.", []string{})
-		return
-	}
-	if utf8.RuneCountInString(word) > 30 {
-		h.logger.ErrorLog.Printf("Word '%s' length too long. Must be less than 30 characters.", word)
-		utils.NewErrorResponse(c, http.StatusBadRequest, "Word length too long. Must be less than 30 characters.If this is a sentence, please use the analyser.", []string{})
-		return
-	}
-	if h.service.IsNotAWord(word) {
-		h.logger.ErrorLog.Printf("User provided a phrase(%s) instead of a word.", word)
-		utils.NewErrorResponse(c, http.StatusBadRequest, "This looks like a phrase. Please use the 'Analyzer'.", []string{})
-		return
-	}
-	if h.service.IsNonsensical(word) {
-		h.logger.ErrorLog.Printf("User provided nonsense(%s) instead of a word.", word)
-		utils.NewErrorResponse(c, http.StatusBadRequest, "This doesn't look like a word. Please provide a valid word.", []string{})
+	err = h.service.ValidateWord(word)
+	if err != nil {
+		utils.NewErrorResponse(c, http.StatusBadRequest, err.Error(), []string{})
 		return
 	}
 
@@ -92,15 +71,9 @@ func (h *languageToolsHandler) ExplainSentence(c *gin.Context) {
 
 	sentence := strings.TrimSpace(requestBody.Sentence)
 
-	if sentence == "" {
-		h.logger.ErrorLog.Printf("User didn't provide a sentence: %s", sentence)
-		utils.NewErrorResponse(c, http.StatusBadRequest, "Please provide a sentence", []string{})
-		return
-	}
-
-	if utf8.RuneCountInString(sentence) > 100 {
-		h.logger.ErrorLog.Printf("Sentence '%s' length too long. Must be less than 100 characters.", sentence)
-		utils.NewErrorResponse(c, http.StatusBadRequest, "The sentence must be less than 100 characters.", []string{})
+	err = h.service.ValidateSentence(sentence)
+	if err != nil {
+		utils.NewErrorResponse(c, http.StatusBadRequest, err.Error(), []string{})
 		return
 	}
 
@@ -125,29 +98,9 @@ func (h *languageToolsHandler) GetSynonyms(c *gin.Context) {
 
 	word := strings.TrimSpace(requestBody.Word)
 
-	if word == "" {
-		h.logger.ErrorLog.Printf("User didn't provide a word: %s", word)
-		utils.NewErrorResponse(c, http.StatusBadRequest, "Please provide a word", []string{})
-		return
-	}
-	if utils.ContainsNumber(word) {
-		h.logger.ErrorLog.Printf("User provided a word(%s) that contained a number.", word)
-		utils.NewErrorResponse(c, http.StatusBadRequest, "Words should not contain numbers.", []string{})
-		return
-	}
-	if utf8.RuneCountInString(word) > 30 {
-		h.logger.ErrorLog.Printf("Word '%s' length too long. Must be less than 30 characters.", word)
-		utils.NewErrorResponse(c, http.StatusBadRequest, "Word length too long. Must be less than 30 characters.If this is a sentence, please use the analyser.", []string{})
-		return
-	}
-	if h.service.IsNotAWord(word) {
-		h.logger.ErrorLog.Printf("User provided a phrase(%s) instead of a word.", word)
-		utils.NewErrorResponse(c, http.StatusBadRequest, "This looks like a phrase. Please use the 'Analyzer'.", []string{})
-		return
-	}
-	if h.service.IsNonsensical(word) {
-		h.logger.ErrorLog.Printf("User provided nonsense(%s) instead of a word.", word)
-		utils.NewErrorResponse(c, http.StatusBadRequest, "This doesn't look like a word. Please provide a valid word.", []string{})
+	err = h.service.ValidateWord(word)
+	if err != nil {
+		utils.NewErrorResponse(c, http.StatusBadRequest, err.Error(), []string{})
 		return
 	}
 

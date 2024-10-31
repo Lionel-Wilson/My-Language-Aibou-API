@@ -4,9 +4,11 @@ import (
 	log "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/log"
 
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/config"
-	handler "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/language_tools"
 	middlewares "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/middleware"
-	languagetools "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/language_tools"
+	sentencehandler "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/sentence"
+	wordhandler "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/word"
+	sentence "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/sentence"
+	word "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/word"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
@@ -30,14 +32,19 @@ func main() {
 	router.Use(middlewares.SecureHeaders())
 	router.Use(middlewares.CorsMiddleware())
 
-	languageToolsService := languagetools.New(cfg, logger)
-	languageToolsHandler := handler.NewHandler(logger, languageToolsService)
+	wordService := word.New(cfg, logger)
+	sentenceService := sentence.New(cfg, logger)
+
+	wordHandler := wordhandler.NewHandler(logger, wordService)
+	sentenceHandler := sentencehandler.NewHandler(logger, sentenceService)
 
 	apiV1 := router.Group("/api/v1")
 	{
-		apiV1.POST("/search/word", languageToolsHandler.DefineWord)
-		apiV1.POST("/search/sentence", languageToolsHandler.ExplainSentence)
-		apiV1.POST("/search/synonyms", languageToolsHandler.GetSynonyms)
+		apiV1.POST("/search/word", wordHandler.DefineWord)
+		apiV1.POST("/search/synonyms", wordHandler.GetSynonyms)
+
+		apiV1.POST("/search/sentence", sentenceHandler.ExplainSentence)
+
 	}
 	logger.InfoLog.Printf("Starting server on %s", cfg.Address)
 

@@ -44,6 +44,7 @@ func main() {
 		apiV1.POST("/search/synonyms", wordHandler.GetSynonyms)
 
 		apiV1.POST("/search/sentence", sentenceHandler.ExplainSentence)
+		apiV1.POST("/search/sentence/correction", sentenceHandler.CorrectSentence)
 
 	}
 	logger.InfoLog.Printf("Starting server on %s", cfg.Address)

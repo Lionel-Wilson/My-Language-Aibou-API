@@ -1,4 +1,4 @@
-package handler
+package word
 
 import (
 	"net/http"
@@ -17,12 +17,12 @@ type Handler interface {
 }
 
 type wordHandler struct {
-	logger  *log.Logger
+	logger  log.Logger
 	service word.Service
 }
 
 func NewHandler(
-	logger *log.Logger,
+	logger log.Logger,
 	service word.Service,
 ) Handler {
 	return &wordHandler{
@@ -36,7 +36,7 @@ func (h *wordHandler) DefineWord(c *gin.Context) {
 
 	err := c.ShouldBindJSON(&requestBody)
 	if err != nil {
-		h.logger.ErrorLog.Println(err.Error())
+		h.logger.Error(err.Error())
 		utils.ServerErrorResponse(c, err, "Failed to process your word.Please make sure you remove any extra spaces & special characters and try again")
 		return
 	}
@@ -63,7 +63,7 @@ func (h *wordHandler) GetSynonyms(c *gin.Context) {
 
 	err := c.ShouldBindJSON(&requestBody)
 	if err != nil {
-		h.logger.ErrorLog.Println(err.Error())
+		h.logger.Error(err.Error())
 		utils.ServerErrorResponse(c, err, "Failed to process your word. Please make sure you remove any extra spaces & special characters and try again")
 		return
 	}

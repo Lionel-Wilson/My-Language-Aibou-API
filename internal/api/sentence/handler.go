@@ -1,4 +1,4 @@
-package handler
+package sentence
 
 import (
 	"net/http"
@@ -17,12 +17,12 @@ type Handler interface {
 }
 
 type sentenceHandler struct {
-	logger  *log.Logger
+	logger  log.Logger
 	service sentence.Service
 }
 
 func NewHandler(
-	logger *log.Logger,
+	logger log.Logger,
 	service sentence.Service,
 ) Handler {
 	return &sentenceHandler{
@@ -36,7 +36,7 @@ func (h *sentenceHandler) ExplainSentence(c *gin.Context) {
 
 	err := c.ShouldBindJSON(&requestBody)
 	if err != nil {
-		h.logger.ErrorLog.Println(err.Error())
+		h.logger.Error(err.Error())
 		utils.ServerErrorResponse(c, err, "Failed to process your sentence(s).Please make sure you remove any line breaks and large gaps between your sentences and try again")
 		return
 	}
@@ -63,7 +63,7 @@ func (h *sentenceHandler) CorrectSentence(c *gin.Context) {
 
 	err := c.ShouldBindJSON(&requestBody)
 	if err != nil {
-		h.logger.ErrorLog.Println(err.Error())
+		h.logger.Error(err.Error())
 		utils.ServerErrorResponse(c, err, "Failed to process your sentence(s).Please make sure you remove any line breaks and large gaps between your sentences and try again")
 		return
 	}

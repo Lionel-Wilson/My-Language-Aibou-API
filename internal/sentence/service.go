@@ -15,6 +15,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+//go:generate mockgen -source=service.go -destination=mock/service.go
 type Service interface {
 	GetSentenceExplanation(c *gin.Context, sentence string, nativeLanguage string) (*models.ChatCompletion, error)
 	GetSentenceCorrection(c *gin.Context, sentence string, nativeLanguage string) (*models.ChatCompletion, error)
@@ -23,10 +24,10 @@ type Service interface {
 
 type service struct {
 	config *config.Config
-	logger *log.Logger
+	logger log.Logger
 }
 
-func New(config *config.Config, logger *log.Logger) Service {
+func New(config *config.Config, logger log.Logger) Service {
 	return &service{
 		config: config,
 		logger: logger,
@@ -38,7 +39,7 @@ func (s *service) GetSentenceCorrection(c *gin.Context, sentence string, nativeL
 
 	resp, responseBody, err := utils.MakeOpenAIApiRequest(jsonBody, c, s.config.OpenAi.Key)
 	if err != nil {
-		s.logger.ErrorLog.Println(err.Error())
+		s.logger.Error(err.Error())
 		utils.ServerErrorResponse(c, err, "Failed to process your sentence(s).Please make sure you remove any line breaks and large gaps between your sentences and try again")
 		return &models.ChatCompletion{}, err
 	}
@@ -77,7 +78,7 @@ func (s *service) GetSentenceExplanation(c *gin.Context, sentence string, native
 
 	resp, responseBody, err := utils.MakeOpenAIApiRequest(jsonBody, c, s.config.OpenAi.Key)
 	if err != nil {
-		s.logger.ErrorLog.Println(err.Error())
+		s.logger.Error(err.Error())
 		utils.ServerErrorResponse(c, err, "Failed to process your sentence(s).Please make sure you remove any line breaks and large gaps between your sentences and try again")
 		return &models.ChatCompletion{}, err
 	}
@@ -113,12 +114,12 @@ func (s *service) GetSentenceExplanation(c *gin.Context, sentence string, native
 
 func (s *service) ValidateSentence(sentence string) error {
 	if sentence == "" {
-		s.logger.ErrorLog.Printf("User didn't provide a sentence: %s", sentence)
+		s.logger.Error(fmt.Printf("User didn't provide a sentence: %s", sentence))
 		return errors.New("Please provide a sentence")
 	}
 
 	if utf8.RuneCountInString(sentence) > 100 {
-		s.logger.ErrorLog.Printf("Sentence '%s' length too long. Must be less than 100 characters.", sentence)
+		s.logger.Error(fmt.Printf("Sentence '%s' length too long. Must be less than 100 characters.", sentence))
 		return errors.New("The sentence must be less than 100 characters.")
 	}
 
@@ -166,7 +167,7 @@ func sentenceToOpenAiSentenceCorrectionRequestBody(sentence, userNativeLanguage 
 	content := fmt.Sprintf("Is this sentence correct? if not then correct it for me - '%s'", sentence)
 
 	if userNativeLanguage != "English" {
-		content = fmt.Sprintf("Is this sentence correct? if not then correct it for me - '%s'. Respond in %s as if you're a language teacher teaching a native %s speaker who's learning this sentence's language.", sentence, userNativeLanguage)
+		content = fmt.Sprintf("Is this sentence correct? if not then correct it for me - '%s'. Respond in %s as if you're a language teacher teaching a native %s speaker who's learning this sentence's language.", sentence, userNativeLanguage, userNativeLanguage)
 	}
 
 	body := fmt.Sprintf(`{

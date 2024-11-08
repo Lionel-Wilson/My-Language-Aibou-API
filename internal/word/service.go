@@ -16,6 +16,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+//go:generate mockgen -source=service.go -destination=mock/service.go
 type Service interface {
 	GetWordDefinition(c *gin.Context, word string, nativeLanguage string) (*models.ChatCompletion, error)
 	GetWordSynonyms(c *gin.Context, word string, nativeLanguage string) (*models.ChatCompletion, error)
@@ -24,10 +25,10 @@ type Service interface {
 
 type service struct {
 	config *config.Config
-	logger *log.Logger
+	logger log.Logger
 }
 
-func New(config *config.Config, logger *log.Logger) Service {
+func New(config *config.Config, logger log.Logger) Service {
 	return &service{
 		config: config,
 		logger: logger,
@@ -39,7 +40,7 @@ func (s *service) GetWordSynonyms(c *gin.Context, word string, nativeLanguage st
 
 	resp, responseBody, err := utils.MakeOpenAIApiRequest(jsonBody, c, s.config.OpenAi.Key)
 	if err != nil {
-		s.logger.ErrorLog.Println(err.Error())
+		s.logger.Error(err.Error())
 		utils.ServerErrorResponse(c, err, "Failed to process your word.Please make sure you remove any extra spaces & special characters and try again")
 		return &models.ChatCompletion{}, err
 	}
@@ -79,7 +80,7 @@ func (s *service) GetWordDefinition(c *gin.Context, word string, nativeLanguage 
 
 	resp, responseBody, err := utils.MakeOpenAIApiRequest(jsonBody, c, s.config.OpenAi.Key)
 	if err != nil {
-		s.logger.ErrorLog.Println(err.Error())
+		s.logger.Error(err.Error())
 		return &models.ChatCompletion{}, err
 	}
 
@@ -112,23 +113,23 @@ func (s *service) GetWordDefinition(c *gin.Context, word string, nativeLanguage 
 
 func (s *service) ValidateWord(word string) error {
 	if word == "" {
-		s.logger.ErrorLog.Printf("User didn't provide a word: %s", word)
+		s.logger.Error(fmt.Printf("User didn't provide a word: %s", word))
 		return errors.New("Please provide a word")
 	}
 	if utils.ContainsNumber(word) {
-		s.logger.ErrorLog.Printf("User provided a word(%s) that contained a number.", word)
+		s.logger.Error(fmt.Printf("User provided a word(%s) that contained a number.", word))
 		return errors.New("Words should not contain numbers.")
 	}
 	if utf8.RuneCountInString(word) > 30 {
-		s.logger.ErrorLog.Printf("Word '%s' length too long. Must be less than 30 characters.", word)
+		s.logger.Error(fmt.Printf("Word '%s' length too long. Must be less than 30 characters.", word))
 		return errors.New("Word length too long. Must be less than 30 characters.If this is a sentence, please use the analyser.")
 	}
 	if isNotAWord(word) {
-		s.logger.ErrorLog.Printf("User provided a phrase(%s) instead of a word.", word)
+		s.logger.Error(fmt.Printf("User provided a phrase(%s) instead of a word.", word))
 		return errors.New("This looks like a phrase. Please use the 'Analyzer'.")
 	}
 	if isNonsensical(word) {
-		s.logger.ErrorLog.Printf("User provided nonsense(%s) instead of a word.", word)
+		s.logger.Error(fmt.Printf("User provided nonsense(%s) instead of a word.", word))
 		return errors.New("This doesn't look like a word. Please provide a valid word.")
 	}
 

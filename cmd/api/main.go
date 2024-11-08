@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	log "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/log"
 
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/config"
@@ -44,13 +46,14 @@ func main() {
 		apiV1.POST("/search/synonyms", wordHandler.GetSynonyms)
 
 		apiV1.POST("/search/sentence", sentenceHandler.ExplainSentence)
+		apiV1.POST("/search/sentence/correction", sentenceHandler.CorrectSentence)
 
 	}
-	logger.InfoLog.Printf("Starting server on %s", cfg.Address)
+	logger.Info(fmt.Printf("Starting server on %s", cfg.Address))
 
 	//router.RunTLS(addr, "./tls/cert.pem", "./tls/key.pem") TO-DO: Server over HTTPS when figure out how to get certificates
 	err := router.Run(cfg.Address)
 	if err != nil {
-		logger.ErrorLog.Fatal(err)
+		logger.Fatal(err)
 	}
 }

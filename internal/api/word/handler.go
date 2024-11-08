@@ -1,4 +1,4 @@
-package handler
+package word
 
 import (
 	"net/http"
@@ -16,27 +16,27 @@ type Handler interface {
 	GetSynonyms(c *gin.Context)
 }
 
-type languageToolsHandler struct {
-	logger  *log.Logger
+type wordHandler struct {
+	logger  log.Logger
 	service word.Service
 }
 
 func NewHandler(
-	logger *log.Logger,
+	logger log.Logger,
 	service word.Service,
 ) Handler {
-	return &languageToolsHandler{
+	return &wordHandler{
 		logger:  logger,
 		service: service,
 	}
 }
 
-func (h *languageToolsHandler) DefineWord(c *gin.Context) {
+func (h *wordHandler) DefineWord(c *gin.Context) {
 	var requestBody dto.DefineWordRequest
 
 	err := c.ShouldBindJSON(&requestBody)
 	if err != nil {
-		h.logger.ErrorLog.Println(err.Error())
+		h.logger.Error(err.Error())
 		utils.ServerErrorResponse(c, err, "Failed to process your word.Please make sure you remove any extra spaces & special characters and try again")
 		return
 	}
@@ -58,12 +58,12 @@ func (h *languageToolsHandler) DefineWord(c *gin.Context) {
 	c.JSON(http.StatusOK, response.Choices[0].Message.Content)
 }
 
-func (h *languageToolsHandler) GetSynonyms(c *gin.Context) {
+func (h *wordHandler) GetSynonyms(c *gin.Context) {
 	var requestBody dto.GetSynonymsRequest
 
 	err := c.ShouldBindJSON(&requestBody)
 	if err != nil {
-		h.logger.ErrorLog.Println(err.Error())
+		h.logger.Error(err.Error())
 		utils.ServerErrorResponse(c, err, "Failed to process your word. Please make sure you remove any extra spaces & special characters and try again")
 		return
 	}

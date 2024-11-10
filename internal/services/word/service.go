@@ -37,7 +37,7 @@ func New(logger log.Logger, openAiClient openai.Client) Service {
 func (s *service) GetWordSynonyms(c *gin.Context, word string, nativeLanguage string) (*openai.ChatCompletion, error) {
 	jsonBody := wordToOpenAiSynonymsRequestBody(word, nativeLanguage)
 
-	resp, responseBody, err := s.openAiClient.MakeRequest(jsonBody, c)
+	resp, responseBody, err := s.openAiClient.MakeRequest(jsonBody)
 	if err != nil {
 		s.logger.Error(err.Error())
 		utils.ServerErrorResponse(c, err, "Failed to process your word.Please make sure you remove any extra spaces & special characters and try again")

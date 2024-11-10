@@ -77,7 +77,7 @@ func (s *service) GetWordDefinition(c *gin.Context, word string, nativeLanguage 
 
 	jsonBody := wordToOpenAiDefinitionRequestBody(word, nativeLanguage)
 
-	resp, responseBody, err := s.openAiClient.MakeRequest(jsonBody, c)
+	resp, responseBody, err := s.openAiClient.MakeRequest(jsonBody)
 	if err != nil {
 		s.logger.Error(err.Error())
 		return &openai.ChatCompletion{}, err

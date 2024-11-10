@@ -37,7 +37,7 @@ func New(logger log.Logger, openAiClient openai.Client) Service {
 func (s *service) GetSentenceCorrection(c *gin.Context, sentence string, nativeLanguage string) (*openai.ChatCompletion, error) {
 	jsonBody := sentenceToOpenAiSentenceCorrectionRequestBody(sentence, nativeLanguage)
 
-	resp, responseBody, err := s.openAiClient.MakeRequest(jsonBody, c)
+	resp, responseBody, err := s.openAiClient.MakeRequest(jsonBody)
 	if err != nil {
 		s.logger.Error(err.Error())
 		utils.ServerErrorResponse(c, err, "Failed to process your sentence(s).Please make sure you remove any line breaks and large gaps between your sentences and try again")

@@ -14,7 +14,6 @@ import (
 	reflect "reflect"
 	strings "strings"
 
-	gin "github.com/gin-gonic/gin"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -42,9 +41,9 @@ func (m *MockClient) EXPECT() *MockClientMockRecorder {
 }
 
 // MakeRequest mocks base method.
-func (m *MockClient) MakeRequest(body *strings.Reader, context *gin.Context) (*http.Response, []byte, error) {
+func (m *MockClient) MakeRequest(body *strings.Reader) (*http.Response, []byte, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "MakeRequest", body, context)
+	ret := m.ctrl.Call(m, "MakeRequest", body)
 	ret0, _ := ret[0].(*http.Response)
 	ret1, _ := ret[1].([]byte)
 	ret2, _ := ret[2].(error)
@@ -52,7 +51,7 @@ func (m *MockClient) MakeRequest(body *strings.Reader, context *gin.Context) (*h
 }
 
 // MakeRequest indicates an expected call of MakeRequest.
-func (mr *MockClientMockRecorder) MakeRequest(body, context any) *gomock.Call {
+func (mr *MockClientMockRecorder) MakeRequest(body any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MakeRequest", reflect.TypeOf((*MockClient)(nil).MakeRequest), body, context)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MakeRequest", reflect.TypeOf((*MockClient)(nil).MakeRequest), body)
 }

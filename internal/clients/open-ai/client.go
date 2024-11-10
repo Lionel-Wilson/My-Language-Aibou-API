@@ -7,12 +7,11 @@ import (
 	"strings"
 
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/log"
-	"github.com/gin-gonic/gin"
 )
 
 //go:generate mockgen -source=client.go -destination=mock/client.go
 type Client interface {
-	MakeRequest(body *strings.Reader, context *gin.Context) (*http.Response, []byte, error)
+	MakeRequest(body *strings.Reader) (*http.Response, []byte, error)
 }
 
 type (
@@ -61,7 +60,7 @@ func NewClient(apiKey string, logger log.Logger) Client {
 	}
 }
 
-func (c openAiClient) MakeRequest(body *strings.Reader, context *gin.Context) (*http.Response, []byte, error) {
+func (c openAiClient) MakeRequest(body *strings.Reader) (*http.Response, []byte, error) {
 	req, err := http.NewRequest("POST", "https://api.openai.com/v1/chat/completions", body)
 	if err != nil {
 		fmt.Println("Failed to create request")

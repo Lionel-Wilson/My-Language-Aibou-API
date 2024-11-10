@@ -10,9 +10,17 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func newMockConfig() *config.Config {
+	var cfg config.Config
+
+	cfg.OpenAi.Key = "test-key"
+
+	return &cfg
+}
+
 // TO DO: UNIT TESTS
 func TestValidateWord(t *testing.T) {
-	cfg := config.New()
+	cfg := newMockConfig()
 	logger := log.New()
 	wordService := word.New(cfg, logger)
 

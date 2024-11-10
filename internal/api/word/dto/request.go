@@ -1,9 +1,7 @@
 package dto
 
 type DefineWordRequest struct {
-	Word string `json:"word"`
-	//Tier string `json:"tier"`
-	//TargetLanguage string `json:"targetLanguage"`
+	Word           string `json:"word"`
 	NativeLanguage string `json:"nativeLanguage"`
 }
 

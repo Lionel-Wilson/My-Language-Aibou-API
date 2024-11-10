@@ -1,8 +1,6 @@
 package dto
 
 type DefineSentenceRequest struct {
-	Sentence string `json:"sentence"`
-	//Tier   string `json:"tier"`
-	//TargetLanguage string `json:"targetLanguage"`
+	Sentence       string `json:"sentence"`
 	NativeLanguage string `json:"nativeLanguage"`
 }

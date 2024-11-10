@@ -6,7 +6,7 @@ import (
 
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/log"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/sentence/dto"
-	sentence "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/sentence"
+	sentence "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/services/sentence"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/utils"
 	"github.com/gin-gonic/gin"
 )

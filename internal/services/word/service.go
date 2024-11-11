@@ -9,61 +9,60 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/config"
 	log "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/log"
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/models"
+	openai "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/utils"
 	"github.com/gin-gonic/gin"
 )
 
 //go:generate mockgen -source=service.go -destination=mock/service.go
 type Service interface {
-	GetWordDefinition(c *gin.Context, word string, nativeLanguage string) (*models.ChatCompletion, error)
-	GetWordSynonyms(c *gin.Context, word string, nativeLanguage string) (*models.ChatCompletion, error)
+	GetWordDefinition(c *gin.Context, word string, nativeLanguage string) (*openai.ChatCompletion, error)
+	GetWordSynonyms(c *gin.Context, word string, nativeLanguage string) (*openai.ChatCompletion, error)
 	ValidateWord(word string) error
 }
 
 type service struct {
-	config *config.Config
-	logger log.Logger
+	logger       log.Logger
+	openAiClient openai.Client
 }
 
-func New(config *config.Config, logger log.Logger) Service {
+func New(logger log.Logger, openAiClient openai.Client) Service {
 	return &service{
-		config: config,
-		logger: logger,
+		logger:       logger,
+		openAiClient: openAiClient,
 	}
 }
 
-func (s *service) GetWordSynonyms(c *gin.Context, word string, nativeLanguage string) (*models.ChatCompletion, error) {
+func (s *service) GetWordSynonyms(c *gin.Context, word string, nativeLanguage string) (*openai.ChatCompletion, error) {
 	jsonBody := wordToOpenAiSynonymsRequestBody(word, nativeLanguage)
 
-	resp, responseBody, err := utils.MakeOpenAIApiRequest(jsonBody, c, s.config.OpenAi.Key)
+	resp, responseBody, err := s.openAiClient.MakeRequest(jsonBody)
 	if err != nil {
 		s.logger.Error(err.Error())
 		utils.ServerErrorResponse(c, err, "Failed to process your word.Please make sure you remove any extra spaces & special characters and try again")
-		return &models.ChatCompletion{}, err
+		return &openai.ChatCompletion{}, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		fmt.Println("OpenAI API returned non-OK status. ")
 		utils.ServerErrorResponse(c, err, "Failed to process your word.Please make sure you remove any extra spaces & special characters and try again")
-		return &models.ChatCompletion{}, err
+		return &openai.ChatCompletion{}, err
 	}
 
-	var OpenAIApiResponse models.ChatCompletion
+	var OpenAIApiResponse openai.ChatCompletion
 
 	err = json.Unmarshal(responseBody, &OpenAIApiResponse)
 	if err != nil {
 		fmt.Println("Failed to unmarshal json body")
-		return &models.ChatCompletion{}, err
+		return &openai.ChatCompletion{}, err
 	}
 
 	if len(OpenAIApiResponse.Choices) == 0 {
 		fmt.Println("OpenAI API response contains no choices")
 		err = fmt.Errorf("OpenAI API response contains no choices")
 		utils.ServerErrorResponse(c, err, "Failed to process your word.Please make sure you remove any extra spaces & special characters and try again")
-		return &models.ChatCompletion{}, err
+		return &openai.ChatCompletion{}, err
 	}
 
 	fmt.Printf("Word Synonyms: %s\n", OpenAIApiResponse.Choices[0].Message.Content)
@@ -74,39 +73,40 @@ func (s *service) GetWordSynonyms(c *gin.Context, word string, nativeLanguage st
 	return &OpenAIApiResponse, nil
 }
 
-func (s *service) GetWordDefinition(c *gin.Context, word string, nativeLanguage string) (*models.ChatCompletion, error) {
+func (s *service) GetWordDefinition(c *gin.Context, word string, nativeLanguage string) (*openai.ChatCompletion, error) {
 
 	jsonBody := wordToOpenAiDefinitionRequestBody(word, nativeLanguage)
 
-	resp, responseBody, err := utils.MakeOpenAIApiRequest(jsonBody, c, s.config.OpenAi.Key)
+	resp, responseBody, err := s.openAiClient.MakeRequest(jsonBody)
 	if err != nil {
 		s.logger.Error(err.Error())
-		return &models.ChatCompletion{}, err
+		return &openai.ChatCompletion{}, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		fmt.Println("OpenAI API returned non-OK status. ")
-		return &models.ChatCompletion{}, err
+		return &openai.ChatCompletion{}, err
 	}
 
-	var OpenAIApiResponse models.ChatCompletion
+	var OpenAIApiResponse openai.ChatCompletion
 
 	err = json.Unmarshal(responseBody, &OpenAIApiResponse)
 	if err != nil {
 		fmt.Println("Failed to unmarshal json body")
-		return &models.ChatCompletion{}, err
+		return &openai.ChatCompletion{}, err
 	}
 
 	if len(OpenAIApiResponse.Choices) == 0 {
 		fmt.Println("OpenAI API response contains no choices")
 		err = fmt.Errorf("OpenAI API response contains no choices")
-		return &models.ChatCompletion{}, err
+		return &openai.ChatCompletion{}, err
 	}
 
+	fmt.Printf("response: %v\n", OpenAIApiResponse)
 	fmt.Printf("Word Definition: %s\n", OpenAIApiResponse.Choices[0].Message.Content)
-	fmt.Printf(`Prompt Tokens: %d`, OpenAIApiResponse.Usage.PromptTokens)
-	fmt.Printf(`Response Tokens: %d`, OpenAIApiResponse.Usage.CompletionTokens)
-	fmt.Printf(`Total Tokens used: %d`, OpenAIApiResponse.Usage.TotalTokens)
+	fmt.Printf(`Prompt Tokens: %d\n`, OpenAIApiResponse.Usage.PromptTokens)
+	fmt.Printf(`Response Tokens: %d\n`, OpenAIApiResponse.Usage.CompletionTokens)
+	fmt.Printf(`Total Tokens used: %d\n`, OpenAIApiResponse.Usage.TotalTokens)
 
 	return &OpenAIApiResponse, nil
 }

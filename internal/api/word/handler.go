@@ -6,8 +6,8 @@ import (
 
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/log"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/word/dto"
+	word "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/services/word"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/utils"
-	word "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/word"
 	"github.com/gin-gonic/gin"
 )
 

@@ -8,61 +8,61 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/config"
 	log "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/log"
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/models"
+	openai "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai"
+
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/utils"
 	"github.com/gin-gonic/gin"
 )
 
 //go:generate mockgen -source=service.go -destination=mock/service.go
 type Service interface {
-	GetSentenceExplanation(c *gin.Context, sentence string, nativeLanguage string) (*models.ChatCompletion, error)
-	GetSentenceCorrection(c *gin.Context, sentence string, nativeLanguage string) (*models.ChatCompletion, error)
+	GetSentenceExplanation(c *gin.Context, sentence string, nativeLanguage string) (*openai.ChatCompletion, error)
+	GetSentenceCorrection(c *gin.Context, sentence string, nativeLanguage string) (*openai.ChatCompletion, error)
 	ValidateSentence(sentence string) error
 }
 
 type service struct {
-	config *config.Config
-	logger log.Logger
+	logger       log.Logger
+	openAiClient openai.Client
 }
 
-func New(config *config.Config, logger log.Logger) Service {
+func New(logger log.Logger, openAiClient openai.Client) Service {
 	return &service{
-		config: config,
-		logger: logger,
+		logger:       logger,
+		openAiClient: openAiClient,
 	}
 }
 
-func (s *service) GetSentenceCorrection(c *gin.Context, sentence string, nativeLanguage string) (*models.ChatCompletion, error) {
+func (s *service) GetSentenceCorrection(c *gin.Context, sentence string, nativeLanguage string) (*openai.ChatCompletion, error) {
 	jsonBody := sentenceToOpenAiSentenceCorrectionRequestBody(sentence, nativeLanguage)
 
-	resp, responseBody, err := utils.MakeOpenAIApiRequest(jsonBody, c, s.config.OpenAi.Key)
+	resp, responseBody, err := s.openAiClient.MakeRequest(jsonBody)
 	if err != nil {
 		s.logger.Error(err.Error())
 		utils.ServerErrorResponse(c, err, "Failed to process your sentence(s).Please make sure you remove any line breaks and large gaps between your sentences and try again")
-		return &models.ChatCompletion{}, err
+		return &openai.ChatCompletion{}, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		fmt.Println("OpenAI API returned non-OK status. ")
 		utils.ServerErrorResponse(c, err, "Failed to process your sentence(s).Please make sure you remove any line breaks and large gaps between your sentences and try again")
-		return &models.ChatCompletion{}, err
+		return &openai.ChatCompletion{}, err
 	}
 
-	var OpenAIApiResponse models.ChatCompletion
+	var OpenAIApiResponse openai.ChatCompletion
 
 	err = json.Unmarshal(responseBody, &OpenAIApiResponse)
 	if err != nil {
 		fmt.Println("Failed to unmarshal json body")
-		return &models.ChatCompletion{}, err
+		return &openai.ChatCompletion{}, err
 	}
 
 	if len(OpenAIApiResponse.Choices) == 0 {
 		fmt.Println("OpenAI API response contains no choices")
 		err = fmt.Errorf("OpenAI API response contains no choices")
 		utils.ServerErrorResponse(c, err, "Failed to process your sentence(s).Please make sure you remove any line breaks and large gaps between your sentences and try again")
-		return &models.ChatCompletion{}, err
+		return &openai.ChatCompletion{}, err
 	}
 
 	fmt.Printf("Phrase explanation: %s\n", OpenAIApiResponse.Choices[0].Message.Content)
@@ -73,35 +73,35 @@ func (s *service) GetSentenceCorrection(c *gin.Context, sentence string, nativeL
 	return &OpenAIApiResponse, nil
 }
 
-func (s *service) GetSentenceExplanation(c *gin.Context, sentence string, nativeLanguage string) (*models.ChatCompletion, error) {
+func (s *service) GetSentenceExplanation(c *gin.Context, sentence string, nativeLanguage string) (*openai.ChatCompletion, error) {
 	jsonBody := sentenceToOpenAiExplanationRequestBody(sentence, nativeLanguage)
 
-	resp, responseBody, err := utils.MakeOpenAIApiRequest(jsonBody, c, s.config.OpenAi.Key)
+	resp, responseBody, err := s.openAiClient.MakeRequest(jsonBody)
 	if err != nil {
 		s.logger.Error(err.Error())
 		utils.ServerErrorResponse(c, err, "Failed to process your sentence(s).Please make sure you remove any line breaks and large gaps between your sentences and try again")
-		return &models.ChatCompletion{}, err
+		return &openai.ChatCompletion{}, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		fmt.Println("OpenAI API returned non-OK status. ")
 		utils.ServerErrorResponse(c, err, "Failed to process your sentence(s).Please make sure you remove any line breaks and large gaps between your sentences and try again")
-		return &models.ChatCompletion{}, err
+		return &openai.ChatCompletion{}, err
 	}
 
-	var OpenAIApiResponse models.ChatCompletion
+	var OpenAIApiResponse openai.ChatCompletion
 
 	err = json.Unmarshal(responseBody, &OpenAIApiResponse)
 	if err != nil {
 		fmt.Println("Failed to unmarshal json body")
-		return &models.ChatCompletion{}, err
+		return &openai.ChatCompletion{}, err
 	}
 
 	if len(OpenAIApiResponse.Choices) == 0 {
 		fmt.Println("OpenAI API response contains no choices")
 		err = fmt.Errorf("OpenAI API response contains no choices")
 		utils.ServerErrorResponse(c, err, "Failed to process your sentence(s).Please make sure you remove any line breaks and large gaps between your sentences and try again")
-		return &models.ChatCompletion{}, err
+		return &openai.ChatCompletion{}, err
 	}
 
 	fmt.Printf("Phrase explanation: %s\n", OpenAIApiResponse.Choices[0].Message.Content)

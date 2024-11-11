@@ -6,15 +6,28 @@ import (
 
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/config"
 	log "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/log"
-	word "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/word"
+	mockopenai "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai/mock"
+	word "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/services/word"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
+
+func newMockConfig() *config.Config {
+	var cfg config.Config
+
+	cfg.OpenAi.Key = "test-key"
+
+	return &cfg
+}
 
 // TO DO: UNIT TESTS
 func TestValidateWord(t *testing.T) {
-	cfg := config.New()
+	ctrl := gomock.NewController(t)
+
+	mockOpenAiClient := mockopenai.NewMockClient(ctrl)
 	logger := log.New()
-	wordService := word.New(cfg, logger)
+
+	wordService := word.New(logger, mockOpenAiClient)
 
 	testCases := []struct {
 		name        string

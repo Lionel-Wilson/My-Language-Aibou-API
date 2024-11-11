@@ -4,13 +4,14 @@ import (
 	"fmt"
 
 	log "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/log"
+	openai "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai"
 
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/config"
 	middlewares "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/middleware"
 	sentencehandler "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/sentence"
 	wordhandler "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/word"
-	sentence "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/sentence"
-	word "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/word"
+	sentence "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/services/sentence"
+	word "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/services/word"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
@@ -34,8 +35,10 @@ func main() {
 	router.Use(middlewares.SecureHeaders())
 	router.Use(middlewares.CorsMiddleware())
 
-	wordService := word.New(cfg, logger)
-	sentenceService := sentence.New(cfg, logger)
+	openAiClient := openai.NewClient(cfg.OpenAi.Key, logger)
+
+	wordService := word.New(logger, openAiClient)
+	sentenceService := sentence.New(logger, openAiClient)
 
 	wordHandler := wordhandler.NewHandler(logger, wordService)
 	sentenceHandler := sentencehandler.NewHandler(logger, sentenceService)

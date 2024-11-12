@@ -15,6 +15,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var (
+	FailedToProcessWord = "Failed to process your word.Please make sure you remove any extra spaces & special characters and try again"
+)
+
 //go:generate mockgen -source=service.go -destination=mock/service.go
 type Service interface {
 	GetWordDefinition(c *gin.Context, word string, nativeLanguage string) (*openai.ChatCompletion, error)
@@ -40,13 +44,13 @@ func (s *service) GetWordSynonyms(c *gin.Context, word string, nativeLanguage st
 	resp, responseBody, err := s.openAiClient.MakeRequest(jsonBody)
 	if err != nil {
 		s.logger.Error(err.Error())
-		utils.ServerErrorResponse(c, err, "Failed to process your word.Please make sure you remove any extra spaces & special characters and try again")
+		utils.ServerErrorResponse(c, err, FailedToProcessWord)
 		return &openai.ChatCompletion{}, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		fmt.Println("OpenAI API returned non-OK status. ")
-		utils.ServerErrorResponse(c, err, "Failed to process your word.Please make sure you remove any extra spaces & special characters and try again")
+		utils.ServerErrorResponse(c, err, FailedToProcessWord)
 		return &openai.ChatCompletion{}, err
 	}
 
@@ -61,7 +65,7 @@ func (s *service) GetWordSynonyms(c *gin.Context, word string, nativeLanguage st
 	if len(OpenAIApiResponse.Choices) == 0 {
 		fmt.Println("OpenAI API response contains no choices")
 		err = fmt.Errorf("OpenAI API response contains no choices")
-		utils.ServerErrorResponse(c, err, "Failed to process your word.Please make sure you remove any extra spaces & special characters and try again")
+		utils.ServerErrorResponse(c, err, FailedToProcessWord)
 		return &openai.ChatCompletion{}, err
 	}
 

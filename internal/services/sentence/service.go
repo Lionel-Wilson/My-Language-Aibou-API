@@ -16,8 +16,8 @@ import (
 )
 
 var (
-	ErrFailedToProcessSentence = "Failed to process your sentence(s).Please make sure you remove any line breaks and large gaps between your sentences and try again"
-	ErrOpenAiNoChoices         = errors.New("OpenAI API response contains no choices")
+	FailedToProcessSentence = "Failed to process your sentence(s).Please make sure you remove any line breaks and large gaps between your sentences and try again"
+	ErrOpenAiNoChoices      = errors.New("OpenAI API response contains no choices")
 )
 
 //go:generate mockgen -source=service.go -destination=mock/service.go
@@ -45,13 +45,13 @@ func (s *service) GetSentenceCorrection(c *gin.Context, sentence string, nativeL
 	resp, responseBody, err := s.openAiClient.MakeRequest(jsonBody)
 	if err != nil {
 		s.logger.Error(err.Error())
-		utils.ServerErrorResponse(c, err, ErrFailedToProcessSentence)
+		utils.ServerErrorResponse(c, err, FailedToProcessSentence)
 		return &openai.ChatCompletion{}, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		fmt.Println("OpenAI API returned non-OK status. ")
-		utils.ServerErrorResponse(c, err, ErrFailedToProcessSentence)
+		utils.ServerErrorResponse(c, err, FailedToProcessSentence)
 		return &openai.ChatCompletion{}, err
 	}
 
@@ -66,7 +66,7 @@ func (s *service) GetSentenceCorrection(c *gin.Context, sentence string, nativeL
 	if len(OpenAIApiResponse.Choices) == 0 {
 		fmt.Println("OpenAI API response contains no choices")
 		err = ErrOpenAiNoChoices
-		utils.ServerErrorResponse(c, err, ErrFailedToProcessSentence)
+		utils.ServerErrorResponse(c, err, FailedToProcessSentence)
 		return &openai.ChatCompletion{}, err
 	}
 
@@ -84,13 +84,13 @@ func (s *service) GetSentenceExplanation(c *gin.Context, sentence string, native
 	resp, responseBody, err := s.openAiClient.MakeRequest(jsonBody)
 	if err != nil {
 		s.logger.Error(err.Error())
-		utils.ServerErrorResponse(c, err, ErrFailedToProcessSentence)
+		utils.ServerErrorResponse(c, err, FailedToProcessSentence)
 		return &openai.ChatCompletion{}, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		fmt.Println("OpenAI API returned non-OK status. ")
-		utils.ServerErrorResponse(c, err, ErrFailedToProcessSentence)
+		utils.ServerErrorResponse(c, err, FailedToProcessSentence)
 		return &openai.ChatCompletion{}, err
 	}
 
@@ -105,7 +105,7 @@ func (s *service) GetSentenceExplanation(c *gin.Context, sentence string, native
 	if len(OpenAIApiResponse.Choices) == 0 {
 		fmt.Println("OpenAI API response contains no choices")
 		err = ErrOpenAiNoChoices
-		utils.ServerErrorResponse(c, err, ErrFailedToProcessSentence)
+		utils.ServerErrorResponse(c, err, FailedToProcessSentence)
 		return &openai.ChatCompletion{}, err
 	}
 

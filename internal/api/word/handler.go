@@ -11,6 +11,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var (
+	FailedToProcessWord = "Failed to process your word.Please make sure you remove any extra spaces & special characters and try again"
+)
+
 type Handler interface {
 	DefineWord(c *gin.Context)
 	GetSynonyms(c *gin.Context)
@@ -37,7 +41,7 @@ func (h *wordHandler) DefineWord(c *gin.Context) {
 	err := c.ShouldBindJSON(&requestBody)
 	if err != nil {
 		h.logger.Error(err.Error())
-		utils.ServerErrorResponse(c, err, "Failed to process your word.Please make sure you remove any extra spaces & special characters and try again")
+		utils.ServerErrorResponse(c, err, FailedToProcessWord)
 		return
 	}
 
@@ -51,7 +55,7 @@ func (h *wordHandler) DefineWord(c *gin.Context) {
 
 	response, err := h.service.GetWordDefinition(c, word, requestBody.NativeLanguage)
 	if err != nil {
-		utils.ServerErrorResponse(c, err, "Failed to process your word. Please make sure you remove any extra spaces & special characters and try again")
+		utils.ServerErrorResponse(c, err, FailedToProcessWord)
 		return
 	}
 
@@ -64,7 +68,7 @@ func (h *wordHandler) GetSynonyms(c *gin.Context) {
 	err := c.ShouldBindJSON(&requestBody)
 	if err != nil {
 		h.logger.Error(err.Error())
-		utils.ServerErrorResponse(c, err, "Failed to process your word. Please make sure you remove any extra spaces & special characters and try again")
+		utils.ServerErrorResponse(c, err, FailedToProcessWord)
 		return
 	}
 
@@ -78,7 +82,7 @@ func (h *wordHandler) GetSynonyms(c *gin.Context) {
 
 	response, err := h.service.GetWordSynonyms(c, word, requestBody.NativeLanguage)
 	if err != nil {
-		utils.ServerErrorResponse(c, err, "Failed to process your word.Please make sure you remove any extra spaces & special characters and try again")
+		utils.ServerErrorResponse(c, err, FailedToProcessWord)
 		return
 	}
 

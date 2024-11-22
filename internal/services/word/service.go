@@ -21,7 +21,7 @@ var (
 
 //go:generate mockgen -source=service.go -destination=mock/service.go
 type Service interface {
-	GetWordDefinition(c *gin.Context, word string, nativeLanguage string) (*openai.ChatCompletion, error)
+	GetWordDefinition(word string, nativeLanguage string) (*openai.ChatCompletion, error)
 	GetWordSynonyms(c *gin.Context, word string, nativeLanguage string) (*openai.ChatCompletion, error)
 	ValidateWord(word string) error
 }
@@ -77,7 +77,7 @@ func (s *service) GetWordSynonyms(c *gin.Context, word string, nativeLanguage st
 	return &OpenAIApiResponse, nil
 }
 
-func (s *service) GetWordDefinition(c *gin.Context, word string, nativeLanguage string) (*openai.ChatCompletion, error) {
+func (s *service) GetWordDefinition(word string, nativeLanguage string) (*openai.ChatCompletion, error) {
 
 	jsonBody := wordToOpenAiDefinitionRequestBody(word, nativeLanguage)
 
@@ -118,23 +118,23 @@ func (s *service) GetWordDefinition(c *gin.Context, word string, nativeLanguage 
 func (s *service) ValidateWord(word string) error {
 	if word == "" {
 		s.logger.Error(fmt.Printf("User didn't provide a word: %s", word))
-		return errors.New("Please provide a word")
+		return errors.New("please provide a word")
 	}
 	if utils.ContainsNumber(word) {
 		s.logger.Error(fmt.Printf("User provided a word(%s) that contained a number.", word))
-		return errors.New("Words should not contain numbers.")
+		return errors.New("words should not contain numbers")
 	}
 	if utf8.RuneCountInString(word) > 30 {
 		s.logger.Error(fmt.Printf("Word '%s' length too long. Must be less than 30 characters.", word))
-		return errors.New("Word length too long. Must be less than 30 characters.If this is a sentence, please use the analyser.")
+		return errors.New("word length too long. Must be less than 30 characters.If this is a sentence, please use the analyser")
 	}
 	if isNotAWord(word) {
 		s.logger.Error(fmt.Printf("User provided a phrase(%s) instead of a word.", word))
-		return errors.New("This looks like a phrase. Please use the 'Analyzer'.")
+		return errors.New("this looks like a phrase. Please use the 'Analyzer'")
 	}
 	if isNonsensical(word) {
 		s.logger.Error(fmt.Printf("User provided nonsense(%s) instead of a word.", word))
-		return errors.New("This doesn't look like a word. Please provide a valid word.")
+		return errors.New("this doesn't look like a word. Please provide a valid word")
 	}
 
 	return nil

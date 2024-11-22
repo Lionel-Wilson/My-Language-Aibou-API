@@ -45,15 +45,15 @@ func (h *wordHandler) DefineWord(c *gin.Context) {
 		return
 	}
 
-	word := strings.TrimSpace(requestBody.Word)
+	spaceTrimmedWord := strings.TrimSpace(requestBody.Word)
 
-	err = h.service.ValidateWord(word)
+	err = h.service.ValidateWord(spaceTrimmedWord)
 	if err != nil {
 		utils.NewErrorResponse(c, http.StatusBadRequest, err.Error(), []string{})
 		return
 	}
 
-	response, err := h.service.GetWordDefinition(c, word, requestBody.NativeLanguage)
+	response, err := h.service.GetWordDefinition(spaceTrimmedWord, requestBody.NativeLanguage)
 	if err != nil {
 		utils.ServerErrorResponse(c, err, FailedToProcessWord)
 		return
@@ -72,15 +72,15 @@ func (h *wordHandler) GetSynonyms(c *gin.Context) {
 		return
 	}
 
-	word := strings.TrimSpace(requestBody.Word)
+	spaceTrimmedWord := strings.TrimSpace(requestBody.Word)
 
-	err = h.service.ValidateWord(word)
+	err = h.service.ValidateWord(spaceTrimmedWord)
 	if err != nil {
 		utils.NewErrorResponse(c, http.StatusBadRequest, err.Error(), []string{})
 		return
 	}
 
-	response, err := h.service.GetWordSynonyms(c, word, requestBody.NativeLanguage)
+	response, err := h.service.GetWordSynonyms(c, spaceTrimmedWord, requestBody.NativeLanguage)
 	if err != nil {
 		utils.ServerErrorResponse(c, err, FailedToProcessWord)
 		return

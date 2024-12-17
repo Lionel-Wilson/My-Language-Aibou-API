@@ -4,12 +4,15 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/gin-gonic/gin"
+
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/log"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/word/dto"
 	word "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/services/word"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/utils"
-	"github.com/gin-gonic/gin"
 )
+
+var FailedToProcessWord = "Failed to process your word.Please make sure you remove any extra spaces & special characters and try again"
 
 type Handler interface {
 	DefineWord(c *gin.Context)
@@ -37,21 +40,21 @@ func (h *wordHandler) DefineWord(c *gin.Context) {
 	err := c.ShouldBindJSON(&requestBody)
 	if err != nil {
 		h.logger.Error(err.Error())
-		utils.ServerErrorResponse(c, err, "Failed to process your word.Please make sure you remove any extra spaces & special characters and try again")
+		utils.ServerErrorResponse(c, err, FailedToProcessWord)
 		return
 	}
 
-	word := strings.TrimSpace(requestBody.Word)
+	spaceTrimmedWord := strings.TrimSpace(requestBody.Word)
 
-	err = h.service.ValidateWord(word)
+	err = h.service.ValidateWord(spaceTrimmedWord)
 	if err != nil {
 		utils.NewErrorResponse(c, http.StatusBadRequest, err.Error(), []string{})
 		return
 	}
 
-	response, err := h.service.GetWordDefinition(c, word, requestBody.NativeLanguage)
+	response, err := h.service.GetWordDefinition(spaceTrimmedWord, requestBody.NativeLanguage)
 	if err != nil {
-		utils.ServerErrorResponse(c, err, "Failed to process your word. Please make sure you remove any extra spaces & special characters and try again")
+		utils.ServerErrorResponse(c, err, FailedToProcessWord)
 		return
 	}
 
@@ -64,21 +67,21 @@ func (h *wordHandler) GetSynonyms(c *gin.Context) {
 	err := c.ShouldBindJSON(&requestBody)
 	if err != nil {
 		h.logger.Error(err.Error())
-		utils.ServerErrorResponse(c, err, "Failed to process your word. Please make sure you remove any extra spaces & special characters and try again")
+		utils.ServerErrorResponse(c, err, FailedToProcessWord)
 		return
 	}
 
-	word := strings.TrimSpace(requestBody.Word)
+	spaceTrimmedWord := strings.TrimSpace(requestBody.Word)
 
-	err = h.service.ValidateWord(word)
+	err = h.service.ValidateWord(spaceTrimmedWord)
 	if err != nil {
 		utils.NewErrorResponse(c, http.StatusBadRequest, err.Error(), []string{})
 		return
 	}
 
-	response, err := h.service.GetWordSynonyms(c, word, requestBody.NativeLanguage)
+	response, err := h.service.GetWordSynonyms(c, spaceTrimmedWord, requestBody.NativeLanguage)
 	if err != nil {
-		utils.ServerErrorResponse(c, err, "Failed to process your word.Please make sure you remove any extra spaces & special characters and try again")
+		utils.ServerErrorResponse(c, err, FailedToProcessWord)
 		return
 	}
 

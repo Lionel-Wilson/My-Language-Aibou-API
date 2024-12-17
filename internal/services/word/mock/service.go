@@ -12,9 +12,10 @@ package mock_word
 import (
 	reflect "reflect"
 
-	openai "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai"
 	gin "github.com/gin-gonic/gin"
 	gomock "go.uber.org/mock/gomock"
+
+	openai "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai"
 )
 
 // MockService is a mock of Service interface.
@@ -41,18 +42,18 @@ func (m *MockService) EXPECT() *MockServiceMockRecorder {
 }
 
 // GetWordDefinition mocks base method.
-func (m *MockService) GetWordDefinition(c *gin.Context, word, nativeLanguage string) (*openai.ChatCompletion, error) {
+func (m *MockService) GetWordDefinition(word, nativeLanguage string) (*openai.ChatCompletion, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetWordDefinition", c, word, nativeLanguage)
+	ret := m.ctrl.Call(m, "GetWordDefinition", word, nativeLanguage)
 	ret0, _ := ret[0].(*openai.ChatCompletion)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetWordDefinition indicates an expected call of GetWordDefinition.
-func (mr *MockServiceMockRecorder) GetWordDefinition(c, word, nativeLanguage any) *gomock.Call {
+func (mr *MockServiceMockRecorder) GetWordDefinition(word, nativeLanguage any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWordDefinition", reflect.TypeOf((*MockService)(nil).GetWordDefinition), c, word, nativeLanguage)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWordDefinition", reflect.TypeOf((*MockService)(nil).GetWordDefinition), word, nativeLanguage)
 }
 
 // GetWordSynonyms mocks base method.

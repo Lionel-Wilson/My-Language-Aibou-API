@@ -9,15 +9,18 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/gin-gonic/gin"
+
 	log "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/log"
 	openai "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/utils"
-	"github.com/gin-gonic/gin"
 )
+
+var FailedToProcessWord = "Failed to process your word.Please make sure you remove any extra spaces & special characters and try again"
 
 //go:generate mockgen -source=service.go -destination=mock/service.go
 type Service interface {
-	GetWordDefinition(c *gin.Context, word string, nativeLanguage string) (*openai.ChatCompletion, error)
+	GetWordDefinition(word string, nativeLanguage string) (*openai.ChatCompletion, error)
 	GetWordSynonyms(c *gin.Context, word string, nativeLanguage string) (*openai.ChatCompletion, error)
 	ValidateWord(word string) error
 }
@@ -40,13 +43,13 @@ func (s *service) GetWordSynonyms(c *gin.Context, word string, nativeLanguage st
 	resp, responseBody, err := s.openAiClient.MakeRequest(jsonBody)
 	if err != nil {
 		s.logger.Error(err.Error())
-		utils.ServerErrorResponse(c, err, "Failed to process your word.Please make sure you remove any extra spaces & special characters and try again")
+		utils.ServerErrorResponse(c, err, FailedToProcessWord)
 		return &openai.ChatCompletion{}, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		fmt.Println("OpenAI API returned non-OK status. ")
-		utils.ServerErrorResponse(c, err, "Failed to process your word.Please make sure you remove any extra spaces & special characters and try again")
+		utils.ServerErrorResponse(c, err, FailedToProcessWord)
 		return &openai.ChatCompletion{}, err
 	}
 
@@ -61,7 +64,7 @@ func (s *service) GetWordSynonyms(c *gin.Context, word string, nativeLanguage st
 	if len(OpenAIApiResponse.Choices) == 0 {
 		fmt.Println("OpenAI API response contains no choices")
 		err = fmt.Errorf("OpenAI API response contains no choices")
-		utils.ServerErrorResponse(c, err, "Failed to process your word.Please make sure you remove any extra spaces & special characters and try again")
+		utils.ServerErrorResponse(c, err, FailedToProcessWord)
 		return &openai.ChatCompletion{}, err
 	}
 
@@ -73,8 +76,7 @@ func (s *service) GetWordSynonyms(c *gin.Context, word string, nativeLanguage st
 	return &OpenAIApiResponse, nil
 }
 
-func (s *service) GetWordDefinition(c *gin.Context, word string, nativeLanguage string) (*openai.ChatCompletion, error) {
-
+func (s *service) GetWordDefinition(word string, nativeLanguage string) (*openai.ChatCompletion, error) {
 	jsonBody := wordToOpenAiDefinitionRequestBody(word, nativeLanguage)
 
 	resp, responseBody, err := s.openAiClient.MakeRequest(jsonBody)
@@ -114,31 +116,31 @@ func (s *service) GetWordDefinition(c *gin.Context, word string, nativeLanguage 
 func (s *service) ValidateWord(word string) error {
 	if word == "" {
 		s.logger.Error(fmt.Printf("User didn't provide a word: %s", word))
-		return errors.New("Please provide a word")
+		return errors.New("please provide a word")
 	}
 	if utils.ContainsNumber(word) {
 		s.logger.Error(fmt.Printf("User provided a word(%s) that contained a number.", word))
-		return errors.New("Words should not contain numbers.")
+		return errors.New("words should not contain numbers")
 	}
 	if utf8.RuneCountInString(word) > 30 {
 		s.logger.Error(fmt.Printf("Word '%s' length too long. Must be less than 30 characters.", word))
-		return errors.New("Word length too long. Must be less than 30 characters.If this is a sentence, please use the analyser.")
+		return errors.New("word length too long. Must be less than 30 characters.If this is a sentence, please use the analyser")
 	}
 	if isNotAWord(word) {
 		s.logger.Error(fmt.Printf("User provided a phrase(%s) instead of a word.", word))
-		return errors.New("This looks like a phrase. Please use the 'Analyzer'.")
+		return errors.New("this looks like a phrase. Please use the 'Analyzer'")
 	}
 	if isNonsensical(word) {
 		s.logger.Error(fmt.Printf("User provided nonsense(%s) instead of a word.", word))
-		return errors.New("This doesn't look like a word. Please provide a valid word.")
+		return errors.New("this doesn't look like a word. Please provide a valid word")
 	}
 
 	return nil
 }
 
 func wordToOpenAiDefinitionRequestBody(word, userNativeLanguage string) *strings.Reader {
-	//var maxWordCount string
-	//var MaxTokens string
+	// var maxWordCount string
+	// var MaxTokens string
 
 	/*if userTier == "Basic" {
 		MaxTokens = "75"
@@ -166,8 +168,8 @@ func wordToOpenAiDefinitionRequestBody(word, userNativeLanguage string) *strings
 	"max_tokens": 300
 	}`, content)
 
-	//fmt.Printf("Tier: %s\n", userTier)
-	//fmt.Printf("Body: %s\n", body)
+	// fmt.Printf("Tier: %s\n", userTier)
+	// fmt.Printf("Body: %s\n", body)
 	fmt.Printf("Word prompt: %s\n", content)
 
 	return strings.NewReader(body)

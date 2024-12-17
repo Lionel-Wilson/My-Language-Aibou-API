@@ -12,9 +12,10 @@ package mock_word
 import (
 	reflect "reflect"
 
-	openai "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai"
 	gin "github.com/gin-gonic/gin"
 	gomock "go.uber.org/mock/gomock"
+
+	openai "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai"
 )
 
 // MockService is a mock of Service interface.

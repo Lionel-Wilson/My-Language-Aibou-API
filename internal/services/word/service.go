@@ -9,15 +9,14 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/gin-gonic/gin"
+
 	log "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/log"
 	openai "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/utils"
-	"github.com/gin-gonic/gin"
 )
 
-var (
-	FailedToProcessWord = "Failed to process your word.Please make sure you remove any extra spaces & special characters and try again"
-)
+var FailedToProcessWord = "Failed to process your word.Please make sure you remove any extra spaces & special characters and try again"
 
 //go:generate mockgen -source=service.go -destination=mock/service.go
 type Service interface {
@@ -78,7 +77,6 @@ func (s *service) GetWordSynonyms(c *gin.Context, word string, nativeLanguage st
 }
 
 func (s *service) GetWordDefinition(word string, nativeLanguage string) (*openai.ChatCompletion, error) {
-
 	jsonBody := wordToOpenAiDefinitionRequestBody(word, nativeLanguage)
 
 	resp, responseBody, err := s.openAiClient.MakeRequest(jsonBody)
@@ -141,8 +139,8 @@ func (s *service) ValidateWord(word string) error {
 }
 
 func wordToOpenAiDefinitionRequestBody(word, userNativeLanguage string) *strings.Reader {
-	//var maxWordCount string
-	//var MaxTokens string
+	// var maxWordCount string
+	// var MaxTokens string
 
 	/*if userTier == "Basic" {
 		MaxTokens = "75"
@@ -170,8 +168,8 @@ func wordToOpenAiDefinitionRequestBody(word, userNativeLanguage string) *strings
 	"max_tokens": 300
 	}`, content)
 
-	//fmt.Printf("Tier: %s\n", userTier)
-	//fmt.Printf("Body: %s\n", body)
+	// fmt.Printf("Tier: %s\n", userTier)
+	// fmt.Printf("Body: %s\n", body)
 	fmt.Printf("Word prompt: %s\n", content)
 
 	return strings.NewReader(body)

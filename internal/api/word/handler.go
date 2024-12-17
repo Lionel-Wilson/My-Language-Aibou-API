@@ -4,16 +4,15 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/gin-gonic/gin"
+
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/log"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/word/dto"
 	word "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/services/word"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/utils"
-	"github.com/gin-gonic/gin"
 )
 
-var (
-	FailedToProcessWord = "Failed to process your word.Please make sure you remove any extra spaces & special characters and try again"
-)
+var FailedToProcessWord = "Failed to process your word.Please make sure you remove any extra spaces & special characters and try again"
 
 type Handler interface {
 	DefineWord(c *gin.Context)

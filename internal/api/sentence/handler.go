@@ -43,7 +43,7 @@ func (h *handler) ExplainSentence() http.HandlerFunc {
 			h.logger.Sugar().Errorw("failed to decode and validate explain sentence request body",
 				"error", err)
 
-			render.Json(w, http.StatusBadRequest, FailedToProcessSentence)
+			render.Json(w, http.StatusBadRequest, dto.ToExplainSentenceResponse("", err.Error()))
 
 			return
 		}
@@ -53,7 +53,7 @@ func (h *handler) ExplainSentence() http.HandlerFunc {
 		err := h.service.ValidateSentence(trimmedSentence)
 		if err != nil {
 			h.logger.Sugar().Errorw("sentence validation failed", "sentence", trimmedSentence, "error", err)
-			render.Json(w, http.StatusBadRequest, err.Error())
+			render.Json(w, http.StatusBadRequest, dto.ToExplainSentenceResponse("", err.Error()))
 
 			return
 		}
@@ -62,7 +62,7 @@ func (h *handler) ExplainSentence() http.HandlerFunc {
 		if err != nil {
 			h.logger.Sugar().Errorw("sentence explanation failed", "sentence", trimmedSentence,
 				"native language", requestBody.NativeLanguage, "error", err)
-			render.Json(w, http.StatusInternalServerError, FailedToProcessSentence)
+			render.Json(w, http.StatusInternalServerError, dto.ToExplainSentenceResponse("", FailedToProcessSentence))
 
 			return
 		}
@@ -80,7 +80,7 @@ func (h *handler) CorrectSentence() http.HandlerFunc {
 			h.logger.Sugar().Errorw("failed to decode and validate correct sentence request body",
 				"error", err)
 
-			render.Json(w, http.StatusBadRequest, FailedToProcessSentence)
+			render.Json(w, http.StatusBadRequest, dto.ToExplainSentenceResponse("", FailedToProcessSentence))
 
 			return
 		}
@@ -90,7 +90,7 @@ func (h *handler) CorrectSentence() http.HandlerFunc {
 		err := h.service.ValidateSentence(trimmedSentence)
 		if err != nil {
 			h.logger.Sugar().Errorw("sentence validation failed", "sentence", trimmedSentence, "error", err)
-			render.Json(w, http.StatusBadRequest, err.Error())
+			render.Json(w, http.StatusBadRequest, dto.ToExplainSentenceResponse("", err.Error()))
 
 			return
 		}
@@ -99,7 +99,7 @@ func (h *handler) CorrectSentence() http.HandlerFunc {
 		if err != nil {
 			h.logger.Sugar().Errorw("sentence correction failed", "sentence", trimmedSentence,
 				"native language", requestBody.NativeLanguage, "error", err)
-			render.Json(w, http.StatusInternalServerError, FailedToProcessSentence)
+			render.Json(w, http.StatusInternalServerError, dto.ToExplainSentenceResponse("", FailedToProcessSentence))
 
 			return
 		}

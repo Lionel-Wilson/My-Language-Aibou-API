@@ -8,13 +8,13 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/config"
-	logger2 "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/logger"
 	middlewares "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/middleware"
 	sentencehandler "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/sentence"
 	wordhandler "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/word"
 	openai "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai"
-	sentence "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/services/sentence"
-	word "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/services/word"
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/services/sentence"
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/services/word"
+	logger2 "github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/logger"
 )
 
 func main() {
@@ -41,11 +41,11 @@ func main() {
 
 	openAiClient := openai.NewClient(cfg.OpenAIAPIKey, logger)
 
-	wordService := word.New(logger, openAiClient)
+	wordService := word.NewWordService(logger, openAiClient)
 	sentenceService := sentence.New(logger, openAiClient)
 
-	wordHandler := wordhandler.NewHandler(logger, wordService)
-	sentenceHandler := sentencehandler.NewHandler(logger, sentenceService)
+	wordHandler := wordhandler.NewWordHandler(logger, wordService)
+	sentenceHandler := sentencehandler.NewSentenceHandler(logger, sentenceService)
 
 	apiV1 := router.Group("/api/v1")
 	{

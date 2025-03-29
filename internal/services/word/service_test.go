@@ -21,7 +21,7 @@ func TestValidateWord(t *testing.T) {
 	mockOpenAiClient := mockopenai.NewMockClient(ctrl)
 	logger := zaptest.NewLogger(t)
 
-	wordService := word.New(*logger, mockOpenAiClient)
+	wordService := word.NewWordService(*logger, mockOpenAiClient)
 
 	testCases := []struct {
 		name        string
@@ -67,7 +67,7 @@ func TestGetWordDefinition(t *testing.T) {
 	mockOpenAiClient := mockopenai.NewMockClient(ctrl)
 	logger := zaptest.NewLogger(t)
 
-	wordService := word.New(*logger, mockOpenAiClient)
+	wordService := word.NewWordService(*logger, mockOpenAiClient)
 
 	testCases := []struct {
 		name             string
@@ -130,9 +130,9 @@ In both examples, "어떻게" is used to ask about the method or process involve
 
 /*
 func GetWordSynonyms(t *testing.T) {
-	cfg := config.New()
-	logger := logger.New()
-	wordService := word.New(cfg, logger)
+	cfg := config.NewWordService()
+	logger := logger.NewWordService()
+	wordService := word.NewWordService(cfg, logger)
 
 	testCases := []struct {
 		name        string
@@ -142,7 +142,7 @@ func GetWordSynonyms(t *testing.T) {
 		{
 			name:        "No word provided",
 			word:        "",
-			expectedErr: errors.New("Please provide a word"),
+			expectedErr: errors.NewWordService("Please provide a word"),
 		},
 	}
 

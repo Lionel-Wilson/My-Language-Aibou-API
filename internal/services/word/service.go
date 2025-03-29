@@ -30,7 +30,7 @@ type service struct {
 	openAiClient openai.Client
 }
 
-func New(logger zap.Logger, openAiClient openai.Client) Service {
+func NewWordService(logger zap.Logger, openAiClient openai.Client) Service {
 	return &service{
 		logger:       logger,
 		openAiClient: openAiClient,
@@ -49,7 +49,7 @@ func (s *service) GetWordSynonyms(c *gin.Context, word string, nativeLanguage st
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		fmt.Println("OpenAI API returned non-OK status. ")
+		s.logger.Error("OpenAI API returned non-OK status. ")
 		utils.ServerErrorResponse(c, err, FailedToProcessWord)
 
 		return &openai.ChatCompletion{}, err
@@ -64,8 +64,10 @@ func (s *service) GetWordSynonyms(c *gin.Context, word string, nativeLanguage st
 	}
 
 	if len(OpenAIApiResponse.Choices) == 0 {
-		fmt.Println("OpenAI API response contains no choices")
+		s.logger.Info("OpenAI API response contains no choices")
+
 		err = fmt.Errorf("OpenAI API response contains no choices")
+
 		utils.ServerErrorResponse(c, err, FailedToProcessWord)
 
 		return &openai.ChatCompletion{}, err

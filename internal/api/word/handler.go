@@ -19,22 +19,22 @@ type Handler interface {
 	GetSynonyms(c *gin.Context)
 }
 
-type wordHandler struct {
+type handler struct {
 	logger  zap.Logger
 	service word.Service
 }
 
-func NewHandler(
+func NewWordHandler(
 	logger zap.Logger,
 	service word.Service,
 ) Handler {
-	return &wordHandler{
+	return &handler{
 		logger:  logger,
 		service: service,
 	}
 }
 
-func (h *wordHandler) DefineWord(c *gin.Context) {
+func (h *handler) DefineWord(c *gin.Context) {
 	var requestBody dto.DefineWordRequest
 
 	err := c.ShouldBindJSON(&requestBody)
@@ -62,7 +62,7 @@ func (h *wordHandler) DefineWord(c *gin.Context) {
 	c.JSON(http.StatusOK, response.Choices[0].Message.Content)
 }
 
-func (h *wordHandler) GetSynonyms(c *gin.Context) {
+func (h *handler) GetSynonyms(c *gin.Context) {
 	var requestBody dto.GetSynonymsRequest
 
 	err := c.ShouldBindJSON(&requestBody)

@@ -29,7 +29,7 @@ func TestDefineWordHandler(t *testing.T) {
 
 	mockService := wordmock.NewMockService(ctrl)
 	mockLogger := zaptest.NewLogger(t)
-	handler := word.NewHandler(*mockLogger, mockService)
+	handler := word.NewWordHandler(*mockLogger, mockService)
 
 	router := gin.Default()
 	router.POST("search/word", handler.DefineWord)

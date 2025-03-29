@@ -17,71 +17,71 @@ type Handler interface {
 	CorrectSentence(c *gin.Context)
 }
 
-type sentenceHandler struct {
+type handler struct {
 	logger  zap.Logger
 	service sentence.Service
 }
 
-func NewHandler(
+func NewSentenceHandler(
 	logger zap.Logger,
 	service sentence.Service,
 ) Handler {
-	return &sentenceHandler{
+	return &handler{
 		logger:  logger,
 		service: service,
 	}
 }
 
-func (h *sentenceHandler) ExplainSentence(c *gin.Context) {
+func (h *handler) ExplainSentence(c *gin.Context) {
 	var requestBody dto.DefineSentenceRequest
 
 	err := c.ShouldBindJSON(&requestBody)
 	if err != nil {
 		h.logger.Error(err.Error())
-		utils.ServerErrorResponse(c, err, "Failed to process your sentence(s).Please make sure you remove any line breaks and large gaps between your sentences and try again")
+		utils.ServerErrorResponse(c, err, "Failed to process your trimmedSentence(s).Please make sure you remove any line breaks and large gaps between your sentences and try again")
 
 		return
 	}
 
-	sentence := strings.TrimSpace(requestBody.Sentence)
+	trimmedSentence := strings.TrimSpace(requestBody.Sentence)
 
-	err = h.service.ValidateSentence(sentence)
+	err = h.service.ValidateSentence(trimmedSentence)
 	if err != nil {
 		utils.NewErrorResponse(c, http.StatusBadRequest, err.Error(), []string{})
 		return
 	}
 
-	response, err := h.service.GetSentenceExplanation(c, sentence, requestBody.NativeLanguage)
+	response, err := h.service.GetSentenceExplanation(c, trimmedSentence, requestBody.NativeLanguage)
 	if err != nil {
-		utils.ServerErrorResponse(c, err, "Failed to process your sentence(s).Please make sure you remove any line breaks and large gaps between your sentences and try again")
+		utils.ServerErrorResponse(c, err, "Failed to process your trimmedSentence(s).Please make sure you remove any line breaks and large gaps between your sentences and try again")
 		return
 	}
 
 	c.JSON(http.StatusOK, response.Choices[0].Message.Content)
 }
 
-func (h *sentenceHandler) CorrectSentence(c *gin.Context) {
+func (h *handler) CorrectSentence(c *gin.Context) {
 	var requestBody dto.DefineSentenceRequest
 
 	err := c.ShouldBindJSON(&requestBody)
 	if err != nil {
 		h.logger.Error(err.Error())
-		utils.ServerErrorResponse(c, err, "Failed to process your sentence(s).Please make sure you remove any line breaks and large gaps between your sentences and try again")
+		utils.ServerErrorResponse(c, err, "Failed to process your trimmedSentence(s).Please make sure you remove any line breaks and large gaps between your sentences and try again")
 
 		return
 	}
 
-	sentence := strings.TrimSpace(requestBody.Sentence)
+	trimmedSentence := strings.TrimSpace(requestBody.Sentence)
 
-	err = h.service.ValidateSentence(sentence)
+	err = h.service.ValidateSentence(trimmedSentence)
 	if err != nil {
 		utils.NewErrorResponse(c, http.StatusBadRequest, err.Error(), []string{})
 		return
 	}
 
-	response, err := h.service.GetSentenceCorrection(c, sentence, requestBody.NativeLanguage)
+	response, err := h.service.GetSentenceCorrection(c, trimmedSentence, requestBody.NativeLanguage)
 	if err != nil {
-		utils.ServerErrorResponse(c, err, "Failed to process your sentence(s).Please make sure you remove any line breaks and large gaps between your sentences and try again")
+		utils.ServerErrorResponse(c, err, "Failed to process your trimmedSentence(s).Please make sure you remove any line breaks and large gaps between your sentences and try again")
 		return
 	}
 

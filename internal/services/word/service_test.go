@@ -21,7 +21,7 @@ func TestValidateWord(t *testing.T) {
 	mockOpenAiClient := mockopenai.NewMockClient(ctrl)
 	logger := zaptest.NewLogger(t)
 
-	wordService := word.NewWordService(*logger, mockOpenAiClient)
+	wordService := word.NewWordService(logger, mockOpenAiClient)
 
 	testCases := []struct {
 		name        string
@@ -67,7 +67,7 @@ func TestGetWordDefinition(t *testing.T) {
 	mockOpenAiClient := mockopenai.NewMockClient(ctrl)
 	logger := zaptest.NewLogger(t)
 
-	wordService := word.NewWordService(*logger, mockOpenAiClient)
+	wordService := word.NewWordService(logger, mockOpenAiClient)
 
 	testCases := []struct {
 		name             string

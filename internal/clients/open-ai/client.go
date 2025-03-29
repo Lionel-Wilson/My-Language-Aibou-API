@@ -50,10 +50,10 @@ type (
 
 type openAiClient struct {
 	Key    string
-	logger zap.Logger
+	logger *zap.Logger
 }
 
-func NewClient(apiKey string, logger zap.Logger) Client {
+func NewClient(apiKey string, logger *zap.Logger) Client {
 	return &openAiClient{
 		Key:    apiKey,
 		logger: logger,

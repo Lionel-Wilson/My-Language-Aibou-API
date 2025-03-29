@@ -14,7 +14,7 @@ import (
 type Config struct {
 	OpenAIAPIKey string `mapstructure:"OPENAI_API_KEY" validate:"required"`
 	Secret       string `mapstructure:"SECRET" validate:"required"`
-	Address      string `mapstructure:"ADDRESS" validate:"required"`
+	Port         string `mapstructure:"PORT" validate:"required"`
 	Env          string `mapstructure:"ENV" validate:"required"`
 }
 
@@ -42,8 +42,8 @@ func LoadConfig() (*Config, error) {
 	cfg := Config{
 		OpenAIAPIKey: viper.GetString("OPENAI_API_KEY"),
 		Secret:       viper.GetString("SECRET"),
-		Address:      viper.GetString("ADDRESS"),
 		Env:          viper.GetString("ENV"),
+		Port:         viper.GetString("PORT"),
 	}
 
 	// Validate the config.

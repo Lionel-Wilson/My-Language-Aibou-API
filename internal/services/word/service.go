@@ -9,7 +9,6 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 
 	openai "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai"
@@ -21,36 +20,34 @@ var FailedToProcessWord = "Failed to process your word.Please make sure you remo
 //go:generate mockgen -source=service.go -destination=mock/service.go
 type Service interface {
 	GetWordDefinition(word string, nativeLanguage string) (*openai.ChatCompletion, error)
-	GetWordSynonyms(c *gin.Context, word string, nativeLanguage string) (*openai.ChatCompletion, error)
+	GetWordSynonyms(word string, nativeLanguage string) (*openai.ChatCompletion, error)
 	ValidateWord(word string) error
 }
 
 type service struct {
-	logger       zap.Logger
+	logger       *zap.Logger
 	openAiClient openai.Client
 }
 
-func NewWordService(logger zap.Logger, openAiClient openai.Client) Service {
+func NewWordService(logger *zap.Logger, openAiClient openai.Client) Service {
 	return &service{
 		logger:       logger,
 		openAiClient: openAiClient,
 	}
 }
 
-func (s *service) GetWordSynonyms(c *gin.Context, word string, nativeLanguage string) (*openai.ChatCompletion, error) {
-	jsonBody := wordToOpenAiSynonymsRequestBody(word, nativeLanguage)
+func (s *service) GetWordSynonyms(word string, nativeLanguage string) (*openai.ChatCompletion, error) {
+	jsonBody := s.wordToOpenAiSynonymsRequestBody(word, nativeLanguage)
 
 	resp, responseBody, err := s.openAiClient.MakeRequest(jsonBody)
 	if err != nil {
 		s.logger.Error(err.Error())
-		utils.ServerErrorResponse(c, err, FailedToProcessWord)
 
 		return &openai.ChatCompletion{}, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		s.logger.Error("OpenAI API returned non-OK status. ")
-		utils.ServerErrorResponse(c, err, FailedToProcessWord)
 
 		return &openai.ChatCompletion{}, err
 	}
@@ -59,30 +56,26 @@ func (s *service) GetWordSynonyms(c *gin.Context, word string, nativeLanguage st
 
 	err = json.Unmarshal(responseBody, &OpenAIApiResponse)
 	if err != nil {
-		fmt.Println("Failed to unmarshal json body")
+		s.logger.Info("Failed to unmarshal json body")
 		return &openai.ChatCompletion{}, err
 	}
 
 	if len(OpenAIApiResponse.Choices) == 0 {
 		s.logger.Info("OpenAI API response contains no choices")
 
-		err = fmt.Errorf("OpenAI API response contains no choices")
-
-		utils.ServerErrorResponse(c, err, FailedToProcessWord)
-
-		return &openai.ChatCompletion{}, err
+		return &openai.ChatCompletion{}, fmt.Errorf("OpenAI API response contains no choices")
 	}
 
-	fmt.Printf("Word Synonyms: %s\n", OpenAIApiResponse.Choices[0].Message.Content)
-	fmt.Printf(`Prompt Tokens: %d`, OpenAIApiResponse.Usage.PromptTokens)
-	fmt.Printf(`Response Tokens: %d`, OpenAIApiResponse.Usage.CompletionTokens)
-	fmt.Printf(`Total Tokens used: %d`, OpenAIApiResponse.Usage.TotalTokens)
+	s.logger.Sugar().Infof("Word Synonyms: %s\n", OpenAIApiResponse.Choices[0].Message.Content)
+	s.logger.Sugar().Infof(`Prompt Tokens: %d`, OpenAIApiResponse.Usage.PromptTokens)
+	s.logger.Sugar().Infof(`Response Tokens: %d`, OpenAIApiResponse.Usage.CompletionTokens)
+	s.logger.Sugar().Infof(`Total Tokens used: %d`, OpenAIApiResponse.Usage.TotalTokens)
 
 	return &OpenAIApiResponse, nil
 }
 
 func (s *service) GetWordDefinition(word string, nativeLanguage string) (*openai.ChatCompletion, error) {
-	jsonBody := wordToOpenAiDefinitionRequestBody(word, nativeLanguage)
+	jsonBody := s.wordToOpenAiDefinitionRequestBody(word, nativeLanguage)
 
 	resp, responseBody, err := s.openAiClient.MakeRequest(jsonBody)
 	if err != nil {
@@ -91,7 +84,7 @@ func (s *service) GetWordDefinition(word string, nativeLanguage string) (*openai
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		fmt.Println("OpenAI API returned non-OK status. ")
+		s.logger.Error("OpenAI API returned non-OK status. ")
 		return &openai.ChatCompletion{}, err
 	}
 
@@ -99,22 +92,21 @@ func (s *service) GetWordDefinition(word string, nativeLanguage string) (*openai
 
 	err = json.Unmarshal(responseBody, &OpenAIApiResponse)
 	if err != nil {
-		fmt.Println("Failed to unmarshal json body")
+		s.logger.With(zap.Error(err)).Error("Failed to unmarshal json body")
 		return &openai.ChatCompletion{}, err
 	}
 
 	if len(OpenAIApiResponse.Choices) == 0 {
-		fmt.Println("OpenAI API response contains no choices")
-		err = fmt.Errorf("OpenAI API response contains no choices")
+		s.logger.Info("OpenAI API response contains no choices")
 
-		return &openai.ChatCompletion{}, err
+		return &openai.ChatCompletion{}, fmt.Errorf("OpenAI API response contains no choices")
 	}
 
-	fmt.Printf("response: %v\n", OpenAIApiResponse)
-	fmt.Printf("Word Definition: %s\n", OpenAIApiResponse.Choices[0].Message.Content)
-	fmt.Printf(`Prompt Tokens: %d\n`, OpenAIApiResponse.Usage.PromptTokens)
-	fmt.Printf(`Response Tokens: %d\n`, OpenAIApiResponse.Usage.CompletionTokens)
-	fmt.Printf(`Total Tokens used: %d\n`, OpenAIApiResponse.Usage.TotalTokens)
+	s.logger.Sugar().Infof("response: %v\n", OpenAIApiResponse)
+	s.logger.Sugar().Infof("Word Definition: %s\n", OpenAIApiResponse.Choices[0].Message.Content)
+	s.logger.Sugar().Infof(`Prompt Tokens: %d\n`, OpenAIApiResponse.Usage.PromptTokens)
+	s.logger.Sugar().Infof(`Response Tokens: %d\n`, OpenAIApiResponse.Usage.CompletionTokens)
+	s.logger.Sugar().Infof(`Total Tokens used: %d\n`, OpenAIApiResponse.Usage.TotalTokens)
 
 	return &OpenAIApiResponse, nil
 }
@@ -148,7 +140,7 @@ func (s *service) ValidateWord(word string) error {
 	return nil
 }
 
-func wordToOpenAiDefinitionRequestBody(word, userNativeLanguage string) *strings.Reader {
+func (s *service) wordToOpenAiDefinitionRequestBody(word, userNativeLanguage string) *strings.Reader {
 	// var maxWordCount string
 	// var MaxTokens string
 	/*if userTier == "Basic" {
@@ -177,14 +169,14 @@ func wordToOpenAiDefinitionRequestBody(word, userNativeLanguage string) *strings
 	"max_tokens": 300
 	}`, content)
 
-	// fmt.Printf("Tier: %s\n", userTier)
-	// fmt.Printf("Body: %s\n", body)
-	fmt.Printf("Word prompt: %s\n", content)
+	// s.logger.Sugar().Infof("Tier: %s\n", userTier)
+	// s.logger.Sugar().Infof("Body: %s\n", body)
+	s.logger.Sugar().Infof("Word prompt: %s\n", content)
 
 	return strings.NewReader(body)
 }
 
-func wordToOpenAiSynonymsRequestBody(word, userNativeLanguage string) *strings.Reader {
+func (s *service) wordToOpenAiSynonymsRequestBody(word, userNativeLanguage string) *strings.Reader {
 	content := fmt.Sprintf("List out for me some simple synonyms for the word '%s'", word)
 
 	if userNativeLanguage != "English" {
@@ -205,7 +197,7 @@ func wordToOpenAiSynonymsRequestBody(word, userNativeLanguage string) *strings.R
 	"max_tokens": 300
 	}`, content)
 
-	fmt.Printf("Word prompt: %s\n", content)
+	s.logger.Sugar().Infof("Word prompt: %s\n", content)
 
 	return strings.NewReader(body)
 }

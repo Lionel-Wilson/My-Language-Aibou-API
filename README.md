@@ -15,7 +15,7 @@ The API for the "My Language Aibou" application. The AI Powered language learnin
 2. Create a .env file at the root of the repository.
 3. Fill the .env file with the following variables:
 ```
-ADDRESS=:8080
+PORT=8080
 OPENAI_API_KEY= < Your own Open AI API key >
 SECRET= < Can be any secret you want >
 ENV=dev

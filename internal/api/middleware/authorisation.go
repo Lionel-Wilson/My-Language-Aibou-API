@@ -8,9 +8,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/utils"
 )
 
 var secretKey []byte
@@ -21,13 +22,12 @@ func init() {
 		fmt.Println("Error generating key:", err)
 		return
 	}
+
 	secretKey = []byte(keystring)
 }
 
 func AuthRequired() gin.HandlerFunc {
-
 	return func(c *gin.Context) {
-
 		/* Retrieve the token from the cookie
 		tokenString, err := c.Cookie("jwtToken")
 		if err != nil {
@@ -41,14 +41,17 @@ func AuthRequired() gin.HandlerFunc {
 		if tokenString == "" {
 			utils.NewErrorResponse(c, http.StatusUnauthorized, "Authorisation Failed", []string{"Missing authorization header"})
 			c.Abort()
+
 			return
 		}
+
 		tokenString = tokenString[len("Bearer "):]
 
 		token, err := VerifyToken(tokenString)
 		if err != nil {
 			utils.NewErrorResponse(c, http.StatusUnauthorized, "Authorisation Failed", []string{"Invalid token"})
 			c.Abort()
+
 			return
 		}
 
@@ -56,6 +59,7 @@ func AuthRequired() gin.HandlerFunc {
 		if err != nil {
 			utils.NewErrorResponse(c, http.StatusUnauthorized, "Authorisation Failed", []string{"Unable to extract subject from token"})
 			c.Abort()
+
 			return
 		}
 
@@ -94,7 +98,6 @@ func VerifyToken(tokenString string) (*jwt.Token, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		return secretKey, nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -108,9 +111,11 @@ func VerifyToken(tokenString string) (*jwt.Token, error) {
 
 func generateSecureKey() (string, error) {
 	key := make([]byte, 32) // 32 bytes = 256 bits
+
 	_, err := rand.Read(key)
 	if err != nil {
 		return "", err
 	}
+
 	return base64.StdEncoding.EncodeToString(key), nil
 }

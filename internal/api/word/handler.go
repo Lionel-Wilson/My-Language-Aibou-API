@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/log"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/word/dto"
 	word "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/services/word"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/utils"
@@ -19,28 +19,29 @@ type Handler interface {
 	GetSynonyms(c *gin.Context)
 }
 
-type wordHandler struct {
-	logger  log.Logger
+type handler struct {
+	logger  zap.Logger
 	service word.Service
 }
 
-func NewHandler(
-	logger log.Logger,
+func NewWordHandler(
+	logger zap.Logger,
 	service word.Service,
 ) Handler {
-	return &wordHandler{
+	return &handler{
 		logger:  logger,
 		service: service,
 	}
 }
 
-func (h *wordHandler) DefineWord(c *gin.Context) {
+func (h *handler) DefineWord(c *gin.Context) {
 	var requestBody dto.DefineWordRequest
 
 	err := c.ShouldBindJSON(&requestBody)
 	if err != nil {
 		h.logger.Error(err.Error())
 		utils.ServerErrorResponse(c, err, FailedToProcessWord)
+
 		return
 	}
 
@@ -61,13 +62,14 @@ func (h *wordHandler) DefineWord(c *gin.Context) {
 	c.JSON(http.StatusOK, response.Choices[0].Message.Content)
 }
 
-func (h *wordHandler) GetSynonyms(c *gin.Context) {
+func (h *handler) GetSynonyms(c *gin.Context) {
 	var requestBody dto.GetSynonymsRequest
 
 	err := c.ShouldBindJSON(&requestBody)
 	if err != nil {
 		h.logger.Error(err.Error())
 		utils.ServerErrorResponse(c, err, FailedToProcessWord)
+
 		return
 	}
 

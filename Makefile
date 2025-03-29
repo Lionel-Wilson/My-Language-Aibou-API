@@ -1,7 +1,7 @@
 deps:
-	go install go.uber.org/mock/mockgen@latest
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-	go install mvdan.cc/gofumpt@latest
+	@echo "Installing dependencies..."
+	go mod tidy
+	go mod download
 .PHONY: deps
 
 mock:
@@ -17,3 +17,16 @@ lint:
 	golangci-lint run $(p)
 	go fmt ./...
 .PHONY: lint
+
+start:
+	docker build -t my-language-aibou-api .
+	docker run --name my-language-aibou-api -p 8080:8080 my-language-aibou-api
+.PHONY: start
+
+delete:
+	docker rm my-language-aibou-api
+.PHONY: delete
+
+test:
+	go test ./...
+.PHONY: test

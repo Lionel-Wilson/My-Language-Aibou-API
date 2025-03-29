@@ -1,33 +1,55 @@
 package config
 
 import (
+	"fmt"
+	"log"
 	"os"
+
+	"github.com/go-playground/validator/v10"
+	"github.com/joho/godotenv"
+	"github.com/spf13/viper"
 )
 
+// Config holds the application settings.
 type Config struct {
-	OpenAi struct {
-		Key string
-	}
-	Secret  string
-	Address string
+	OpenAIAPIKey string `mapstructure:"OPENAI_API_KEY" validate:"required"`
+	Secret       string `mapstructure:"SECRET" validate:"required"`
+	Address      string `mapstructure:"ADDRESS" validate:"required"`
+	Env          string `mapstructure:"ENV" validate:"required"`
 }
 
-func New() *Config {
-	//Load environment variables. Uncomment when running locally and not in container TO-DO: put this in an if env="local" statement in the config NEW function
-	/*err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}*/
+// LoadConfig loads configuration from the OS environment and, if not in production,
+// from a .env file at the root of the repository.
+func LoadConfig() (*Config, error) {
+	// Check if running in production.
+	// When ENV is "prod", we assume all necessary environment variables are set.
+	// Otherwise, load variables from the .env file.
+	if os.Getenv("ENV") != "prod" {
+		if err := godotenv.Load(); err != nil {
+			log.Printf("Warning: no .env file found, relying on OS environment variables: %v", err)
+		}
+	}
 
-	var cfg Config
+	// Use Viper to read environment variables.
+	viper.AutomaticEnv()
 
-	addr := os.Getenv("DEV_ADDRESS")
-	secret := os.Getenv("SECRET")
-	openAiKey := os.Getenv("OPENAI_API_KEY")
+	// Set a default value for ENV if it hasn't been set.
+	if viper.GetString("ENV") == "" {
+		viper.Set("ENV", "dev")
+	}
 
-	cfg.Address = addr
-	cfg.Secret = secret
-	cfg.OpenAi.Key = openAiKey
+	// Create a Config instance with values from environment variables.
+	cfg := Config{
+		OpenAIAPIKey: viper.GetString("OPENAI_API_KEY"),
+		Secret:       viper.GetString("SECRET"),
+		Address:      viper.GetString("ADDRESS"),
+		Env:          viper.GetString("ENV"),
+	}
 
-	return &cfg
+	// Validate the config.
+	if err := validator.New().Struct(cfg); err != nil {
+		return nil, fmt.Errorf("config validation failed: %w", err)
+	}
+
+	return &cfg, nil
 }

@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
+	"go.uber.org/zap/zaptest"
 
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/log"
 	openai "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai"
 	mockopenai "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai/mock"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/services/word"
@@ -19,9 +19,9 @@ func TestValidateWord(t *testing.T) {
 	ctrl := gomock.NewController(t)
 
 	mockOpenAiClient := mockopenai.NewMockClient(ctrl)
-	logger := log.New()
+	logger := zaptest.NewLogger(t)
 
-	wordService := word.New(logger, mockOpenAiClient)
+	wordService := word.NewWordService(*logger, mockOpenAiClient)
 
 	testCases := []struct {
 		name        string
@@ -65,9 +65,9 @@ func TestGetWordDefinition(t *testing.T) {
 	ctrl := gomock.NewController(t)
 
 	mockOpenAiClient := mockopenai.NewMockClient(ctrl)
-	logger := log.New()
+	logger := zaptest.NewLogger(t)
 
-	wordService := word.New(logger, mockOpenAiClient)
+	wordService := word.NewWordService(*logger, mockOpenAiClient)
 
 	testCases := []struct {
 		name             string
@@ -101,7 +101,6 @@ func TestGetWordDefinition(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, tc.expectedResponse, response)
 		}
-
 	}
 }
 
@@ -131,9 +130,9 @@ In both examples, "어떻게" is used to ask about the method or process involve
 
 /*
 func GetWordSynonyms(t *testing.T) {
-	cfg := config.New()
-	logger := log.New()
-	wordService := word.New(cfg, logger)
+	cfg := config.NewWordService()
+	logger := logger.NewWordService()
+	wordService := word.NewWordService(cfg, logger)
 
 	testCases := []struct {
 		name        string
@@ -143,7 +142,7 @@ func GetWordSynonyms(t *testing.T) {
 		{
 			name:        "No word provided",
 			word:        "",
-			expectedErr: errors.New("Please provide a word"),
+			expectedErr: errors.NewWordService("Please provide a word"),
 		},
 	}
 

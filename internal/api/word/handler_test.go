@@ -12,8 +12,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"go.uber.org/zap/zaptest"
 
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/log"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/word"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/word/dto"
 	openai "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai"
@@ -28,8 +28,8 @@ func TestDefineWordHandler(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockService := wordmock.NewMockService(ctrl)
-	mockLogger := log.New()
-	handler := word.NewHandler(mockLogger, mockService)
+	mockLogger := zaptest.NewLogger(t)
+	handler := word.NewHandler(*mockLogger, mockService)
 
 	router := gin.Default()
 	router.POST("search/word", handler.DefineWord)

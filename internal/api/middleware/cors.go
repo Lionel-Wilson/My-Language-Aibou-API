@@ -11,7 +11,7 @@ import (
 func CorsMiddleware() gin.HandlerFunc {
 	// Define the CORS configuration options
 	corsConfig := cors.New(cors.Options{
-		AllowedOrigins:   []string{"*"}, //TO-DO: Later replace with frontend production url
+		AllowedOrigins:   []string{"*"}, // TO-DO: Later replace with frontend production url
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
 		AllowedHeaders:   []string{"Content-Type", "Authorization"},
 		AllowCredentials: true,

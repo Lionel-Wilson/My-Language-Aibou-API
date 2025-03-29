@@ -8,11 +8,11 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	log "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/log"
-	openai "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai"
-
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/utils"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
+
+	openai "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai"
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/utils"
 )
 
 var (
@@ -28,11 +28,11 @@ type Service interface {
 }
 
 type service struct {
-	logger       log.Logger
+	logger       zap.Logger
 	openAiClient openai.Client
 }
 
-func New(logger log.Logger, openAiClient openai.Client) Service {
+func New(logger zap.Logger, openAiClient openai.Client) Service {
 	return &service{
 		logger:       logger,
 		openAiClient: openAiClient,
@@ -46,12 +46,14 @@ func (s *service) GetSentenceCorrection(c *gin.Context, sentence string, nativeL
 	if err != nil {
 		s.logger.Error(err.Error())
 		utils.ServerErrorResponse(c, err, FailedToProcessSentence)
+
 		return &openai.ChatCompletion{}, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		fmt.Println("OpenAI API returned non-OK status. ")
 		utils.ServerErrorResponse(c, err, FailedToProcessSentence)
+
 		return &openai.ChatCompletion{}, err
 	}
 
@@ -65,8 +67,10 @@ func (s *service) GetSentenceCorrection(c *gin.Context, sentence string, nativeL
 
 	if len(OpenAIApiResponse.Choices) == 0 {
 		fmt.Println("OpenAI API response contains no choices")
+
 		err = ErrOpenAiNoChoices
 		utils.ServerErrorResponse(c, err, FailedToProcessSentence)
+
 		return &openai.ChatCompletion{}, err
 	}
 
@@ -85,12 +89,14 @@ func (s *service) GetSentenceExplanation(c *gin.Context, sentence string, native
 	if err != nil {
 		s.logger.Error(err.Error())
 		utils.ServerErrorResponse(c, err, FailedToProcessSentence)
+
 		return &openai.ChatCompletion{}, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		fmt.Println("OpenAI API returned non-OK status. ")
 		utils.ServerErrorResponse(c, err, FailedToProcessSentence)
+
 		return &openai.ChatCompletion{}, err
 	}
 
@@ -104,8 +110,10 @@ func (s *service) GetSentenceExplanation(c *gin.Context, sentence string, native
 
 	if len(OpenAIApiResponse.Choices) == 0 {
 		fmt.Println("OpenAI API response contains no choices")
+
 		err = ErrOpenAiNoChoices
 		utils.ServerErrorResponse(c, err, FailedToProcessSentence)
+
 		return &openai.ChatCompletion{}, err
 	}
 
@@ -119,12 +127,12 @@ func (s *service) GetSentenceExplanation(c *gin.Context, sentence string, native
 
 func (s *service) ValidateSentence(sentence string) error {
 	if sentence == "" {
-		s.logger.Error(fmt.Printf("User didn't provide a sentence: %s", sentence))
+		s.logger.Sugar().Errorf("User didn't provide a sentence: %s", sentence)
 		return errors.New("Please provide a sentence")
 	}
 
 	if utf8.RuneCountInString(sentence) > 100 {
-		s.logger.Error(fmt.Printf("Sentence '%s' length too long. Must be less than 100 characters.", sentence))
+		s.logger.Sugar().Errorf("Sentence '%s' length too long. Must be less than 100 characters.", sentence)
 		return errors.New("The sentence must be less than 100 characters.")
 	}
 
@@ -132,9 +140,8 @@ func (s *service) ValidateSentence(sentence string) error {
 }
 
 func sentenceToOpenAiExplanationRequestBody(sentence, userNativeLanguage string) *strings.Reader {
-	//var maxWordCount string
-	//var MaxTokens string
-
+	// var maxWordCount string
+	// var MaxTokens string
 	/*Remove tier system.
 	if userTier == "Basic" {
 		MaxTokens = "110"
@@ -144,7 +151,6 @@ func sentenceToOpenAiExplanationRequestBody(sentence, userNativeLanguage string)
 		MaxTokens = "330"
 		maxWordCount = "230"
 	}*/
-
 	content := fmt.Sprintf("Explain the meaning & grammar used in this sentence - '%s'.Respond in %s", sentence, userNativeLanguage)
 
 	body := fmt.Sprintf(`{
@@ -161,8 +167,8 @@ func sentenceToOpenAiExplanationRequestBody(sentence, userNativeLanguage string)
 	"max_tokens": 800
 	}`, content)
 
-	//fmt.Printf("Tier: %s\n", userTier)
-	//fmt.Printf("Body: %s\n", body)
+	// fmt.Printf("Tier: %s\n", userTier)
+	// fmt.Printf("Body: %s\n", body)
 	fmt.Printf("Phrase prompt: %s\n", content)
 
 	return strings.NewReader(body)

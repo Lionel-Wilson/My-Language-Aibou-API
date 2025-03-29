@@ -4,11 +4,12 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/log"
+	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
+
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/sentence/dto"
 	sentence "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/services/sentence"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/utils"
-	"github.com/gin-gonic/gin"
 )
 
 type Handler interface {
@@ -17,12 +18,12 @@ type Handler interface {
 }
 
 type sentenceHandler struct {
-	logger  log.Logger
+	logger  zap.Logger
 	service sentence.Service
 }
 
 func NewHandler(
-	logger log.Logger,
+	logger zap.Logger,
 	service sentence.Service,
 ) Handler {
 	return &sentenceHandler{
@@ -38,6 +39,7 @@ func (h *sentenceHandler) ExplainSentence(c *gin.Context) {
 	if err != nil {
 		h.logger.Error(err.Error())
 		utils.ServerErrorResponse(c, err, "Failed to process your sentence(s).Please make sure you remove any line breaks and large gaps between your sentences and try again")
+
 		return
 	}
 
@@ -65,6 +67,7 @@ func (h *sentenceHandler) CorrectSentence(c *gin.Context) {
 	if err != nil {
 		h.logger.Error(err.Error())
 		utils.ServerErrorResponse(c, err, "Failed to process your sentence(s).Please make sure you remove any line breaks and large gaps between your sentences and try again")
+
 		return
 	}
 

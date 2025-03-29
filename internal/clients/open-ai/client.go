@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/log"
+	"go.uber.org/zap"
 )
 
 //go:generate mockgen -source=client.go -destination=mock/client.go
@@ -50,10 +50,10 @@ type (
 
 type openAiClient struct {
 	Key    string
-	logger log.Logger
+	logger zap.Logger
 }
 
-func NewClient(apiKey string, logger log.Logger) Client {
+func NewClient(apiKey string, logger zap.Logger) Client {
 	return &openAiClient{
 		Key:    apiKey,
 		logger: logger,
@@ -71,17 +71,20 @@ func (c openAiClient) MakeRequest(body *strings.Reader) (*http.Response, []byte,
 	req.Header.Add("Authorization", `Bearer `+c.Key)
 
 	client := &http.Client{}
+
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println("Failed to make request to OpenAI API")
 		return &http.Response{}, []byte{}, err
 	}
+
 	defer resp.Body.Close()
 
 	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println("Failed to read AI response body:")
 		fmt.Println(string(responseBody))
+
 		return &http.Response{}, []byte{}, err
 	}
 

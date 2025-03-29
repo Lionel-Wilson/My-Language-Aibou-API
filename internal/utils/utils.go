@@ -40,6 +40,7 @@ func ServerErrorResponse(c *gin.Context, err error, msg string) {
 	} else {
 		errorDetails = append(errorDetails, "Unknown error")
 	}
+
 	c.JSON(http.StatusInternalServerError, ErrorResponse{
 		StatusCode: http.StatusInternalServerError,
 		Message:    message,
@@ -68,5 +69,6 @@ func ContainsNumber(s string) bool {
 			return true
 		}
 	}
+
 	return false
 }

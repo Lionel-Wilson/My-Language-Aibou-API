@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/log"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/word/dto"
 	word "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/services/word"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/utils"
@@ -20,12 +20,12 @@ type Handler interface {
 }
 
 type wordHandler struct {
-	logger  log.Logger
+	logger  zap.Logger
 	service word.Service
 }
 
 func NewHandler(
-	logger log.Logger,
+	logger zap.Logger,
 	service word.Service,
 ) Handler {
 	return &wordHandler{
@@ -41,6 +41,7 @@ func (h *wordHandler) DefineWord(c *gin.Context) {
 	if err != nil {
 		h.logger.Error(err.Error())
 		utils.ServerErrorResponse(c, err, FailedToProcessWord)
+
 		return
 	}
 
@@ -68,6 +69,7 @@ func (h *wordHandler) GetSynonyms(c *gin.Context) {
 	if err != nil {
 		h.logger.Error(err.Error())
 		utils.ServerErrorResponse(c, err, FailedToProcessWord)
+
 		return
 	}
 

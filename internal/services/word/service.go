@@ -10,8 +10,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 
-	log "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/log"
 	openai "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/utils"
 )
@@ -26,11 +26,11 @@ type Service interface {
 }
 
 type service struct {
-	logger       log.Logger
+	logger       zap.Logger
 	openAiClient openai.Client
 }
 
-func New(logger log.Logger, openAiClient openai.Client) Service {
+func New(logger zap.Logger, openAiClient openai.Client) Service {
 	return &service{
 		logger:       logger,
 		openAiClient: openAiClient,
@@ -44,12 +44,14 @@ func (s *service) GetWordSynonyms(c *gin.Context, word string, nativeLanguage st
 	if err != nil {
 		s.logger.Error(err.Error())
 		utils.ServerErrorResponse(c, err, FailedToProcessWord)
+
 		return &openai.ChatCompletion{}, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		fmt.Println("OpenAI API returned non-OK status. ")
 		utils.ServerErrorResponse(c, err, FailedToProcessWord)
+
 		return &openai.ChatCompletion{}, err
 	}
 
@@ -65,6 +67,7 @@ func (s *service) GetWordSynonyms(c *gin.Context, word string, nativeLanguage st
 		fmt.Println("OpenAI API response contains no choices")
 		err = fmt.Errorf("OpenAI API response contains no choices")
 		utils.ServerErrorResponse(c, err, FailedToProcessWord)
+
 		return &openai.ChatCompletion{}, err
 	}
 
@@ -101,6 +104,7 @@ func (s *service) GetWordDefinition(word string, nativeLanguage string) (*openai
 	if len(OpenAIApiResponse.Choices) == 0 {
 		fmt.Println("OpenAI API response contains no choices")
 		err = fmt.Errorf("OpenAI API response contains no choices")
+
 		return &openai.ChatCompletion{}, err
 	}
 
@@ -115,23 +119,27 @@ func (s *service) GetWordDefinition(word string, nativeLanguage string) (*openai
 
 func (s *service) ValidateWord(word string) error {
 	if word == "" {
-		s.logger.Error(fmt.Printf("User didn't provide a word: %s", word))
+		s.logger.Sugar().Errorf("User didn't provide a word: %s", word)
 		return errors.New("please provide a word")
 	}
+
 	if utils.ContainsNumber(word) {
-		s.logger.Error(fmt.Printf("User provided a word(%s) that contained a number.", word))
+		s.logger.Sugar().Errorf("User provided a word(%s) that contained a number.", word)
 		return errors.New("words should not contain numbers")
 	}
+
 	if utf8.RuneCountInString(word) > 30 {
-		s.logger.Error(fmt.Printf("Word '%s' length too long. Must be less than 30 characters.", word))
+		s.logger.Sugar().Errorf("Word '%s' length too long. Must be less than 30 characters.", word)
 		return errors.New("word length too long. Must be less than 30 characters.If this is a sentence, please use the analyser")
 	}
+
 	if isNotAWord(word) {
-		s.logger.Error(fmt.Printf("User provided a phrase(%s) instead of a word.", word))
+		s.logger.Sugar().Errorf("User provided a phrase(%s) instead of a word.", word)
 		return errors.New("this looks like a phrase. Please use the 'Analyzer'")
 	}
+
 	if isNonsensical(word) {
-		s.logger.Error(fmt.Printf("User provided nonsense(%s) instead of a word.", word))
+		s.logger.Sugar().Errorf("User provided nonsense(%s) instead of a word.", word)
 		return errors.New("this doesn't look like a word. Please provide a valid word")
 	}
 
@@ -141,7 +149,6 @@ func (s *service) ValidateWord(word string) error {
 func wordToOpenAiDefinitionRequestBody(word, userNativeLanguage string) *strings.Reader {
 	// var maxWordCount string
 	// var MaxTokens string
-
 	/*if userTier == "Basic" {
 		MaxTokens = "75"
 		maxWordCount = "40"
@@ -209,6 +216,7 @@ func isNotAWord(word string) bool {
 func isNonsensical(word string) bool {
 	// Check condition 1: The string contains special characters
 	hasSpecialCharacters := false
+
 	for _, ch := range word {
 		if unicode.IsPunct(ch) || unicode.IsSymbol(ch) {
 			hasSpecialCharacters = true
@@ -218,6 +226,7 @@ func isNonsensical(word string) bool {
 
 	// Check condition 2: The string contains the same character more than 3 times in a row
 	hasRepeatingCharacters := false
+
 	for i := 0; i < len(word)-3; i++ {
 		if word[i] == word[i+1] && word[i] == word[i+2] && word[i] == word[i+3] {
 			hasRepeatingCharacters = true

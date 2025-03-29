@@ -17,7 +17,7 @@ import (
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/word"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/word/dto"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai"
-	wordmock "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/services/word/mock"
+	wordmock "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/word/mock"
 )
 
 func TestDefineWordHandler(t *testing.T) {

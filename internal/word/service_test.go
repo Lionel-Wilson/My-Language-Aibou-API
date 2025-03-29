@@ -11,7 +11,7 @@ import (
 
 	openai "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai"
 	mockopenai "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai/mock"
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/services/word"
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/word"
 )
 
 // TO DO: UNIT TESTS

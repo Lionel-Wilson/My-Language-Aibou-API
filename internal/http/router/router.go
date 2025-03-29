@@ -9,8 +9,8 @@ import (
 
 	sentencehandler "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/sentence"
 	wordhandler "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/word"
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/services/sentence"
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/services/word"
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/sentence"
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/word"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/render"
 )
 

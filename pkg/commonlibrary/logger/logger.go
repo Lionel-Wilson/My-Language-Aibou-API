@@ -6,7 +6,7 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/config"
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/config"
 )
 
 func New(cfg *config.Config) *zap.Logger {

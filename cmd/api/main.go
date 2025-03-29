@@ -5,11 +5,11 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/config"
 	openai "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai"
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/config"
 	router "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/http/router"
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/services/sentence"
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/services/word"
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/sentence"
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/word"
 	commonlogger "github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/logger"
 )
 

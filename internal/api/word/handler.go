@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/word/dto"
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/services/word"
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/word"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/render"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/request"
 )

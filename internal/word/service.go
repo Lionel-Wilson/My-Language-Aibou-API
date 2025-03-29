@@ -15,8 +15,6 @@ import (
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/utils"
 )
 
-var FailedToProcessWord = "Failed to process your word.Please make sure you remove any extra spaces & special characters and try again"
-
 //go:generate mockgen -source=service.go -destination=mock/service.go
 type Service interface {
 	GetWordDefinition(word string, nativeLanguage string) (*openai.ChatCompletion, error)

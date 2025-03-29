@@ -7,9 +7,8 @@ import (
 )
 
 const (
-	headerContentType                = "Content-Type"
-	contentTypeJSON                  = "application/json"
-	StatusInternalServerErrorPayload = "something went wrong. please try again later."
+	headerContentType = "Content-Type"
+	contentTypeJSON   = "application/json"
 )
 
 func Json(w http.ResponseWriter, statusCode int, payload any) {

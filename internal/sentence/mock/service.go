@@ -12,9 +12,8 @@ package mock_sentence
 import (
 	reflect "reflect"
 
-	gomock "go.uber.org/mock/gomock"
-
 	openai "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockService is a mock of Service interface.

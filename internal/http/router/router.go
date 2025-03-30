@@ -35,15 +35,15 @@ func New(
 
 			r.Route(
 				"/word", func(r chi.Router) {
-					r.Post("/definition", wordHandler.DefineWord())
-					r.Post("/synonyms", wordHandler.GetSynonyms())
-					r.Post("/history", wordHandler.GetHistory())
+					r.Get("/definition", wordHandler.DefineWord())
+					r.Get("/synonyms", wordHandler.GetSynonyms())
+					r.Get("/history", wordHandler.GetHistory())
 				},
 			)
 			r.Route(
 				"/sentence", func(r chi.Router) {
-					r.Post("/explanation", sentenceHandler.ExplainSentence())
-					r.Post("/correction", sentenceHandler.CorrectSentence())
+					r.Get("/explanation", sentenceHandler.ExplainSentence())
+					r.Get("/correction", sentenceHandler.CorrectSentence())
 				},
 			)
 		},

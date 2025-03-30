@@ -20,6 +20,7 @@ type Service interface {
 	GetWordDefinition(word string, nativeLanguage string) (*openai.ChatCompletion, error)
 	GetWordSynonyms(word string, nativeLanguage string) (*openai.ChatCompletion, error)
 	ValidateWord(word string) error
+	GetWordHistory(word string, nativeLanguage string) (*openai.ChatCompletion, error)
 }
 
 type service struct {
@@ -32,6 +33,43 @@ func NewWordService(logger *zap.Logger, openAiClient openai.Client) Service {
 		logger:       logger,
 		openAiClient: openAiClient,
 	}
+}
+
+func (s *service) GetWordHistory(word string, nativeLanguage string) (*openai.ChatCompletion, error) {
+	jsonBody := s.wordToOpenAiHistoryRequestBody(word, nativeLanguage)
+
+	resp, responseBody, err := s.openAiClient.MakeRequest(jsonBody)
+	if err != nil {
+		s.logger.Error(err.Error())
+		return &openai.ChatCompletion{}, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		s.logger.Error("OpenAI API returned non-OK status. ")
+		return &openai.ChatCompletion{}, err
+	}
+
+	var OpenAIApiResponse openai.ChatCompletion
+
+	err = json.Unmarshal(responseBody, &OpenAIApiResponse)
+	if err != nil {
+		s.logger.With(zap.Error(err)).Error("Failed to unmarshal json body")
+		return &openai.ChatCompletion{}, err
+	}
+
+	if len(OpenAIApiResponse.Choices) == 0 {
+		s.logger.Info("OpenAI API response contains no choices")
+
+		return &openai.ChatCompletion{}, fmt.Errorf("OpenAI API response contains no choices")
+	}
+
+	s.logger.Sugar().Infof("response: %v\n", OpenAIApiResponse)
+	s.logger.Sugar().Infof("Word History: %s\n", OpenAIApiResponse.Choices[0].Message.Content)
+	s.logger.Sugar().Infof(`Prompt Tokens: %d\n`, OpenAIApiResponse.Usage.PromptTokens)
+	s.logger.Sugar().Infof(`Response Tokens: %d\n`, OpenAIApiResponse.Usage.CompletionTokens)
+	s.logger.Sugar().Infof(`Total Tokens used: %d\n`, OpenAIApiResponse.Usage.TotalTokens)
+
+	return &OpenAIApiResponse, nil
 }
 
 func (s *service) GetWordSynonyms(word string, nativeLanguage string) (*openai.ChatCompletion, error) {
@@ -138,6 +176,28 @@ func (s *service) ValidateWord(word string) error {
 	return nil
 }
 
+func (s *service) wordToOpenAiHistoryRequestBody(word, userNativeLanguage string) *strings.Reader {
+	content := fmt.Sprintf("Give me the history and origin of the word '%s', ensuring the explanation is in %s.", word, userNativeLanguage)
+
+	body := fmt.Sprintf(`{
+	"model":"gpt-4o",
+	"messages": [{
+		"role": "system",
+		"content": "You are a helpful multilingual assistant that supports users learning foreign languages."
+	  },
+	  {
+		"role": "user",
+		"content": "%s"
+	  }],
+	"temperature": 0.4,
+	"max_tokens": 300
+	}`, content)
+
+	s.logger.Sugar().Infof("Word prompt: %s\n", content)
+
+	return strings.NewReader(body)
+}
+
 func (s *service) wordToOpenAiDefinitionRequestBody(word, userNativeLanguage string) *strings.Reader {
 	// var maxWordCount string
 	// var MaxTokens string
@@ -177,8 +237,8 @@ func (s *service) wordToOpenAiDefinitionRequestBody(word, userNativeLanguage str
 func (s *service) wordToOpenAiSynonymsRequestBody(word, userNativeLanguage string) *strings.Reader {
 	// Construct the dynamic content prompt
 	content := fmt.Sprintf(
-		"The user has provided the word '%s'. First, detect what language this word is in. " +
-			"Then, list some simple synonyms for it in that same language. " +
+		"The user has provided the word '%s'. First, detect what language this word is in. "+
+			"Then, list some simple synonyms for it in that same language. "+
 			"Respond in %s, but make sure the synonyms themselves are written in the original language of the word.",
 		word, userNativeLanguage,
 	)

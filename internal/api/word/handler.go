@@ -17,6 +17,7 @@ var FailedToProcessWord = "Failed to process your word. Please make sure you rem
 type Handler interface {
 	DefineWord() http.HandlerFunc
 	GetSynonyms() http.HandlerFunc
+	GetHistory() http.HandlerFunc
 }
 
 type handler struct {
@@ -31,6 +32,42 @@ func NewWordHandler(
 	return &handler{
 		logger:  logger,
 		service: service,
+	}
+}
+
+func (h *handler) GetHistory() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var requestBody dto.DefineWordRequest
+
+		// Validates and decodes request
+		if err := request.DecodeAndValidate(r.Body, &requestBody); err != nil {
+			h.logger.Sugar().Errorw("failed to decode and validate word history request body",
+				"error", err)
+
+			render.Json(w, http.StatusBadRequest, FailedToProcessWord)
+
+			return
+		}
+
+		spaceTrimmedWord := strings.TrimSpace(requestBody.Word)
+
+		err := h.service.ValidateWord(spaceTrimmedWord)
+		if err != nil {
+			h.logger.Sugar().Errorw("failed to validate word", "word", spaceTrimmedWord, "native language", requestBody.NativeLanguage, "error", err)
+			render.Json(w, http.StatusBadRequest, err.Error())
+
+			return
+		}
+
+		response, err := h.service.GetWordHistory(spaceTrimmedWord, requestBody.NativeLanguage)
+		if err != nil {
+			h.logger.Sugar().Errorw("failed to get word history", "error", err, "word", spaceTrimmedWord, "native language", requestBody.NativeLanguage)
+			render.Json(w, http.StatusBadRequest, FailedToProcessWord)
+
+			return
+		}
+
+		render.Json(w, http.StatusOK, response.Choices[0].Message.Content)
 	}
 }
 

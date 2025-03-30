@@ -37,6 +37,7 @@ func New(
 				"/word", func(r chi.Router) {
 					r.Post("/definition", wordHandler.DefineWord())
 					r.Post("/synonyms", wordHandler.GetSynonyms())
+					r.Post("/history", wordHandler.GetHistory())
 				},
 			)
 			r.Route(

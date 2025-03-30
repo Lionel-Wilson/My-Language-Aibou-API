@@ -56,6 +56,21 @@ func (mr *MockServiceMockRecorder) GetWordDefinition(word, nativeLanguage any) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWordDefinition", reflect.TypeOf((*MockService)(nil).GetWordDefinition), word, nativeLanguage)
 }
 
+// GetWordHistory mocks base method.
+func (m *MockService) GetWordHistory(word, nativeLanguage string) (*openai.ChatCompletion, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetWordHistory", word, nativeLanguage)
+	ret0, _ := ret[0].(*openai.ChatCompletion)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetWordHistory indicates an expected call of GetWordHistory.
+func (mr *MockServiceMockRecorder) GetWordHistory(word, nativeLanguage any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWordHistory", reflect.TypeOf((*MockService)(nil).GetWordHistory), word, nativeLanguage)
+}
+
 // GetWordSynonyms mocks base method.
 func (m *MockService) GetWordSynonyms(word, nativeLanguage string) (*openai.ChatCompletion, error) {
 	m.ctrl.T.Helper()

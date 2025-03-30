@@ -29,7 +29,7 @@ func TestDefineWordHandler(t *testing.T) {
 	handler := word.NewWordHandler(mockLogger, mockService)
 
 	r := chi.NewRouter()
-	r.Get("/api/v1/word/definition", handler.DefineWord())
+	r.Post("/api/v1/word/definition", handler.DefineWord())
 
 	testCases := []struct {
 		name           string

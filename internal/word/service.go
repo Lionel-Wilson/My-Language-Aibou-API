@@ -175,25 +175,33 @@ func (s *service) wordToOpenAiDefinitionRequestBody(word, userNativeLanguage str
 }
 
 func (s *service) wordToOpenAiSynonymsRequestBody(word, userNativeLanguage string) *strings.Reader {
-	content := fmt.Sprintf("List out for me some simple synonyms for the word '%s'", word)
+	// Construct the dynamic content prompt
+	content := fmt.Sprintf(
+		"The user has provided the word '%s'. First, detect what language this word is in. " +
+			"Then, list some simple synonyms for it in that same language. " +
+			"Respond in %s, but make sure the synonyms themselves are written in the original language of the word.",
+		word, userNativeLanguage,
+	)
 
-	if userNativeLanguage != "English" {
-		content = fmt.Sprintf("List out for me some simple synonyms for the word '%s'. Respond in %s", word, userNativeLanguage)
-	}
+	// Optionally add a more specific system instruction
+	systemPrompt := "You are a helpful multilingual assistant that supports users learning foreign languages."
 
+	// Construct the full request body
 	body := fmt.Sprintf(`{
-	"model":"gpt-4o",
-	"messages": [{
-		"role": "system",
-		"content": "You are a helpful assistant."
-	  },
-	  {
-		"role": "user",
-		"content": "%s"
-	  }],
-	"temperature": 0.4,
-	"max_tokens": 300
-	}`, content)
+		"model": "gpt-4o",
+		"messages": [
+			{
+				"role": "system",
+				"content": "%s"
+			},
+			{
+				"role": "user",
+				"content": "%s"
+			}
+		],
+		"temperature": 0.4,
+		"max_tokens": 400
+	}`, systemPrompt, content)
 
 	s.logger.Sugar().Infof("Word prompt: %s\n", content)
 

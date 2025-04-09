@@ -19,6 +19,8 @@ WORKDIR /root/
 
 COPY --from=builder /app/server .
 COPY --from=builder /app/internal/config ./internal/config
+#uncomment when running container locally
+#COPY --from=builder /app/.env .env
 COPY --from=builder /app/migrations ./migrations
 
 EXPOSE 8080

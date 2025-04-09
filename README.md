@@ -17,7 +17,7 @@ The API for the "My Language Aibou" application. The AI Powered language learnin
 ```
 PORT=8080
 OPENAI_API_KEY= < Your own Open AI API key >
-SECRET= < Can be any secret you want >
+SECRET= < your secret >
 ENV=dev
 LOG_LEVEL=debug
 DATABASE_URL=<your db url>

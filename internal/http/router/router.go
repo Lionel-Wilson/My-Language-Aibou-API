@@ -20,7 +20,7 @@ import (
 func New(
 	logger *zap.Logger,
 	wordService word.Service,
-	sentencService sentence.Service,
+	sentenceService sentence.Service,
 	userService auth2.UserService,
 	jwtSecret []byte,
 ) http.Handler {
@@ -36,7 +36,7 @@ func New(
 
 	authHandler := auth.NewAuthHandler(logger, userService)
 	wordHandler := wordhandler.NewWordHandler(logger, wordService)
-	sentenceHandler := sentencehandler.NewSentenceHandler(logger, sentencService)
+	sentenceHandler := sentencehandler.NewSentenceHandler(logger, sentenceService)
 
 	router.Route(
 		"/api/v1", func(r chi.Router) {

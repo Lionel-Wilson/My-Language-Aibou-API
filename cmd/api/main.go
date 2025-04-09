@@ -1,20 +1,21 @@
 package main
 
 import (
+	"fmt"
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/auth"
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/auth/storage"
+	commonDb "github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/db"
+	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq" // <-- Add this line to register the Postgres driver
 	"log"
+	"net/http"
 
-	"github.com/gin-contrib/sessions"
-	"github.com/gin-contrib/sessions/cookie"
-	"github.com/gin-gonic/gin"
-
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/config"
-	middlewares "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/middleware"
-	sentencehandler "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/sentence"
-	wordhandler "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/word"
 	openai "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai"
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/services/sentence"
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/services/word"
-	logger2 "github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/logger"
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/config"
+	router "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/http/router"
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/sentence"
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/word"
+	commonlogger "github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/logger"
 )
 
 func main() {
@@ -23,43 +24,39 @@ func main() {
 		log.Fatalf("failed to load configuration: %v", err)
 	}
 
-	logger := logger2.New(cfg)
+	logger := commonlogger.New(cfg)
 
-	gin.SetMode(gin.ReleaseMode)
-	router := gin.Default()
+	// Connect to the PostgreSQL database using sqlx.
+	db, err := sqlx.Connect("postgres", cfg.DatabaseURL)
+	if err != nil {
+		logger.Sugar().Fatalf("failed to connect to database: %v", err)
+	}
 
-	store := cookie.NewStore([]byte(cfg.Secret))
-	store.Options(sessions.Options{
-		MaxAge:   12 * 60 * 60, // 12 hours
-		HttpOnly: true,
-		Secure:   true, // true in production
-	})
-
-	router.Use(sessions.Sessions("mysession", store))
-	router.Use(middlewares.SecureHeaders())
-	router.Use(middlewares.CorsMiddleware())
+	if err := commonDb.RunMigrations(db.DB); err != nil {
+		logger.Sugar().Fatalf("failed to run migrations: %v", err)
+	}
 
 	openAiClient := openai.NewClient(cfg.OpenAIAPIKey, logger)
 
 	wordService := word.NewWordService(logger, openAiClient)
-	sentenceService := sentence.New(logger, openAiClient)
+	sentenceService := sentence.NewSentenceService(logger, openAiClient)
 
-	wordHandler := wordhandler.NewWordHandler(logger, wordService)
-	sentenceHandler := sentencehandler.NewSentenceHandler(logger, sentenceService)
+	userRepository := storage.NewUserRepository(db)
+	userService := auth.NewUserService(logger, userRepository, cfg.JwtSecret)
 
-	apiV1 := router.Group("/api/v1")
-	{
-		apiV1.POST("/search/word", wordHandler.DefineWord)
-		apiV1.POST("/search/synonyms", wordHandler.GetSynonyms)
+	mux := router.New(
+		logger,
+		wordService,
+		sentenceService,
+		userService,
+		cfg.JwtSecret,
+	)
 
-		apiV1.POST("/search/sentence", sentenceHandler.ExplainSentence)
-		apiV1.POST("/search/sentence/correction", sentenceHandler.CorrectSentence)
-	}
-	logger.Sugar().Infof("Server starting on port %s", cfg.Address)
+	logger.Sugar().Infof("Server starting on port %s", cfg.Port)
 
-	// router.RunTLS(addr, "./tls/cert.pem", "./tls/key.pem") TO-DO: Server over HTTPS when figure out how to get certificates
-	err = router.Run(cfg.Address)
-	if err != nil {
-		logger.Fatal(err.Error())
+	addr := fmt.Sprintf(":%s", cfg.Port)
+
+	if err := http.ListenAndServe(addr, mux); err != nil {
+		log.Fatalf("failed to start server: %v", err)
 	}
 }

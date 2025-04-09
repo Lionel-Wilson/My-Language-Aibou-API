@@ -24,3 +24,5 @@ go.work
 tls/
 tls/cert.pem
 tls/key.pem
+
+sqlboiler.toml

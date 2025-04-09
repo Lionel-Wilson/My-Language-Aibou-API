@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    container_name: my_language_aibou_db
+    restart: always
+    environment:
+      POSTGRES_USER: mylanguageaibouuser
+      POSTGRES_PASSWORD: MyAibou25
+      POSTGRES_DB: my-language-aibou-db
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - mla-network
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: my_language_aibou_api
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      - db
+    ports:
+      - "8080:8080"
+    networks:
+      - mla-network
+
+volumes:
+  pgdata:
+
+networks:
+  mla-network:

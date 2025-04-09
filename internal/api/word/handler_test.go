@@ -8,31 +8,28 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	_ "github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap/zaptest"
 
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/word"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/word/dto"
-	openai "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai"
-	wordmock "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/services/word/mock"
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai"
+	wordmock "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/word/mock"
 )
 
-// TO-DO: Handler tests
 func TestDefineWordHandler(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	mockService := wordmock.NewMockService(ctrl)
 	mockLogger := zaptest.NewLogger(t)
-	handler := word.NewWordHandler(*mockLogger, mockService)
+	handler := word.NewWordHandler(mockLogger, mockService)
 
-	router := gin.Default()
-	router.POST("search/word", handler.DefineWord)
+	r := chi.NewRouter()
+	r.Post("/api/v1/word/definition", handler.DefineWord())
 
 	testCases := []struct {
 		name           string
@@ -42,48 +39,66 @@ func TestDefineWordHandler(t *testing.T) {
 		expectedBody   string
 	}{
 		{
-			name: "no word provided",
+			name: "empty word",
 			requestBody: dto.DefineWordRequest{
 				Word:           "",
 				NativeLanguage: "english",
 			},
 			mockSetup: func() {
-				mockService.EXPECT().ValidateWord("").Return(errors.New("please provide a word")).Times(1)
+				mockService.EXPECT().ValidateWord("").Return(errors.New("please provide a word"))
 			},
-			expectedBody:   `please provide a word`,
 			expectedStatus: http.StatusBadRequest,
+			expectedBody:   "please provide a word",
 		},
 		{
-			name: "Failed to get word definition",
+			name: "valid word but API fails",
 			requestBody: dto.DefineWordRequest{
-				Word:           "恋愛",
+				Word:           "hello",
 				NativeLanguage: "english",
 			},
 			mockSetup: func() {
-				mockService.EXPECT().ValidateWord("恋愛").Return(nil).Times(1)
-				mockService.EXPECT().GetWordDefinition(gomock.Any(), gomock.Any()).Return(&openai.ChatCompletion{}, errors.New("an error"))
+				mockService.EXPECT().ValidateWord("hello").Return(nil)
+				mockService.EXPECT().GetWordDefinition("hello", "english").Return(nil, errors.New("api error"))
 			},
-			expectedBody:   "an error",
-			expectedStatus: http.StatusInternalServerError,
+			expectedStatus: http.StatusBadRequest,
+			expectedBody:   "Failed to process your word",
+		},
+		{
+			name: "successful definition",
+			requestBody: dto.DefineWordRequest{
+				Word:           "hello",
+				NativeLanguage: "english",
+			},
+			mockSetup: func() {
+				mockService.EXPECT().ValidateWord("hello").Return(nil)
+				mockService.EXPECT().GetWordDefinition("hello", "english").Return(&openai.ChatCompletion{
+					Choices: []openai.Choice{
+						{
+							Message: openai.Message{
+								Content: "Definition of hello",
+							},
+						},
+					},
+				}, nil)
+			},
+			expectedStatus: http.StatusOK,
+			expectedBody:   "Definition of hello",
 		},
 	}
 
-	// Run test cases
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.mockSetup()
 
 			body, _ := json.Marshal(tt.requestBody)
-			req, err := http.NewRequest(http.MethodPost, "/search/word", bytes.NewBuffer(body))
-			require.NoError(t, err)
-
+			req := httptest.NewRequest(http.MethodPost, "/api/v1/word/definition", bytes.NewReader(body))
 			req.Header.Set("Content-Type", "application/json")
 
-			recorder := httptest.NewRecorder()
-			router.ServeHTTP(recorder, req)
+			rr := httptest.NewRecorder()
+			r.ServeHTTP(rr, req)
 
-			assert.Equal(t, tt.expectedStatus, recorder.Code)
-			require.Contains(t, recorder.Body.String(), tt.expectedBody)
+			assert.Equal(t, tt.expectedStatus, rr.Code)
+			assert.Contains(t, rr.Body.String(), tt.expectedBody)
 		})
 	}
 }

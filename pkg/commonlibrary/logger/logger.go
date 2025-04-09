@@ -6,10 +6,10 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/config"
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/config"
 )
 
-func New(cfg *config.Config) zap.Logger {
+func New(cfg *config.Config) *zap.Logger {
 	var logger *zap.Logger
 
 	var err error
@@ -29,5 +29,5 @@ func New(cfg *config.Config) zap.Logger {
 		_ = logger.Sync()
 	}() // flushes any buffered logger entries
 
-	return *logger
+	return logger
 }

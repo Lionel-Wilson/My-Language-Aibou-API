@@ -36,6 +36,7 @@ func NewWordService(logger *zap.Logger, openAiClient openai.Client) Service {
 }
 
 func (s *service) GetWordHistory(word string, nativeLanguage string) (*openai.ChatCompletion, error) {
+	s.logger.Info("Getting word history", zap.String("word", word), zap.String("nativeLanguage", nativeLanguage))
 	jsonBody := s.wordToOpenAiHistoryRequestBody(word, nativeLanguage)
 
 	resp, responseBody, err := s.openAiClient.MakeRequest(jsonBody)
@@ -63,16 +64,15 @@ func (s *service) GetWordHistory(word string, nativeLanguage string) (*openai.Ch
 		return &openai.ChatCompletion{}, fmt.Errorf("OpenAI API response contains no choices")
 	}
 
-	s.logger.Sugar().Infof("response: %v\n", OpenAIApiResponse)
-	s.logger.Sugar().Infof("Word History: %s\n", OpenAIApiResponse.Choices[0].Message.Content)
-	s.logger.Sugar().Infof(`Prompt Tokens: %d\n`, OpenAIApiResponse.Usage.PromptTokens)
-	s.logger.Sugar().Infof(`Response Tokens: %d\n`, OpenAIApiResponse.Usage.CompletionTokens)
-	s.logger.Sugar().Infof(`Total Tokens used: %d\n`, OpenAIApiResponse.Usage.TotalTokens)
+	s.logger.Sugar().Infof(`Prompt Tokens: %d`, OpenAIApiResponse.Usage.PromptTokens)
+	s.logger.Sugar().Infof(`Response Tokens: %d`, OpenAIApiResponse.Usage.CompletionTokens)
+	s.logger.Sugar().Infof(`Total Tokens used: %d`, OpenAIApiResponse.Usage.TotalTokens)
 
 	return &OpenAIApiResponse, nil
 }
 
 func (s *service) GetWordSynonyms(word string, nativeLanguage string) (*openai.ChatCompletion, error) {
+	s.logger.Info("Getting word synonyms", zap.String("word", word), zap.String("nativeLanguage", nativeLanguage))
 	jsonBody := s.wordToOpenAiSynonymsRequestBody(word, nativeLanguage)
 
 	resp, responseBody, err := s.openAiClient.MakeRequest(jsonBody)
@@ -102,7 +102,6 @@ func (s *service) GetWordSynonyms(word string, nativeLanguage string) (*openai.C
 		return &openai.ChatCompletion{}, fmt.Errorf("OpenAI API response contains no choices")
 	}
 
-	s.logger.Sugar().Infof("Word Synonyms: %s\n", OpenAIApiResponse.Choices[0].Message.Content)
 	s.logger.Sugar().Infof(`Prompt Tokens: %d`, OpenAIApiResponse.Usage.PromptTokens)
 	s.logger.Sugar().Infof(`Response Tokens: %d`, OpenAIApiResponse.Usage.CompletionTokens)
 	s.logger.Sugar().Infof(`Total Tokens used: %d`, OpenAIApiResponse.Usage.TotalTokens)
@@ -111,6 +110,7 @@ func (s *service) GetWordSynonyms(word string, nativeLanguage string) (*openai.C
 }
 
 func (s *service) GetWordDefinition(word string, nativeLanguage string) (*openai.ChatCompletion, error) {
+	s.logger.Info("Getting word definition", zap.String("word", word), zap.String("nativeLanguage", nativeLanguage))
 	jsonBody := s.wordToOpenAiDefinitionRequestBody(word, nativeLanguage)
 
 	resp, responseBody, err := s.openAiClient.MakeRequest(jsonBody)
@@ -138,11 +138,9 @@ func (s *service) GetWordDefinition(word string, nativeLanguage string) (*openai
 		return &openai.ChatCompletion{}, fmt.Errorf("OpenAI API response contains no choices")
 	}
 
-	s.logger.Sugar().Infof("response: %v\n", OpenAIApiResponse)
-	s.logger.Sugar().Infof("Word Definition: %s\n", OpenAIApiResponse.Choices[0].Message.Content)
-	s.logger.Sugar().Infof(`Prompt Tokens: %d\n`, OpenAIApiResponse.Usage.PromptTokens)
-	s.logger.Sugar().Infof(`Response Tokens: %d\n`, OpenAIApiResponse.Usage.CompletionTokens)
-	s.logger.Sugar().Infof(`Total Tokens used: %d\n`, OpenAIApiResponse.Usage.TotalTokens)
+	s.logger.Sugar().Infof(`Prompt Tokens: %d`, OpenAIApiResponse.Usage.PromptTokens)
+	s.logger.Sugar().Infof(`Response Tokens: %d`, OpenAIApiResponse.Usage.CompletionTokens)
+	s.logger.Sugar().Infof(`Total Tokens used: %d`, OpenAIApiResponse.Usage.TotalTokens)
 
 	return &OpenAIApiResponse, nil
 }

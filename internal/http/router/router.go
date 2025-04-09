@@ -1,6 +1,9 @@
 package router
 
 import (
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/auth"
+	auth2 "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/auth"
+	commonMiddleware "github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/middleware"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -18,6 +21,8 @@ func New(
 	logger *zap.Logger,
 	wordService word.Service,
 	sentencService sentence.Service,
+	userService auth2.UserService,
+	jwtSecret []byte,
 ) http.Handler {
 	// Create a new Chi router.
 	router := chi.NewRouter()
@@ -28,11 +33,26 @@ func New(
 
 	// Define the /alive endpoint.
 	registerAliveEndpoint(router)
+
+	authHandler := auth.NewAuthHandler(logger, userService)
+	wordHandler := wordhandler.NewWordHandler(logger, wordService)
+	sentenceHandler := sentencehandler.NewSentenceHandler(logger, sentencService)
+
 	router.Route(
 		"/api/v1", func(r chi.Router) {
-			wordHandler := wordhandler.NewWordHandler(logger, wordService)
-			sentenceHandler := sentencehandler.NewSentenceHandler(logger, sentencService)
+			r.Route(
+				"/search", func(r chi.Router) {
+					r.Post("/word", wordHandler.DefineWord())
+					r.Post("/synonyms", wordHandler.GetSynonyms())
+					r.Post("/sentence", sentenceHandler.ExplainSentence())
+					r.Post("/sentence/correction", sentenceHandler.CorrectSentence())
+				},
+			)
+		},
+	)
 
+	router.Route(
+		"/api/v2", func(r chi.Router) {
 			r.Route(
 				"/word", func(r chi.Router) {
 					r.Post("/definition", wordHandler.DefineWord())
@@ -48,6 +68,40 @@ func New(
 			)
 		},
 	)
+
+	router.Route("/api/v3", func(r chi.Router) {
+		r.Route(
+			"/auth", func(r chi.Router) {
+				r.Post("/register", authHandler.Register())
+				r.Post("/login", authHandler.Login())
+
+			},
+		)
+
+		// Protected endpoints: wrap these with auth middleware.
+		r.Group(func(r chi.Router) {
+			r.Use(commonMiddleware.AuthMiddlewareString(jwtSecret))
+			r.Route(
+				"/user", func(r chi.Router) {
+					r.Post("/update-details", authHandler.UpdateDetails())
+					r.Delete("/", authHandler.Delete())
+				})
+
+			r.Route(
+				"/word", func(r chi.Router) {
+					r.Post("/definition", wordHandler.DefineWord())
+					r.Post("/synonyms", wordHandler.GetSynonyms())
+					r.Post("/history", wordHandler.GetHistory())
+				},
+			)
+			r.Route(
+				"/sentence", func(r chi.Router) {
+					r.Post("/explanation", sentenceHandler.ExplainSentence())
+					r.Post("/correction", sentenceHandler.CorrectSentence())
+				},
+			)
+		})
+	})
 
 	return router
 }

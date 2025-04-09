@@ -35,6 +35,7 @@ func NewSentenceService(logger *zap.Logger, openAiClient openai.Client) Service 
 }
 
 func (s *service) GetSentenceCorrection(sentence string, nativeLanguage string) (*openai.ChatCompletion, error) {
+	s.logger.Debug("Getting sentence correction", zap.String("sentence", sentence), zap.String("nativeLanguage", nativeLanguage))
 	jsonBody := s.sentenceToOpenAiSentenceCorrectionRequestBody(sentence, nativeLanguage)
 
 	resp, responseBody, err := s.openAiClient.MakeRequest(jsonBody)
@@ -61,15 +62,15 @@ func (s *service) GetSentenceCorrection(sentence string, nativeLanguage string) 
 		return &openai.ChatCompletion{}, ErrOpenAiNoChoices
 	}
 
-	s.logger.Sugar().Infof("Phrase explanation: %s\n", OpenAIApiResponse.Choices[0].Message.Content)
-	s.logger.Sugar().Infof("Prompt Tokens: %d\n", OpenAIApiResponse.Usage.PromptTokens)
-	s.logger.Sugar().Infof("Response Tokens: %d\n", OpenAIApiResponse.Usage.CompletionTokens)
-	s.logger.Sugar().Infof("Total Tokens used: %d\n", OpenAIApiResponse.Usage.TotalTokens)
+	s.logger.Sugar().Infof("Prompt Tokens: %d", OpenAIApiResponse.Usage.PromptTokens)
+	s.logger.Sugar().Infof("Response Tokens: %d", OpenAIApiResponse.Usage.CompletionTokens)
+	s.logger.Sugar().Infof("Total Tokens used: %d", OpenAIApiResponse.Usage.TotalTokens)
 
 	return &OpenAIApiResponse, nil
 }
 
 func (s *service) GetSentenceExplanation(sentence string, nativeLanguage string) (*openai.ChatCompletion, error) {
+	s.logger.Info("Getting sentence explanation", zap.String("sentence", sentence), zap.String("nativeLanguage", nativeLanguage))
 	jsonBody := s.sentenceToOpenAiExplanationRequestBody(sentence, nativeLanguage)
 
 	resp, responseBody, err := s.openAiClient.MakeRequest(jsonBody)
@@ -94,10 +95,9 @@ func (s *service) GetSentenceExplanation(sentence string, nativeLanguage string)
 		return &openai.ChatCompletion{}, ErrOpenAiNoChoices
 	}
 
-	s.logger.Sugar().Infof("Phrase explanation: %s\n", OpenAIApiResponse.Choices[0].Message.Content)
-	s.logger.Sugar().Infof("Prompt Tokens: %d\n", OpenAIApiResponse.Usage.PromptTokens)
-	s.logger.Sugar().Infof("Response Tokens: %d\n", OpenAIApiResponse.Usage.CompletionTokens)
-	s.logger.Sugar().Infof("Total Tokens used: %d\n", OpenAIApiResponse.Usage.TotalTokens)
+	s.logger.Sugar().Infof("Prompt Tokens: %d", OpenAIApiResponse.Usage.PromptTokens)
+	s.logger.Sugar().Infof("Response Tokens: %d", OpenAIApiResponse.Usage.CompletionTokens)
+	s.logger.Sugar().Infof("Total Tokens used: %d", OpenAIApiResponse.Usage.TotalTokens)
 
 	return &OpenAIApiResponse, nil
 }

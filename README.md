@@ -19,6 +19,9 @@ PORT=8080
 OPENAI_API_KEY= < Your own Open AI API key >
 SECRET= < Can be any secret you want >
 ENV=dev
+LOG_LEVEL=debug
+DATABASE_URL=<your db url>
+JWT_SECRET=<your jwt secret>
 ```
 4. Open a terminal and run the following commands. Make sure you're in the root of the repository:
 

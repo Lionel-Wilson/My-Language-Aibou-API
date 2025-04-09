@@ -1,17 +1,27 @@
-# syntax=docker/dockerfile:1
-
-FROM golang:1.22
+# Build stage
+FROM golang:1.24.1-alpine AS builder
 
 WORKDIR /app
 
-COPY go.mod go.sum ./
+RUN apk update && apk add --no-cache git curl
 
+COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o /docker-gs-ping ./cmd/api/main.go
+RUN go build -o server ./cmd/api/main.go
+
+# Final stage
+FROM alpine:latest
+
+WORKDIR /root/
+
+COPY --from=builder /app/server .
+COPY --from=builder /app/internal/config ./internal/config
+COPY --from=builder /app/.env .env
+COPY --from=builder /app/migrations ./migrations
 
 EXPOSE 8080
 
-CMD ["/docker-gs-ping"]
+CMD ["./server"]

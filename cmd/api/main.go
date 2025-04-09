@@ -2,6 +2,11 @@ package main
 
 import (
 	"fmt"
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/auth"
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/auth/storage"
+	commonDb "github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/db"
+	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq" // <-- Add this line to register the Postgres driver
 	"log"
 	"net/http"
 
@@ -21,12 +26,31 @@ func main() {
 
 	logger := commonlogger.New(cfg)
 
+	// Connect to the PostgreSQL database using sqlx.
+	db, err := sqlx.Connect("postgres", cfg.DatabaseURL)
+	if err != nil {
+		logger.Sugar().Fatalf("failed to connect to database: %v", err)
+	}
+
+	if err := commonDb.RunMigrations(db.DB); err != nil {
+		logger.Sugar().Fatalf("failed to run migrations: %v", err)
+	}
+
 	openAiClient := openai.NewClient(cfg.OpenAIAPIKey, logger)
 
 	wordService := word.NewWordService(logger, openAiClient)
 	sentenceService := sentence.NewSentenceService(logger, openAiClient)
 
-	mux := router.New(logger, wordService, sentenceService)
+	userRepository := storage.NewUserRepository(db)
+	userService := auth.NewUserService(logger, userRepository, cfg.JwtSecret)
+
+	mux := router.New(
+		logger,
+		wordService,
+		sentenceService,
+		userService,
+		cfg.JwtSecret,
+	)
 
 	logger.Sugar().Infof("Server starting on port %s", cfg.Port)
 

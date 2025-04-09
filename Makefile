@@ -8,6 +8,25 @@ mock:
 	go generate ./...
 .PHONY: mock
 
+entity:
+	@sqlboiler psql -c ./sqlboiler.toml
+.PHONY: entity
+
+#DSN="postgres://mylanguageaibouuser:MyAibou25@db:5432/my-language-aibou-db?sslmode=disable"
+DSN="postgres://mylanguageaibouuser:MyAibou25@localhost:5432/my-language-aibou-db?sslmode=disable"
+
+migrate-up:
+	@goose -dir ./migrations postgres ${DSN} up
+.PHONY: migrate-up
+
+migrate-down:
+	@goose -dir ./migrations postgres ${DSN} down
+.PHONY: migrate-down
+
+migrate-create:
+	@cd ./migrations && goose create create_user_table sql
+.PHONY: migrate-create
+
 lint:
 	go mod tidy
 	go vet ./...
@@ -17,6 +36,10 @@ lint:
 	golangci-lint run $(p)
 	go fmt ./...
 .PHONY: lint
+
+build:
+	docker-compose up --build
+.PHONY: build
 
 start:
 	docker build -t my-language-aibou-api .

@@ -16,6 +16,9 @@ type Config struct {
 	Secret       string `mapstructure:"SECRET" validate:"required"`
 	Port         string `mapstructure:"PORT" validate:"required"`
 	Env          string `mapstructure:"ENV" validate:"required"`
+	DatabaseURL  string `mapstructure:"DATABASE_URL" yaml:"database_url" validate:"required"`
+	LogLevel     string `mapstructure:"LOG_LEVEL" yaml:"log_level"`
+	JwtSecret    []byte `mapstructure:"JWT_SECRET" yaml:"jwt_secret" validate:"required"`
 }
 
 // LoadConfig loads configuration from the OS environment and, if not in production,
@@ -44,6 +47,9 @@ func LoadConfig() (*Config, error) {
 		Secret:       viper.GetString("SECRET"),
 		Env:          viper.GetString("ENV"),
 		Port:         viper.GetString("PORT"),
+		DatabaseURL:  viper.GetString("DATABASE_URL"),
+		LogLevel:     viper.GetString("LOG_LEVEL"),
+		JwtSecret:    []byte(viper.GetString("JWT_SECRET")),
 	}
 
 	// Validate the config.

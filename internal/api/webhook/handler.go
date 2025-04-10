@@ -109,7 +109,6 @@ func (h *webhookHandler) handleCustomerSubscriptionDeleted(ctx context.Context, 
 func (h *webhookHandler) handleInvoicePaymentSucceeded(ctx context.Context, event stripe.Event) {
 	h.logger.Info("Handling invoice.payment_succeeded")
 
-	// TODO: Implement your business logic here.
 	var invoice stripe.Invoice
 	if err := json.Unmarshal(event.Data.Raw, &invoice); err != nil {
 		h.logger.Error("Error unmarshaling invoice event", zap.Error(err))

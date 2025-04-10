@@ -46,11 +46,11 @@ func (s subscriptionService) SubscribeUser(ctx context.Context, user *entity.Use
 		stripeCustomerID = &user.StripeCustomerID.String
 	}
 
-	// Define the subscription parameters (replace "price_xyz" with your Stripe Price ID for £5/month)
+	// Define the subscription parameters
 	params := &stripe.SubscriptionParams{
 		Customer:        stripeCustomerID,
 		Items:           []*stripe.SubscriptionItemsParams{{Price: stripe.String("price_1RCJhLGhK964Xz608A8iJO80")}},
-		TrialPeriodDays: stripe.Int64(14),
+		TrialPeriodDays: stripe.Int64(7),
 	}
 
 	stripeSub, err := subscription.New(params)

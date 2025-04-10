@@ -117,8 +117,8 @@ func (h *webhookHandler) handleInvoicePaymentSucceeded(ctx context.Context, even
 
 	// Extract required Stripe IDs
 	stripeSubID := &invoice.Parent.SubscriptionDetails.Subscription.ID
-	// Total amount paid (in cents)
-	amount := &invoice.AmountPaid // in cents
+	amountInPounds := invoice.AmountPaid / int64(100)
+	amount := &amountInPounds
 	currency := invoice.Currency
 
 	// Call your service layer to handle it

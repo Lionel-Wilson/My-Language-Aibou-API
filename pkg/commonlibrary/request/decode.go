@@ -25,3 +25,19 @@ func DecodeAndValidate(src io.ReadCloser, target Validator) error {
 
 	return target.Validate()
 }
+
+func Decode(src io.ReadCloser, target any) error {
+	if src == nil {
+		return errors.New("empty body")
+	}
+
+	defer func(src io.ReadCloser) {
+		_ = src.Close()
+	}(src)
+
+	if err := json.NewDecoder(src).Decode(target); err != nil {
+		return err
+	}
+
+	return nil
+}

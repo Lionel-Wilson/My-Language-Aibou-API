@@ -3,6 +3,8 @@ package subscriptions
 import (
 	"context"
 	"fmt"
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/paymenttransactions"
+	"github.com/google/uuid"
 	"time"
 
 	"github.com/stripe/stripe-go/v82"
@@ -18,24 +20,72 @@ type SubscriptionService interface {
 	SubscribeUser(ctx context.Context, user *entity.User) (*entity.Subscription, error)
 	GetUserSubscription(ctx context.Context, userID *string) (*entity.Subscription, error)
 	CancelSubscription(ctx context.Context, useruserID *string) (*entity.Subscription, error)
+	HandleInvoiceSuccess(
+		ctx context.Context,
+		stripeSubID *string,
+		amount *int64,
+		currency string,
+	) error
 }
 
 type subscriptionService struct {
-	logger            *zap.Logger
-	stripeSecretKey   string
-	subscriptionsRepo storage.SubscriptionsRepository
+	logger                    *zap.Logger
+	stripeSecretKey           string
+	subscriptionsRepo         storage.SubscriptionsRepository
+	paymentTransactionService paymenttransactions.PaymentTransactionService
 }
 
 func NewSubscriptionService(
 	logger *zap.Logger,
 	stripeSecretKey string,
 	subscriptionsRepo storage.SubscriptionsRepository,
+	paymentTransactionService paymenttransactions.PaymentTransactionService,
 ) SubscriptionService {
 	return &subscriptionService{
-		logger:            logger,
-		stripeSecretKey:   stripeSecretKey,
-		subscriptionsRepo: subscriptionsRepo,
+		logger:                    logger,
+		stripeSecretKey:           stripeSecretKey,
+		subscriptionsRepo:         subscriptionsRepo,
+		paymentTransactionService: paymentTransactionService,
 	}
+}
+
+func (s *subscriptionService) HandleInvoiceSuccess(
+	ctx context.Context,
+	stripeSubID *string,
+	amount *int64,
+	currency string,
+) error {
+	// 1. Find the subscription in the DB
+	sub, err := s.subscriptionsRepo.GetSubscriptionByStripeID(ctx, stripeSubID)
+	if err != nil {
+		return fmt.Errorf("failed to find subscription: %w", err)
+	}
+
+	// 2. Create a payment transaction record
+	payment := &entity.PaymentTransaction{
+		ID:        uuid.NewString(),
+		UserID:    sub.UserID,
+		Amount:    int(*amount),
+		Status:    "succeeded",
+		Currency:  currency,
+		CreatedAt: time.Now(),
+	}
+
+	if err := s.paymentTransactionService.InsertPaymentTransaction(ctx, payment); err != nil {
+		return fmt.Errorf("failed to record payment: %w", err)
+	}
+
+	// 3. Update subscription status if still "trialing" or some other status
+	if sub.Status != "active" {
+		sub.Status = "active"
+		sub.UpdatedAt = time.Now()
+
+		if _, err := s.subscriptionsRepo.Update(ctx, sub); err != nil {
+			return fmt.Errorf("failed to update subscription status: %w", err)
+		}
+	}
+
+	return nil
 }
 
 func (s *subscriptionService) GetUserSubscription(ctx context.Context, userID *string) (*entity.Subscription, error) {

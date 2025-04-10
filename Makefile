@@ -24,7 +24,7 @@ migrate-down:
 .PHONY: migrate-down
 
 migrate-create:
-	@cd ./migrations && goose create create_user_table sql
+	@cd ./migrations && goose create update_payment_transactions_payment_intent sql
 .PHONY: migrate-create
 
 lint:

@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/paymenttransactions"
+	ptStorage "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/paymenttransactions/storage"
 	"log"
 	"net/http"
 
@@ -47,8 +49,16 @@ func main() {
 	userRepository := userStorage.NewUserRepository(db)
 	userService := auth.NewUserService(logger, userRepository, cfg.JwtSecret, cfg.StripeSecretKey)
 
+	paymentTransactionsRepository := ptStorage.NewPaymentTransactionRepository(db)
+	paymentTransactionService := paymenttransactions.NewPaymentTransactionService(logger, paymentTransactionsRepository)
+
 	subscriptionRepository := subscriptionStorage.NewSubscriptionsRepository(db)
-	subscriptionService := subscriptions.NewSubscriptionService(logger, cfg.StripeSecretKey, subscriptionRepository)
+	subscriptionService := subscriptions.NewSubscriptionService(
+		logger,
+		cfg.StripeSecretKey,
+		subscriptionRepository,
+		paymentTransactionService,
+	)
 
 	mux := router.New(
 		logger,
@@ -57,6 +67,7 @@ func main() {
 		userService,
 		subscriptionService,
 		cfg.JwtSecret,
+		cfg.StripeWebhookSecret,
 	)
 
 	logger.Sugar().Infof("Server starting on port %s", cfg.Port)

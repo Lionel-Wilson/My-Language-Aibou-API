@@ -15,6 +15,7 @@ type SubscriptionsRepository interface {
 	Insert(ctx context.Context, subscription *entity.Subscription) (*entity.Subscription, error)
 	GetSubscriptionByUserID(ctx context.Context, userID *string) (*entity.Subscription, error)
 	Update(ctx context.Context, subscription *entity.Subscription) (*entity.Subscription, error)
+	GetSubscriptionByStripeID(ctx context.Context, stripeID *string) (*entity.Subscription, error)
 }
 
 type subscriptionsRepository struct {
@@ -25,6 +26,21 @@ func NewSubscriptionsRepository(db *sqlx.DB) SubscriptionsRepository {
 	return &subscriptionsRepository{
 		db: db,
 	}
+}
+
+func (s *subscriptionsRepository) GetSubscriptionByStripeID(ctx context.Context, stripeID *string) (*entity.Subscription, error) {
+	subscriptions, err := entity.Subscriptions(
+		qm.Where("stripe_subscription_id = ?", *stripeID),
+	).All(ctx, s.db)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get subscription for user %s: %w", *stripeID, err)
+	}
+
+	if len(subscriptions) == 0 {
+		return nil, fmt.Errorf("no subscription found for user %s", *stripeID)
+	}
+	// Return the first subscription found.
+	return subscriptions[0], nil
 }
 
 func (s *subscriptionsRepository) Update(ctx context.Context, subscription *entity.Subscription) (*entity.Subscription, error) {

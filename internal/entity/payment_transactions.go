@@ -23,52 +23,52 @@ import (
 
 // PaymentTransaction is an object representing the database table.
 type PaymentTransaction struct {
-	ID             string    `boil:"id" json:"id" toml:"id" yaml:"id"`
-	UserID         string    `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
-	StripeChargeID string    `boil:"stripe_charge_id" json:"stripe_charge_id" toml:"stripe_charge_id" yaml:"stripe_charge_id"`
-	Amount         int       `boil:"amount" json:"amount" toml:"amount" yaml:"amount"`
-	Currency       string    `boil:"currency" json:"currency" toml:"currency" yaml:"currency"`
-	Status         string    `boil:"status" json:"status" toml:"status" yaml:"status"`
-	CreatedAt      time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	ID                    string    `boil:"id" json:"id" toml:"id" yaml:"id"`
+	UserID                string    `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
+	Amount                int       `boil:"amount" json:"amount" toml:"amount" yaml:"amount"`
+	Currency              string    `boil:"currency" json:"currency" toml:"currency" yaml:"currency"`
+	Status                string    `boil:"status" json:"status" toml:"status" yaml:"status"`
+	CreatedAt             time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	StripePaymentIntentID string    `boil:"stripe_payment_intent_id" json:"stripe_payment_intent_id" toml:"stripe_payment_intent_id" yaml:"stripe_payment_intent_id"`
 
 	R *paymentTransactionR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L paymentTransactionL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var PaymentTransactionColumns = struct {
-	ID             string
-	UserID         string
-	StripeChargeID string
-	Amount         string
-	Currency       string
-	Status         string
-	CreatedAt      string
+	ID                    string
+	UserID                string
+	Amount                string
+	Currency              string
+	Status                string
+	CreatedAt             string
+	StripePaymentIntentID string
 }{
-	ID:             "id",
-	UserID:         "user_id",
-	StripeChargeID: "stripe_charge_id",
-	Amount:         "amount",
-	Currency:       "currency",
-	Status:         "status",
-	CreatedAt:      "created_at",
+	ID:                    "id",
+	UserID:                "user_id",
+	Amount:                "amount",
+	Currency:              "currency",
+	Status:                "status",
+	CreatedAt:             "created_at",
+	StripePaymentIntentID: "stripe_payment_intent_id",
 }
 
 var PaymentTransactionTableColumns = struct {
-	ID             string
-	UserID         string
-	StripeChargeID string
-	Amount         string
-	Currency       string
-	Status         string
-	CreatedAt      string
+	ID                    string
+	UserID                string
+	Amount                string
+	Currency              string
+	Status                string
+	CreatedAt             string
+	StripePaymentIntentID string
 }{
-	ID:             "payment_transactions.id",
-	UserID:         "payment_transactions.user_id",
-	StripeChargeID: "payment_transactions.stripe_charge_id",
-	Amount:         "payment_transactions.amount",
-	Currency:       "payment_transactions.currency",
-	Status:         "payment_transactions.status",
-	CreatedAt:      "payment_transactions.created_at",
+	ID:                    "payment_transactions.id",
+	UserID:                "payment_transactions.user_id",
+	Amount:                "payment_transactions.amount",
+	Currency:              "payment_transactions.currency",
+	Status:                "payment_transactions.status",
+	CreatedAt:             "payment_transactions.created_at",
+	StripePaymentIntentID: "payment_transactions.stripe_payment_intent_id",
 }
 
 // Generated where
@@ -101,21 +101,21 @@ func (w whereHelperstring) NIN(slice []string) qm.QueryMod {
 }
 
 var PaymentTransactionWhere = struct {
-	ID             whereHelperstring
-	UserID         whereHelperstring
-	StripeChargeID whereHelperstring
-	Amount         whereHelperint
-	Currency       whereHelperstring
-	Status         whereHelperstring
-	CreatedAt      whereHelpertime_Time
+	ID                    whereHelperstring
+	UserID                whereHelperstring
+	Amount                whereHelperint
+	Currency              whereHelperstring
+	Status                whereHelperstring
+	CreatedAt             whereHelpertime_Time
+	StripePaymentIntentID whereHelperstring
 }{
-	ID:             whereHelperstring{field: "\"payment_transactions\".\"id\""},
-	UserID:         whereHelperstring{field: "\"payment_transactions\".\"user_id\""},
-	StripeChargeID: whereHelperstring{field: "\"payment_transactions\".\"stripe_charge_id\""},
-	Amount:         whereHelperint{field: "\"payment_transactions\".\"amount\""},
-	Currency:       whereHelperstring{field: "\"payment_transactions\".\"currency\""},
-	Status:         whereHelperstring{field: "\"payment_transactions\".\"status\""},
-	CreatedAt:      whereHelpertime_Time{field: "\"payment_transactions\".\"created_at\""},
+	ID:                    whereHelperstring{field: "\"payment_transactions\".\"id\""},
+	UserID:                whereHelperstring{field: "\"payment_transactions\".\"user_id\""},
+	Amount:                whereHelperint{field: "\"payment_transactions\".\"amount\""},
+	Currency:              whereHelperstring{field: "\"payment_transactions\".\"currency\""},
+	Status:                whereHelperstring{field: "\"payment_transactions\".\"status\""},
+	CreatedAt:             whereHelpertime_Time{field: "\"payment_transactions\".\"created_at\""},
+	StripePaymentIntentID: whereHelperstring{field: "\"payment_transactions\".\"stripe_payment_intent_id\""},
 }
 
 // PaymentTransactionRels is where relationship names are stored.
@@ -146,8 +146,8 @@ func (r *paymentTransactionR) GetUser() *User {
 type paymentTransactionL struct{}
 
 var (
-	paymentTransactionAllColumns            = []string{"id", "user_id", "stripe_charge_id", "amount", "currency", "status", "created_at"}
-	paymentTransactionColumnsWithoutDefault = []string{"user_id", "stripe_charge_id", "amount", "currency", "status"}
+	paymentTransactionAllColumns            = []string{"id", "user_id", "amount", "currency", "status", "created_at", "stripe_payment_intent_id"}
+	paymentTransactionColumnsWithoutDefault = []string{"user_id", "amount", "currency", "status", "stripe_payment_intent_id"}
 	paymentTransactionColumnsWithDefault    = []string{"id", "created_at"}
 	paymentTransactionPrimaryKeyColumns     = []string{"id"}
 	paymentTransactionGeneratedColumns      = []string{}

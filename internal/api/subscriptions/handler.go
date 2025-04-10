@@ -13,6 +13,8 @@ import (
 
 type SubscriptionsHandler interface {
 	Subscribe() http.HandlerFunc
+	Cancel() http.HandlerFunc
+	Status() http.HandlerFunc
 }
 
 type subscriptionsHandler struct {
@@ -30,6 +32,64 @@ func NewSubscriptionsHandler(
 		logger:               logger,
 		subscriptionsService: subscriptionsService,
 		userService:          userService,
+	}
+}
+
+// Status returns the current subscription details.
+func (h *subscriptionsHandler) Status() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		// Get the user ID from the context
+		userID, err := context.GetUserIDString(ctx)
+		if err != nil {
+			h.logger.Sugar().Errorw("user ID not found in session", "error", err)
+			render.Json(w, http.StatusUnauthorized, "unauthorized")
+
+			return
+		}
+
+		// Use the subscription service to retrieve the user’s subscription record.
+		subscription, err := h.subscriptionsService.GetUserSubscription(r.Context(), &userID)
+		if err != nil {
+			h.logger.Error("Failed to get subscription status", zap.Error(err))
+			render.Json(w, http.StatusInternalServerError, "Unable to retrieve subscription status")
+
+			return
+		}
+
+		// Return the subscription details as JSON.
+		render.Json(w, http.StatusOK, subscription)
+	}
+}
+
+func (h *subscriptionsHandler) Cancel() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		userID, err := context.GetUserIDString(ctx)
+		if err != nil {
+			h.logger.Sugar().Errorw("user ID not found in session", "error", err)
+			render.Json(w, http.StatusUnauthorized, "unauthorized")
+
+			return
+		}
+
+		// Call the service method to cancel the subscription.
+		updatedSubscription, err := h.subscriptionsService.CancelSubscription(r.Context(), &userID)
+		if err != nil {
+			h.logger.Error("Failed to cancel subscription", zap.Error(err))
+			render.Json(w, http.StatusInternalServerError, "Unable to cancel subscription")
+
+			return
+		}
+
+		// Return a confirmation message along with subscription details.
+		response := map[string]interface{}{
+			"message":      "Subscription successfully cancelled",
+			"subscription": updatedSubscription,
+		}
+		render.Json(w, http.StatusOK, response)
 	}
 }
 

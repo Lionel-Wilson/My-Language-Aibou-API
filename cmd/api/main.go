@@ -9,13 +9,13 @@ import (
 	_ "github.com/lib/pq" // <-- Add this line to register the Postgres driver
 
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/auth"
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/auth/storage"
+	userStorage "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/auth/storage"
 	openai "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/config"
 	router "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/http/router"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/sentence"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/subscriptions"
-	storage2 "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/subscriptions/storage"
+	subscriptionStorage "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/subscriptions/storage"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/word"
 	commonDb "github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/db"
 	commonlogger "github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/logger"
@@ -44,10 +44,10 @@ func main() {
 	wordService := word.NewWordService(logger, openAiClient)
 	sentenceService := sentence.NewSentenceService(logger, openAiClient)
 
-	userRepository := storage.NewUserRepository(db)
+	userRepository := userStorage.NewUserRepository(db)
 	userService := auth.NewUserService(logger, userRepository, cfg.JwtSecret, cfg.StripeSecretKey)
 
-	subscriptionRepository := storage2.NewSubscriptionsRepository(db)
+	subscriptionRepository := subscriptionStorage.NewSubscriptionsRepository(db)
 	subscriptionService := subscriptions.NewSubscriptionService(logger, cfg.StripeSecretKey, subscriptionRepository)
 
 	mux := router.New(

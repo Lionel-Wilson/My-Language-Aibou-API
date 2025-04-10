@@ -16,6 +16,8 @@ import (
 
 type SubscriptionService interface {
 	SubscribeUser(ctx context.Context, user *entity.User) (*entity.Subscription, error)
+	GetUserSubscription(ctx context.Context, userID *string) (*entity.Subscription, error)
+	CancelSubscription(ctx context.Context, useruserID *string) (*entity.Subscription, error)
 }
 
 type subscriptionService struct {
@@ -29,15 +31,53 @@ func NewSubscriptionService(
 	stripeSecretKey string,
 	subscriptionsRepo storage.SubscriptionsRepository,
 ) SubscriptionService {
-	return subscriptionService{
+	return &subscriptionService{
 		logger:            logger,
 		stripeSecretKey:   stripeSecretKey,
 		subscriptionsRepo: subscriptionsRepo,
 	}
 }
 
+func (s *subscriptionService) GetUserSubscription(ctx context.Context, userID *string) (*entity.Subscription, error) {
+	sub, err := s.subscriptionsRepo.GetSubscriptionByUserID(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get subscription: %w", err)
+	}
+
+	return sub, nil
+}
+
+func (s *subscriptionService) CancelSubscription(ctx context.Context, userID *string) (*entity.Subscription, error) {
+	// Retrieve the current subscription record from the database.
+	subRecord, err := s.subscriptionsRepo.GetSubscriptionByUserID(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get subscription: %w", err)
+	}
+
+	// Set your Stripe API key.
+	stripe.Key = s.stripeSecretKey
+
+	// Call the Stripe API to cancel the subscription.
+	canceledSub, err := subscription.Cancel(subRecord.StripeSubscriptionID, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to cancel stripe subscription: %w", err)
+	}
+
+	// Update your subscription record. For example, set the status to canceled.
+	subRecord.Status = string(canceledSub.Status)
+	// Optionally record cancellation time (if your entity has such a field)
+	subRecord.UpdatedAt = time.Now()
+
+	updatedSub, err := s.subscriptionsRepo.Update(ctx, subRecord)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update subscription record: %w", err)
+	}
+
+	return updatedSub, nil
+}
+
 // SubscribeUser creates a new Stripe subscription for the given user and stores it.
-func (s subscriptionService) SubscribeUser(ctx context.Context, user *entity.User) (*entity.Subscription, error) {
+func (s *subscriptionService) SubscribeUser(ctx context.Context, user *entity.User) (*entity.Subscription, error) {
 	// Set the Stripe API key
 	stripe.Key = s.stripeSecretKey
 

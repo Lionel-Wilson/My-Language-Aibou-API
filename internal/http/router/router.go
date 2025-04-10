@@ -107,6 +107,8 @@ func New(
 			r.Route(
 				"/subscription", func(r chi.Router) {
 					r.Post("/subscribe", subscriptionsHandler.Subscribe())
+					r.Post("/cancel", subscriptionsHandler.Cancel())
+					r.Get("/status", subscriptionsHandler.Status())
 				},
 			)
 		})

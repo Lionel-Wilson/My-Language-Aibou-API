@@ -78,7 +78,9 @@ func (c openAiClient) MakeRequest(body *strings.Reader) (*http.Response, []byte,
 		return &http.Response{}, []byte{}, err
 	}
 
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(resp.Body)
 
 	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {

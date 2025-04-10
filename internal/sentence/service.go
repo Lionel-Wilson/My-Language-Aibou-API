@@ -104,11 +104,11 @@ func (s *service) GetSentenceExplanation(sentence string, nativeLanguage string)
 
 func (s *service) ValidateSentence(sentence string) error {
 	if sentence == "" {
-		return errors.New("Please provide a sentence")
+		return errors.New("please provide a sentence")
 	}
 
 	if utf8.RuneCountInString(sentence) > 100 {
-		return errors.New("The sentence must be less than 100 characters.")
+		return errors.New("the sentence must be less than 100 characters")
 	}
 
 	return nil

@@ -3,16 +3,17 @@ package auth
 import (
 	"context"
 	"fmt"
+	"time"
+
+	"github.com/golang-jwt/jwt"
+	"github.com/stripe/stripe-go/v82"
+	"github.com/stripe/stripe-go/v82/customer"
+	"go.uber.org/zap"
+
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/auth/domain"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/auth/mappers"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/auth/storage"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/entity"
-	"github.com/stripe/stripe-go/v82"
-	"github.com/stripe/stripe-go/v82/customer"
-	"time"
-
-	"github.com/golang-jwt/jwt"
-	"go.uber.org/zap"
 )
 
 type UserService interface {
@@ -53,6 +54,7 @@ func (s *userService) RegisterNewUser(ctx context.Context, user *domain.User) (*
 	params := &stripe.CustomerParams{
 		Email: &user.Email,
 	}
+
 	cust, err := customer.New(params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create stripe customer: %w", err)

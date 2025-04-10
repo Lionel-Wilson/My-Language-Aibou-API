@@ -74,9 +74,11 @@ func GetUserIDString(ctx context.Context) (string, error) {
 	if val == nil {
 		return "", errors.New("user ID not found in context")
 	}
+
 	uid, ok := val.(string)
 	if !ok {
 		return "", errors.New("user ID has wrong type")
 	}
+
 	return uid, nil
 }

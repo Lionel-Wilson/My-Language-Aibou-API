@@ -2,19 +2,22 @@ package main
 
 import (
 	"fmt"
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/auth"
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/auth/storage"
-	commonDb "github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/db"
-	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq" // <-- Add this line to register the Postgres driver
 	"log"
 	"net/http"
 
+	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq" // <-- Add this line to register the Postgres driver
+
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/auth"
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/auth/storage"
 	openai "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/config"
 	router "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/http/router"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/sentence"
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/subscriptions"
+	storage2 "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/subscriptions/storage"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/word"
+	commonDb "github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/db"
 	commonlogger "github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/logger"
 )
 
@@ -44,11 +47,15 @@ func main() {
 	userRepository := storage.NewUserRepository(db)
 	userService := auth.NewUserService(logger, userRepository, cfg.JwtSecret, cfg.StripeSecretKey)
 
+	subscriptionRepository := storage2.NewSubscriptionsRepository(db)
+	subscriptionService := subscriptions.NewSubscriptionService(logger, cfg.StripeSecretKey, subscriptionRepository)
+
 	mux := router.New(
 		logger,
 		wordService,
 		sentenceService,
 		userService,
+		subscriptionService,
 		cfg.JwtSecret,
 	)
 

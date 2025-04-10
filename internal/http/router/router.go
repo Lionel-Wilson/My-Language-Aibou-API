@@ -1,19 +1,21 @@
 package router
 
 import (
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/auth"
-	auth2 "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/auth"
-	commonMiddleware "github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/middleware"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"go.uber.org/zap"
 
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/auth"
 	sentencehandler "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/sentence"
+	subscriptions2 "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/subscriptions"
 	wordhandler "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/word"
+	auth2 "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/auth"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/sentence"
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/subscriptions"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/word"
+	commonMiddleware "github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/middleware"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/render"
 )
 
@@ -22,6 +24,7 @@ func New(
 	wordService word.Service,
 	sentenceService sentence.Service,
 	userService auth2.UserService,
+	subscriptionService subscriptions.SubscriptionService,
 	jwtSecret []byte,
 ) http.Handler {
 	// Create a new Chi router.
@@ -37,6 +40,7 @@ func New(
 	authHandler := auth.NewAuthHandler(logger, userService)
 	wordHandler := wordhandler.NewWordHandler(logger, wordService)
 	sentenceHandler := sentencehandler.NewSentenceHandler(logger, sentenceService)
+	subscriptionsHandler := subscriptions2.NewSubscriptionsHandler(logger, subscriptionService, userService)
 
 	router.Route(
 		"/api/v1", func(r chi.Router) {
@@ -74,7 +78,6 @@ func New(
 			"/auth", func(r chi.Router) {
 				r.Post("/register", authHandler.Register())
 				r.Post("/login", authHandler.Login())
-
 			},
 		)
 
@@ -98,6 +101,12 @@ func New(
 				"/sentence", func(r chi.Router) {
 					r.Post("/explanation", sentenceHandler.ExplainSentence())
 					r.Post("/correction", sentenceHandler.CorrectSentence())
+				},
+			)
+
+			r.Route(
+				"/subscription", func(r chi.Router) {
+					r.Post("/subscribe", subscriptionsHandler.Subscribe())
 				},
 			)
 		})

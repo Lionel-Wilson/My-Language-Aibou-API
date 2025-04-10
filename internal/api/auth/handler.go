@@ -1,6 +1,11 @@
 package auth
 
 import (
+	"net/http"
+
+	"go.uber.org/zap"
+	"golang.org/x/crypto/bcrypt"
+
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/auth/dto"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/auth"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/auth/domain"
@@ -8,9 +13,6 @@ import (
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/context"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/render"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/request"
-	"go.uber.org/zap"
-	"golang.org/x/crypto/bcrypt"
-	"net/http"
 )
 
 type AuthHandler interface {

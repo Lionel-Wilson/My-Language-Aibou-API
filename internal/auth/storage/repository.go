@@ -3,10 +3,11 @@ package storage
 import (
 	"context"
 	"fmt"
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/entity"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/volatiletech/sqlboiler/v4/boil"
+
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/entity"
 )
 
 type UserRepository interface {
@@ -65,11 +66,11 @@ func (r *userRepository) DeleteUser(ctx context.Context, id string) error {
 	// SQLBoiler's Delete method will execute a DELETE query using the user's primary key.
 	rowsAffected, err := user.Delete(ctx, r.db)
 	if err != nil {
-		return fmt.Errorf("failed to delete user with id %d: %w", id, err)
+		return fmt.Errorf("failed to delete user with id %s: %w", id, err)
 	}
 
 	if rowsAffected == 0 {
-		return fmt.Errorf("no user found with id %d", id)
+		return fmt.Errorf("no user found with id %s", id)
 	}
 
 	return nil

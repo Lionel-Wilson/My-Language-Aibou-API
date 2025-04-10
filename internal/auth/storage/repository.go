@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/entity"
@@ -16,6 +17,7 @@ type UserRepository interface {
 	GetUserById(ctx context.Context, id string) (*entity.User, error)
 	UpdateUser(ctx context.Context, user *entity.User) (*entity.User, error)
 	DeleteUser(ctx context.Context, id string) error
+	GetUserByStripeCustomerID(ctx context.Context, stripeCustomerID string) (*entity.User, error)
 }
 
 type userRepository struct {
@@ -26,6 +28,15 @@ func NewUserRepository(db *sqlx.DB) UserRepository {
 	return &userRepository{
 		db: db,
 	}
+}
+
+func (r *userRepository) GetUserByStripeCustomerID(ctx context.Context, stripeCustomerID string) (*entity.User, error) {
+	user, err := entity.Users(entity.UserWhere.StripeCustomerID.EQ(null.StringFrom(stripeCustomerID))).One(ctx, r.db)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }
 
 func (r *userRepository) InsertUser(ctx context.Context, user *entity.User) (*entity.User, error) {

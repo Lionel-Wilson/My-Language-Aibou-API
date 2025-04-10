@@ -16,6 +16,7 @@ type SubscriptionsRepository interface {
 	GetSubscriptionByUserID(ctx context.Context, userID *string) (*entity.Subscription, error)
 	Update(ctx context.Context, subscription *entity.Subscription) (*entity.Subscription, error)
 	GetSubscriptionByStripeID(ctx context.Context, stripeID *string) (*entity.Subscription, error)
+	DeleteSubscriptionByStripeID(ctx context.Context, stripeID *string) error
 }
 
 type subscriptionsRepository struct {
@@ -26,6 +27,24 @@ func NewSubscriptionsRepository(db *sqlx.DB) SubscriptionsRepository {
 	return &subscriptionsRepository{
 		db: db,
 	}
+}
+
+func (s *subscriptionsRepository) DeleteSubscriptionByStripeID(
+	ctx context.Context,
+	stripeID *string,
+) error {
+	subscription := &entity.Subscription{StripeSubscriptionID: *stripeID}
+
+	rowsAffected, err := subscription.Delete(ctx, s.db)
+	if err != nil {
+		return fmt.Errorf("failed to delete subscription with stripe id %s: %w", *stripeID, err)
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("no subscription found with stripe id %s", *stripeID)
+	}
+
+	return nil
 }
 
 func (s *subscriptionsRepository) GetSubscriptionByStripeID(ctx context.Context, stripeID *string) (*entity.Subscription, error) {

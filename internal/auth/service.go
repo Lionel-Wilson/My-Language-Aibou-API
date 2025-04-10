@@ -23,6 +23,7 @@ type UserService interface {
 	UpdateUserDetails(ctx context.Context, user *entity.User) (*entity.User, error)
 	GetUserById(ctx context.Context, id string) (*entity.User, error)
 	DeleteUser(ctx context.Context, id string) error
+	GetUserByStripeCustomerID(ctx context.Context, stripeCustomerID string) (*entity.User, error)
 }
 
 type userService struct {
@@ -44,6 +45,15 @@ func NewUserService(
 		jwtSecret:       jwtSecret,
 		stripeSecretKey: stripeApiKey,
 	}
+}
+
+func (s *userService) GetUserByStripeCustomerID(ctx context.Context, stripeCustomerID string) (*entity.User, error) {
+	user, err := s.userRepo.GetUserByStripeCustomerID(ctx, stripeCustomerID)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }
 
 func (s *userService) RegisterNewUser(ctx context.Context, user *domain.User) (*entity.User, error) {

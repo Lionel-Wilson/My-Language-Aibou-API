@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/subscriptions"
 	"io"
 	"net/http"
 
@@ -12,6 +11,7 @@ import (
 	"github.com/stripe/stripe-go/v82/webhook"
 	"go.uber.org/zap"
 
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/subscriptions"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/render"
 )
 
@@ -43,6 +43,7 @@ func NewWebhookHandler(
 func (h *webhookHandler) HandleStripeWebhook() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
+
 		const MaxBodyBytes = int64(65536)
 		r.Body = http.MaxBytesReader(w, r.Body, MaxBodyBytes)
 
@@ -80,13 +81,12 @@ func (h *webhookHandler) HandleStripeWebhook() http.HandlerFunc {
 		switch event.Type {
 		case "invoice.paid":
 			h.handleInvoicePaymentSucceeded(ctx, event)
+		case "invoice.payment_failed":
+			h.handleInvoicePaymentFailed(ctx, event)
 		case "customer.subscription.updated":
-			h.handleCustomerSubscriptionUpdated(event)
-		/*case "invoice.payment_failed":
-			h.handleInvoicePaymentFailed(event)
+			h.handleCustomerSubscriptionUpdated(ctx, event)
 		case "customer.subscription.deleted":
-			h.handleCustomerSubscriptionDeleted(event)
-		case "customer.subscription.trial_will_end":*/
+			h.handleCustomerSubscriptionDeleted(ctx, event)
 
 		default:
 			h.logger.Info("Unhandled event type", zap.String("type", string(event.Type)))
@@ -94,6 +94,14 @@ func (h *webhookHandler) HandleStripeWebhook() http.HandlerFunc {
 
 		// Respond with a 200 OK to acknowledge receipt of the event.
 		render.Json(w, http.StatusOK, nil)
+	}
+}
+
+func (h *webhookHandler) handleCustomerSubscriptionDeleted(ctx context.Context, event stripe.Event) {
+	h.logger.Info("Handling customer.subscription.deleted")
+
+	if err := h.subscriptionService.HandleSubscriptionDeleted(ctx, event); err != nil {
+		h.logger.Error("Failed to handle subscription.deleted", zap.Error(err))
 	}
 }
 
@@ -127,14 +135,32 @@ func (h *webhookHandler) handleInvoicePaymentSucceeded(ctx context.Context, even
 }
 
 // Stub function for handling subscription updates.
-func (h *webhookHandler) handleCustomerSubscriptionUpdated(event stripe.Event) {
+func (h *webhookHandler) handleCustomerSubscriptionUpdated(ctx context.Context, event stripe.Event) {
+	h.logger.Info("Handling customer.subscription.updated")
 
-	// TODO: Implement your business logic here.
+	err := h.subscriptionService.HandleSubscriptionUpdated(ctx, event)
+	if err != nil {
+		h.logger.Error("Failed to handle customer.subscription.updated", zap.Error(err))
+	}
 }
 
 // Stub function for handling failed  payments.
-func (h *webhookHandler) handlePaymentFailed(event stripe.Event) {
+func (h *webhookHandler) handleInvoicePaymentFailed(ctx context.Context, event stripe.Event) {
+	h.logger.Info("Handling invoice.payment_failed")
 
-	// Record the failed payment, notify the user, etc.
-	// TODO: Implement your business logic here.
+	var invoice stripe.Invoice
+	if err := json.Unmarshal(event.Data.Raw, &invoice); err != nil {
+		h.logger.Error("Error unmarshaling invoice failed event", zap.Error(err))
+		return
+	}
+
+	err := h.subscriptionService.HandleInvoiceFailed(
+		ctx,
+		invoice.Customer.ID,
+		invoice.AmountDue,
+		string(invoice.Currency),
+	)
+	if err != nil {
+		h.logger.Error("Failed to handle payment failure", zap.Error(err))
+	}
 }

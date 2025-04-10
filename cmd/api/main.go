@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/paymenttransactions"
-	ptStorage "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/paymenttransactions/storage"
 	"log"
 	"net/http"
 
@@ -15,6 +13,8 @@ import (
 	openai "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/config"
 	router "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/http/router"
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/paymenttransactions"
+	ptStorage "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/paymenttransactions/storage"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/sentence"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/subscriptions"
 	subscriptionStorage "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/subscriptions/storage"
@@ -58,6 +58,7 @@ func main() {
 		cfg.StripeSecretKey,
 		subscriptionRepository,
 		paymentTransactionService,
+		userService,
 	)
 
 	mux := router.New(

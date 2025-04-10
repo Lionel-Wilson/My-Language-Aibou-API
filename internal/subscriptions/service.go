@@ -2,17 +2,19 @@ package subscriptions
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/paymenttransactions"
-	"github.com/google/uuid"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/stripe/stripe-go/v82"
 	"github.com/stripe/stripe-go/v82/subscription"
 	"github.com/volatiletech/null/v8"
 	"go.uber.org/zap"
 
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/auth"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/entity"
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/paymenttransactions"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/subscriptions/storage"
 )
 
@@ -26,6 +28,14 @@ type SubscriptionService interface {
 		amount *int64,
 		currency string,
 	) error
+	HandleInvoiceFailed(
+		ctx context.Context,
+		stripeCustomerID string,
+		amount int64,
+		currency string,
+	) error
+	HandleSubscriptionUpdated(ctx context.Context, event stripe.Event) error
+	HandleSubscriptionDeleted(ctx context.Context, event stripe.Event) error
 }
 
 type subscriptionService struct {
@@ -33,6 +43,7 @@ type subscriptionService struct {
 	stripeSecretKey           string
 	subscriptionsRepo         storage.SubscriptionsRepository
 	paymentTransactionService paymenttransactions.PaymentTransactionService
+	userService               auth.UserService
 }
 
 func NewSubscriptionService(
@@ -40,13 +51,109 @@ func NewSubscriptionService(
 	stripeSecretKey string,
 	subscriptionsRepo storage.SubscriptionsRepository,
 	paymentTransactionService paymenttransactions.PaymentTransactionService,
+	userService auth.UserService,
 ) SubscriptionService {
 	return &subscriptionService{
 		logger:                    logger,
 		stripeSecretKey:           stripeSecretKey,
 		subscriptionsRepo:         subscriptionsRepo,
 		paymentTransactionService: paymentTransactionService,
+		userService:               userService,
 	}
+}
+
+func (s *subscriptionService) HandleSubscriptionDeleted(ctx context.Context, event stripe.Event) error {
+	var stripeSub stripe.Subscription
+	if err := json.Unmarshal(event.Data.Raw, &stripeSub); err != nil {
+		return fmt.Errorf("failed to parse subscription: %w", err)
+	}
+
+	sub, err := s.subscriptionsRepo.GetSubscriptionByStripeID(ctx, &stripeSub.ID)
+	if err != nil {
+		return fmt.Errorf("subscription not found: %w", err)
+	}
+
+	sub.Status = "canceled"
+	sub.UpdatedAt = time.Now()
+
+	if _, err := s.subscriptionsRepo.Update(ctx, sub); err != nil {
+		return fmt.Errorf("failed to update canceled subscription: %w", err)
+	}
+
+	// Optional: clean up related resources
+
+	return nil
+}
+
+func (s *subscriptionService) HandleSubscriptionUpdated(ctx context.Context, event stripe.Event) error {
+	var stripeSub stripe.Subscription
+	if err := json.Unmarshal(event.Data.Raw, &stripeSub); err != nil {
+		return fmt.Errorf("failed to parse subscription object: %w", err)
+	}
+
+	// 1. Get the subscription from your DB using the Stripe Subscription ID
+	sub, err := s.subscriptionsRepo.GetSubscriptionByStripeID(ctx, &stripeSub.ID)
+	if err != nil {
+		return fmt.Errorf("could not find local subscription: %w", err)
+	}
+
+	// 2. Update the local subscription
+	sub.Status = string(stripeSub.Status)
+	sub.TrialStart = null.TimeFrom(time.Unix(stripeSub.TrialStart, 0))
+	sub.TrialEnd = null.TimeFrom(time.Unix(stripeSub.TrialEnd, 0))
+	sub.UpdatedAt = time.Now()
+
+	if _, err := s.subscriptionsRepo.Update(ctx, sub); err != nil {
+		return fmt.Errorf("failed to update subscription in DB: %w", err)
+	}
+
+	return nil
+}
+
+func (s *subscriptionService) HandleInvoiceFailed(
+	ctx context.Context,
+	stripeCustomerID string,
+	amount int64,
+	currency string,
+) error {
+	// 1. Get user from customer ID
+	user, err := s.userService.GetUserByStripeCustomerID(ctx, stripeCustomerID)
+	if err != nil {
+		return fmt.Errorf("user not found for stripe customer: %w", err)
+	}
+
+	// 2. Get subscription
+	sub, err := s.subscriptionsRepo.GetSubscriptionByUserID(ctx, &user.ID)
+	if err != nil {
+		return fmt.Errorf("subscription not found: %w", err)
+	}
+
+	// 3. Update subscription status if desired
+	sub.Status = "past_due"
+	sub.UpdatedAt = time.Now()
+
+	_, err = s.subscriptionsRepo.Update(ctx, sub)
+	if err != nil {
+		return fmt.Errorf("failed to update subscription: %w", err)
+	}
+
+	// 4. Record a failed payment transaction
+	tx := &entity.PaymentTransaction{
+		ID:        uuid.NewString(),
+		UserID:    user.ID,
+		Amount:    int(amount),
+		Currency:  currency,
+		Status:    "failed",
+		CreatedAt: time.Now(),
+	}
+	if err := s.paymentTransactionService.InsertPaymentTransaction(ctx, tx); err != nil {
+		return fmt.Errorf("failed to record failed payment: %w", err)
+	}
+
+	// 5. Optionally send email/notification (pseudo-code)
+	// s.emailService.SendPaymentFailureNotification(user.Email)
+
+	return nil
 }
 
 func (s *subscriptionService) HandleInvoiceSuccess(

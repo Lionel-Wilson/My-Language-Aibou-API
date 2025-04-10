@@ -12,13 +12,14 @@ import (
 
 // Config holds the application settings.
 type Config struct {
-	OpenAIAPIKey string `mapstructure:"OPENAI_API_KEY" validate:"required"`
-	Secret       string `mapstructure:"SECRET" validate:"required"`
-	Port         string `mapstructure:"PORT" validate:"required"`
-	Env          string `mapstructure:"ENV" validate:"required"`
-	DatabaseURL  string `mapstructure:"DATABASE_URL" yaml:"database_url" validate:"required"`
-	LogLevel     string `mapstructure:"LOG_LEVEL" yaml:"log_level"`
-	JwtSecret    []byte `mapstructure:"JWT_SECRET" yaml:"jwt_secret" validate:"required"`
+	OpenAIAPIKey    string `mapstructure:"OPENAI_API_KEY" validate:"required"`
+	Secret          string `mapstructure:"SECRET" validate:"required"`
+	Port            string `mapstructure:"PORT" validate:"required"`
+	Env             string `mapstructure:"ENV" validate:"required"`
+	DatabaseURL     string `mapstructure:"DATABASE_URL" yaml:"database_url" validate:"required"`
+	LogLevel        string `mapstructure:"LOG_LEVEL" yaml:"log_level"`
+	JwtSecret       []byte `mapstructure:"JWT_SECRET" yaml:"jwt_secret" validate:"required"`
+	StripeSecretKey string `mapstructure:"STRIPE_SECRET_KEY" yaml:"stripe_secret_key" validate:"required"`
 }
 
 // LoadConfig loads configuration from the OS environment and, if not in production,
@@ -43,13 +44,14 @@ func LoadConfig() (*Config, error) {
 
 	// Create a Config instance with values from environment variables.
 	cfg := Config{
-		OpenAIAPIKey: viper.GetString("OPENAI_API_KEY"),
-		Secret:       viper.GetString("SECRET"),
-		Env:          viper.GetString("ENV"),
-		Port:         viper.GetString("PORT"),
-		DatabaseURL:  viper.GetString("DATABASE_URL"),
-		LogLevel:     viper.GetString("LOG_LEVEL"),
-		JwtSecret:    []byte(viper.GetString("JWT_SECRET")),
+		OpenAIAPIKey:    viper.GetString("OPENAI_API_KEY"),
+		Secret:          viper.GetString("SECRET"),
+		Env:             viper.GetString("ENV"),
+		Port:            viper.GetString("PORT"),
+		DatabaseURL:     viper.GetString("DATABASE_URL"),
+		LogLevel:        viper.GetString("LOG_LEVEL"),
+		StripeSecretKey: viper.GetString("STRIPE_SECRET_KEY"),
+		JwtSecret:       []byte(viper.GetString("JWT_SECRET")),
 	}
 
 	// Validate the config.

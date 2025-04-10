@@ -42,7 +42,7 @@ func main() {
 	sentenceService := sentence.NewSentenceService(logger, openAiClient)
 
 	userRepository := storage.NewUserRepository(db)
-	userService := auth.NewUserService(logger, userRepository, cfg.JwtSecret)
+	userService := auth.NewUserService(logger, userRepository, cfg.JwtSecret, cfg.StripeSecretKey)
 
 	mux := router.New(
 		logger,

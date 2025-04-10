@@ -7,6 +7,8 @@ import (
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/auth/mappers"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/auth/storage"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/entity"
+	"github.com/stripe/stripe-go/v82"
+	"github.com/stripe/stripe-go/v82/customer"
 	"time"
 
 	"github.com/golang-jwt/jwt"
@@ -23,27 +25,40 @@ type UserService interface {
 }
 
 type userService struct {
-	logger    *zap.Logger
-	userRepo  storage.UserRepository
-	jwtSecret []byte
+	logger          *zap.Logger
+	userRepo        storage.UserRepository
+	jwtSecret       []byte
+	stripeSecretKey string
 }
 
 func NewUserService(
 	logger *zap.Logger,
 	userRepo storage.UserRepository,
 	jwtSecret []byte,
+	stripeApiKey string,
 ) UserService {
 	return &userService{
-		logger:    logger,
-		userRepo:  userRepo,
-		jwtSecret: jwtSecret,
+		logger:          logger,
+		userRepo:        userRepo,
+		jwtSecret:       jwtSecret,
+		stripeSecretKey: stripeApiKey,
 	}
 }
 
 func (s *userService) RegisterNewUser(ctx context.Context, user *domain.User) (*entity.User, error) {
 	s.logger.Sugar().Infof("Registering new user")
 
-	userEntity := mappers.ToUserEntity(*user)
+	stripe.Key = s.stripeSecretKey
+
+	params := &stripe.CustomerParams{
+		Email: &user.Email,
+	}
+	cust, err := customer.New(params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create stripe customer: %w", err)
+	}
+
+	userEntity := mappers.ToUserEntity(*user, cust)
 
 	insertedUser, err := s.userRepo.InsertUser(ctx, userEntity)
 	if err != nil {

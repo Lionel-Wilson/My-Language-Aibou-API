@@ -10,6 +10,7 @@ import (
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/auth"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/auth/domain"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/entity"
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/subscriptions"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/context"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/render"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/request"
@@ -23,17 +24,20 @@ type AuthHandler interface {
 }
 
 type handler struct {
-	logger      *zap.Logger
-	userService auth.UserService
+	logger               *zap.Logger
+	userService          auth.UserService
+	subscriptionsService subscriptions.SubscriptionService
 }
 
 func NewAuthHandler(
 	logger *zap.Logger,
 	userService auth.UserService,
+	subscriptionsService subscriptions.SubscriptionService,
 ) AuthHandler {
 	return &handler{
-		logger:      logger,
-		userService: userService,
+		logger:               logger,
+		userService:          userService,
+		subscriptionsService: subscriptionsService,
 	}
 }
 
@@ -71,6 +75,14 @@ func (h *handler) Register() http.HandlerFunc {
 			return
 		}
 
+		subscription, err := h.subscriptionsService.SubscribeUser(ctx, user)
+		if err != nil {
+			h.logger.Sugar().Errorw("failed to subscribe to user", "error", err)
+			render.Json(w, http.StatusInternalServerError, "Failed to create subscription")
+
+			return
+		}
+
 		// Generate an authentication token (e.g., JWT)
 		token, err := h.userService.GenerateToken(user)
 		if err != nil {
@@ -80,11 +92,11 @@ func (h *handler) Register() http.HandlerFunc {
 			return
 		}
 
+		resp := dto.ToRegisterResponse(user, subscription)
+
 		render.Json(w, http.StatusCreated, map[string]interface{}{
-			"token": token,
-			"userDetails": map[string]interface{}{
-				"email": user.Email,
-			},
+			"token":       token,
+			"userDetails": resp,
 		})
 	}
 }
@@ -128,7 +140,13 @@ func (h *handler) Login() http.HandlerFunc {
 			return
 		}
 
-		resp := dto.ToResponse(userEntity)
+		subscriptionEntity, err := h.subscriptionsService.GetUserSubscription(ctx, &userEntity.ID)
+		if err != nil {
+			h.logger.Sugar().Errorw("failed to get subscription", "error", err)
+			render.Json(w, http.StatusInternalServerError, "internal server error")
+		}
+
+		resp := dto.ToUserDetailsResponse(userEntity, subscriptionEntity)
 
 		// Step 2e: Return the token in the response.
 		render.Json(w, http.StatusOK, map[string]interface{}{
@@ -180,7 +198,13 @@ func (h *handler) UpdateDetails() http.HandlerFunc {
 			return
 		}
 
-		resp := dto.ToResponse(updatedUserDetails)
+		subscriptionEntity, err := h.subscriptionsService.GetUserSubscription(ctx, &updatedUserDetails.ID)
+		if err != nil {
+			h.logger.Sugar().Errorw("failed to get subscription", "error", err)
+			render.Json(w, http.StatusInternalServerError, "internal server error")
+		}
+
+		resp := dto.ToUserDetailsResponse(updatedUserDetails, subscriptionEntity)
 
 		render.Json(w, http.StatusOK, map[string]interface{}{
 			"message":     "user details updated successfully",

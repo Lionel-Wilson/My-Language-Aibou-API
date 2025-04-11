@@ -1,8 +1,9 @@
 package dto
 
 import (
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/entity"
 	"time"
+
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/entity"
 )
 
 type StatusResponse struct {

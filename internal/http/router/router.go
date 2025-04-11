@@ -39,7 +39,7 @@ func New(
 	// Define the /alive endpoint.
 	registerAliveEndpoint(router)
 
-	authHandler := auth.NewAuthHandler(logger, userService)
+	authHandler := auth.NewAuthHandler(logger, userService, subscriptionService)
 	wordHandler := wordhandler.NewWordHandler(logger, wordService)
 	sentenceHandler := sentencehandler.NewSentenceHandler(logger, sentenceService)
 	subscriptionsHandler := subscriptions2.NewSubscriptionsHandler(logger, subscriptionService, userService)

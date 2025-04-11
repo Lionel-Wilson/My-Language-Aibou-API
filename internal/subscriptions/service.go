@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/google/uuid"
@@ -94,7 +93,7 @@ func (s *subscriptionService) CreateCheckoutSession(ctx context.Context, userID 
 		Mode:     stripe.String(string(stripe.CheckoutSessionModeSubscription)),
 		LineItems: []*stripe.CheckoutSessionLineItemParams{
 			{
-				Price:    stripe.String(os.Getenv(s.stripePriceID)),
+				Price:    stripe.String(s.stripePriceID),
 				Quantity: stripe.Int64(1),
 			},
 		},
@@ -295,7 +294,7 @@ func (s *subscriptionService) SubscribeUser(ctx context.Context, user *entity.Us
 	// Define the subscription parameters
 	params := &stripe.SubscriptionParams{
 		Customer:        stripeCustomerID,
-		Items:           []*stripe.SubscriptionItemsParams{{Price: stripe.String("price_1RCJhLGhK964Xz608A8iJO80")}},
+		Items:           []*stripe.SubscriptionItemsParams{{Price: stripe.String(s.stripePriceID)}},
 		TrialPeriodDays: stripe.Int64(7),
 	}
 

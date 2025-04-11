@@ -183,8 +183,8 @@ func (h *handler) UpdateDetails() http.HandlerFunc {
 		resp := dto.ToResponse(updatedUserDetails)
 
 		render.Json(w, http.StatusOK, map[string]interface{}{
-			"message": "user details updated successfully",
-			"data":    resp,
+			"message":     "user details updated successfully",
+			"userDetails": resp,
 		})
 	}
 }

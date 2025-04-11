@@ -1,6 +1,7 @@
 package subscriptions
 
 import (
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/subscriptions/dto"
 	"net/http"
 
 	"go.uber.org/zap"
@@ -58,8 +59,14 @@ func (h *subscriptionsHandler) Status() http.HandlerFunc {
 			return
 		}
 
+		resp, err := dto.ToStatusResponse(subscription)
+		if err != nil {
+			h.logger.Error("Failed to map subscription to status response", zap.Error(err))
+			render.Json(w, http.StatusInternalServerError, "Unable to map subscription to status response")
+		}
+
 		// Return the subscription details as JSON.
-		render.Json(w, http.StatusOK, subscription)
+		render.Json(w, http.StatusOK, resp)
 	}
 }
 

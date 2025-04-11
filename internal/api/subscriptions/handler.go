@@ -124,10 +124,10 @@ func (h *subscriptionsHandler) Subscribe() http.HandlerFunc {
 
 		// Return subscription status and billing info as JSON.
 		response := map[string]interface{}{
-			"subscription_id": subscription.StripeSubscriptionID,
-			"status":          subscription.Status,
-			"trial_start":     subscription.TrialStart,
-			"trial_end":       subscription.TrialEnd,
+			"subscriptionID": subscription.StripeSubscriptionID,
+			"status":         subscription.Status,
+			"trialStart":     subscription.TrialStart,
+			"trialEnd":       subscription.TrialEnd,
 		}
 
 		render.Json(w, http.StatusOK, response)

@@ -21,6 +21,9 @@ type Config struct {
 	JwtSecret           []byte `mapstructure:"JWT_SECRET" yaml:"jwt_secret" validate:"required"`
 	StripeSecretKey     string `mapstructure:"STRIPE_SECRET_KEY" yaml:"stripe_secret_key" validate:"required"`
 	StripeWebhookSecret string `mapstructure:"STRIPE_WEBHOOK_SECRET" yaml:"webhook_secret" validate:"required"`
+	StripePaidPriceId   string `mapstructure:"STRIPE_PAID_PRICE_ID" yaml:"stripe_paid_price_id" validate:"required"`
+	CheckoutSuccessURL  string `mapstructure:"CHECKOUT_SUCCESS_URL" yaml:"checkout_success_url" validate:"required"`
+	CheckoutCancelURL   string `mapstructure:"CHECKOUT_CANCEL_URL" yaml:"checkout_cancel_url" validate:"required"`
 }
 
 // LoadConfig loads configuration from the OS environment and, if not in production,
@@ -54,6 +57,9 @@ func LoadConfig() (*Config, error) {
 		StripeSecretKey:     viper.GetString("STRIPE_SECRET_KEY"),
 		JwtSecret:           []byte(viper.GetString("JWT_SECRET")),
 		StripeWebhookSecret: viper.GetString("STRIPE_WEBHOOK_SECRET"),
+		StripePaidPriceId:   viper.GetString("STRIPE_PAID_PRICE_ID"),
+		CheckoutSuccessURL:  viper.GetString("CHECKOUT_SUCCESS_URL"),
+		CheckoutCancelURL:   viper.GetString("CHECKOUT_CANCEL_URL"),
 	}
 
 	// Validate the config.

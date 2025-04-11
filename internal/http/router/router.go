@@ -114,6 +114,7 @@ func New(
 					r.Post("/subscribe", subscriptionsHandler.Subscribe())
 					r.Post("/cancel", subscriptionsHandler.Cancel())
 					r.Get("/status", subscriptionsHandler.Status())
+					r.Post("/checkout", subscriptionsHandler.CreateCheckoutSession())
 				},
 			)
 		})

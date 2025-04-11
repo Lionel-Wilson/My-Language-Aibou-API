@@ -16,13 +16,17 @@ The API for the "My Language Aibou" application. The AI Powered language learnin
 3. Fill the .env file with the following variables:
 ```
 PORT=8080
-OPENAI_API_KEY= < your own Open AI API key >
-SECRET= < your secret >
+OPENAI_API_KEY=<your own>
+SECRET=<your own>
 ENV=dev
 LOG_LEVEL=debug
-DATABASE_URL=<your db url>
-JWT_SECRET=<your jwt secret>
-STRIPE_SECRET_KEY=<your stripe secret key>
+DATABASE_URL=<your own>
+JWT_SECRET=<your own>
+STRIPE_SECRET_KEY=<your own>
+STRIPE_PAID_PRICE_ID= <your own>
+STRIPE_WEBHOOK_SECRET=<your own>
+CHECKOUT_SUCCESS_URL=<your own>
+CHECKOUT_CANCEL_URL=<your own>
 ```
 4. Open a terminal and run the following commands. Make sure you're in the root of the repository:
 

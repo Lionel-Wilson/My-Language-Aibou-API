@@ -16,6 +16,7 @@ type SubscriptionsHandler interface {
 	Subscribe() http.HandlerFunc
 	Cancel() http.HandlerFunc
 	Status() http.HandlerFunc
+	CreateCheckoutSession() http.HandlerFunc
 }
 
 type subscriptionsHandler struct {
@@ -33,6 +34,31 @@ func NewSubscriptionsHandler(
 		logger:               logger,
 		subscriptionsService: subscriptionsService,
 		userService:          userService,
+	}
+}
+
+func (h *subscriptionsHandler) CreateCheckoutSession() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		// Get the user ID from the context
+		userID, err := context.GetUserIDString(ctx)
+		if err != nil {
+			h.logger.Sugar().Errorw("user ID not found in session", "error", err)
+			render.Json(w, http.StatusUnauthorized, "unauthorized")
+
+			return
+		}
+
+		session, err := h.subscriptionsService.CreateCheckoutSession(ctx, userID)
+		if err != nil {
+			h.logger.Sugar().Errorw("failed to create checkout session", "error", err)
+			render.Json(w, http.StatusInternalServerError, "failed to create checkout session")
+		}
+
+		render.Json(w, http.StatusOK, map[string]string{
+			"url": session.URL,
+		})
 	}
 }
 

@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/stripe/stripe-go/v82"
+	"github.com/stripe/stripe-go/v82/checkout/session"
 	"github.com/stripe/stripe-go/v82/subscription"
 	"github.com/volatiletech/null/v8"
 	"go.uber.org/zap"
@@ -36,6 +38,7 @@ type SubscriptionService interface {
 	) error
 	HandleSubscriptionUpdated(ctx context.Context, event stripe.Event) error
 	HandleSubscriptionDeleted(ctx context.Context, event stripe.Event) error
+	CreateCheckoutSession(ctx context.Context, userID string) (*stripe.CheckoutSession, error)
 }
 
 type subscriptionService struct {
@@ -44,6 +47,9 @@ type subscriptionService struct {
 	subscriptionsRepo         storage.SubscriptionsRepository
 	paymentTransactionService paymenttransactions.PaymentTransactionService
 	userService               auth.UserService
+	stripePriceID             string
+	checkoutSuccessURL        string
+	checkoutCancelURL         string
 }
 
 func NewSubscriptionService(
@@ -52,6 +58,9 @@ func NewSubscriptionService(
 	subscriptionsRepo storage.SubscriptionsRepository,
 	paymentTransactionService paymenttransactions.PaymentTransactionService,
 	userService auth.UserService,
+	stripePriceID string,
+	checkoutSuccessURL string,
+	checkoutCancelURL string,
 ) SubscriptionService {
 	return &subscriptionService{
 		logger:                    logger,
@@ -59,7 +68,47 @@ func NewSubscriptionService(
 		subscriptionsRepo:         subscriptionsRepo,
 		paymentTransactionService: paymentTransactionService,
 		userService:               userService,
+		stripePriceID:             stripePriceID,
+		checkoutSuccessURL:        checkoutSuccessURL,
+		checkoutCancelURL:         checkoutCancelURL,
 	}
+}
+
+func (s *subscriptionService) CreateCheckoutSession(ctx context.Context, userID string) (*stripe.CheckoutSession, error) {
+	user, err := s.userService.GetUserById(ctx, userID)
+
+	sub, err := s.subscriptionsRepo.GetSubscriptionByUserID(ctx, &userID)
+	if err != nil {
+		return nil, err
+	}
+
+	var stripeCustomerID string
+	if user.StripeCustomerID.Valid {
+		stripeCustomerID = user.StripeCustomerID.String
+	}
+
+	stripe.Key = s.stripeSecretKey
+
+	sess, err := session.New(&stripe.CheckoutSessionParams{
+		Customer: stripe.String(stripeCustomerID),
+		Mode:     stripe.String(string(stripe.CheckoutSessionModeSubscription)),
+		LineItems: []*stripe.CheckoutSessionLineItemParams{
+			{
+				Price:    stripe.String(os.Getenv(s.stripePriceID)),
+				Quantity: stripe.Int64(1),
+			},
+		},
+		SubscriptionData: &stripe.CheckoutSessionSubscriptionDataParams{
+			TrialEnd: stripe.Int64(sub.TrialEnd.Time.Unix()),
+		},
+		SuccessURL: stripe.String(s.checkoutSuccessURL),
+		CancelURL:  stripe.String(s.checkoutCancelURL),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return sess, nil
 }
 
 func (s *subscriptionService) HandleSubscriptionDeleted(ctx context.Context, event stripe.Event) error {

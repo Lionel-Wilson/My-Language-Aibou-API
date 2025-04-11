@@ -59,6 +59,9 @@ func main() {
 		subscriptionRepository,
 		paymentTransactionService,
 		userService,
+		cfg.StripePaidPriceId,
+		cfg.CheckoutSuccessURL,
+		cfg.CheckoutCancelURL,
 	)
 
 	mux := router.New(

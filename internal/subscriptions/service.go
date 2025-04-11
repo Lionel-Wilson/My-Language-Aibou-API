@@ -88,6 +88,10 @@ func (s *subscriptionService) CreateCheckoutSession(ctx context.Context, userID 
 
 	stripe.Key = s.stripeSecretKey
 
+	if s.checkoutSuccessURL == "" || s.checkoutCancelURL == "" {
+		return nil, fmt.Errorf("checkout URLs are not set")
+	}
+
 	sess, err := session.New(&stripe.CheckoutSessionParams{
 		Customer: stripe.String(stripeCustomerID),
 		Mode:     stripe.String(string(stripe.CheckoutSessionModeSubscription)),

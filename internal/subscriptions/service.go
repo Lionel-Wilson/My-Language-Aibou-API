@@ -75,6 +75,9 @@ func NewSubscriptionService(
 
 func (s *subscriptionService) CreateCheckoutSession(ctx context.Context, userID string) (*stripe.CheckoutSession, error) {
 	user, err := s.userService.GetUserById(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
 
 	subscriptionEntity, err := s.subscriptionsRepo.GetSubscriptionByUserID(ctx, &userID)
 	if err != nil {

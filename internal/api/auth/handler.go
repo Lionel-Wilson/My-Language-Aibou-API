@@ -2,9 +2,9 @@ package auth
 
 import (
 	"database/sql"
-	"github.com/friendsofgo/errors"
 	"net/http"
 
+	"github.com/friendsofgo/errors"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 
@@ -150,11 +150,13 @@ func (h *handler) Login() http.HandlerFunc {
 				if err != nil {
 					h.logger.Sugar().Errorw("failed to subscribe user during login", "error", err)
 					render.Json(w, http.StatusInternalServerError, "failed to subscribe user")
+
 					return
 				}
 			} else {
 				h.logger.Sugar().Errorw("failed to get subscription", "error", err)
 				render.Json(w, http.StatusInternalServerError, "internal server error")
+
 				return
 			}
 		}

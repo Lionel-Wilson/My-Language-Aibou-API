@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"database/sql"
+	"github.com/friendsofgo/errors"
 	"net/http"
 
 	"go.uber.org/zap"
@@ -142,8 +144,19 @@ func (h *handler) Login() http.HandlerFunc {
 
 		subscriptionEntity, err := h.subscriptionsService.GetUserSubscription(ctx, &userEntity.ID)
 		if err != nil {
-			h.logger.Sugar().Errorw("failed to get subscription", "error", err)
-			render.Json(w, http.StatusInternalServerError, "internal server error")
+			// If no subscription exists, create one
+			if errors.Is(err, sql.ErrNoRows) {
+				subscriptionEntity, err = h.subscriptionsService.SubscribeUser(ctx, userEntity)
+				if err != nil {
+					h.logger.Sugar().Errorw("failed to subscribe user during login", "error", err)
+					render.Json(w, http.StatusInternalServerError, "failed to subscribe user")
+					return
+				}
+			} else {
+				h.logger.Sugar().Errorw("failed to get subscription", "error", err)
+				render.Json(w, http.StatusInternalServerError, "internal server error")
+				return
+			}
 		}
 
 		resp := dto.ToUserDetailsResponse(userEntity, subscriptionEntity)

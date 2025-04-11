@@ -76,9 +76,23 @@ func NewSubscriptionService(
 func (s *subscriptionService) CreateCheckoutSession(ctx context.Context, userID string) (*stripe.CheckoutSession, error) {
 	user, err := s.userService.GetUserById(ctx, userID)
 
-	sub, err := s.subscriptionsRepo.GetSubscriptionByUserID(ctx, &userID)
+	subscriptionEntity, err := s.subscriptionsRepo.GetSubscriptionByUserID(ctx, &userID)
 	if err != nil {
 		return nil, err
+	}
+
+	var sub entity.Subscription
+	if subscriptionEntity != nil {
+		sub = *subscriptionEntity
+	}
+
+	if sub.Status == "active" || sub.Status == "trialing" {
+		return nil, fmt.Errorf("user already has an active or trialing subscription")
+	}
+
+	var trialEnd time.Time
+	if sub.TrialEnd.Valid {
+		trialEnd = sub.TrialEnd.Time
 	}
 
 	var stripeCustomerID string
@@ -102,7 +116,7 @@ func (s *subscriptionService) CreateCheckoutSession(ctx context.Context, userID 
 			},
 		},
 		SubscriptionData: &stripe.CheckoutSessionSubscriptionDataParams{
-			TrialEnd: stripe.Int64(sub.TrialEnd.Time.Unix()),
+			TrialEnd: stripe.Int64(trialEnd.Unix()),
 		},
 		SuccessURL: stripe.String(s.checkoutSuccessURL),
 		CancelURL:  stripe.String(s.checkoutCancelURL),

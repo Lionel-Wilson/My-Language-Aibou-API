@@ -126,6 +126,7 @@ func (h *subscriptionsHandler) Cancel() http.HandlerFunc {
 	}
 }
 
+// Not being used by the frontend right now.
 func (h *subscriptionsHandler) Subscribe() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()

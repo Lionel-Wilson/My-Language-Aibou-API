@@ -130,8 +130,8 @@ func (h *handler) Login() http.HandlerFunc {
 
 		// Step 2e: Return the token in the response.
 		render.Json(w, http.StatusOK, map[string]interface{}{
-			"token":        token,
-			"user-details": resp,
+			"token":       token,
+			"userDetails": resp,
 		})
 	}
 }

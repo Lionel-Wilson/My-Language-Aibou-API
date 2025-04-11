@@ -81,8 +81,10 @@ func (h *handler) Register() http.HandlerFunc {
 		}
 
 		render.Json(w, http.StatusCreated, map[string]interface{}{
-			"token":   token,
-			"message": "successfully registered user",
+			"token": token,
+			"userDetails": map[string]interface{}{
+				"email": user.Email,
+			},
 		})
 	}
 }

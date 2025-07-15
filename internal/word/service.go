@@ -221,28 +221,44 @@ func (s *service) wordToOpenAiDefinitionRequestBody(word, userNativeLanguage str
 }
 
 func (s *service) wordToOpenAiSynonymsRequestBody(word, userNativeLanguage string) *strings.Reader {
-	// Construct the dynamic content prompt
-	content := fmt.Sprintf(
-		"The user has provided the word '%s'. First, detect what language this word is in. "+
-			"Then, list some simple synonyms for it in that same language. "+
-			"Respond in %s, but make sure the synonyms themselves are written in the original language of the word.",
-		word, userNativeLanguage,
-	)
+	// New, clearer prompt with bullet points
+	content := fmt.Sprintf(`
+You are a multilingual thesaurus tool.
 
-	// Optionally add a more specific system instruction
+Your task is to:
+1. Detect the language of the given word.
+2. List several common and relevant synonyms for the word in its original language, using bullet points.
+3. Then explain the meaning and usage of those synonyms in the user's native language, which will be specified.
+
+Do not translate the synonyms. Keep them in the original language.
+
+Word: "%s"
+User's native language: "%s"
+
+Format your response like this:
+
+Language of word: {{detected language}}
+Synonyms:
+- synonym 1
+- synonym 2
+- synonym 3
+
+Explanation (in %s):
+{{Simple explanation of what the synonyms mean and how they are used in different contexts}}
+`, word, userNativeLanguage, userNativeLanguage)
+
 	systemPrompt := "You are a helpful multilingual assistant that supports users learning foreign languages."
 
-	// Construct the full request body
 	body := fmt.Sprintf(`{
 		"model": "gpt-4o",
 		"messages": [
 			{
 				"role": "system",
-				"content": "%s"
+				"content": %q
 			},
 			{
 				"role": "user",
-				"content": "%s"
+				"content": %q
 			}
 		],
 		"temperature": 0.4,

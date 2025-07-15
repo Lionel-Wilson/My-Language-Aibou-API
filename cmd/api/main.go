@@ -10,7 +10,7 @@ import (
 	_ "github.com/lib/pq" // <-- Add this line to register the Postgres driver
 
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/auth"
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/auth/storage"
+	authStorage "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/auth/storage"
 	openai "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/config"
 	router "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/http/router"
@@ -51,7 +51,7 @@ func main() {
 	wordService := word.NewWordService(logger, openAiClient, cache)
 	sentenceService := sentence.NewSentenceService(logger, openAiClient, cache)
 
-	userRepository := userStorage.NewUserRepository(db)
+	userRepository := authStorage.NewUserRepository(db)
 	userService := auth.NewUserService(logger, userRepository, cfg.JwtSecret, cfg.StripeSecretKey)
 
 	paymentTransactionsRepository := ptStorage.NewPaymentTransactionRepository(db)

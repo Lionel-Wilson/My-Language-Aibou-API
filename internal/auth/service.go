@@ -3,14 +3,15 @@ package auth
 import (
 	"context"
 	"fmt"
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/auth/domain"
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/auth/mappers"
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/auth/storage"
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/entity"
 	"time"
 
 	"github.com/golang-jwt/jwt"
 	"go.uber.org/zap"
+
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/auth/domain"
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/auth/mappers"
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/auth/storage"
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/entity"
 )
 
 type UserService interface {

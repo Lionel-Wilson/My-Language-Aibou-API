@@ -1,19 +1,19 @@
 package router
 
 import (
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/auth"
-	auth2 "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/auth"
-	commonMiddleware "github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/middleware"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"go.uber.org/zap"
 
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/auth"
 	sentencehandler "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/sentence"
 	wordhandler "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/word"
+	auth2 "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/auth"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/sentence"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/word"
+	commonMiddleware "github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/middleware"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/render"
 )
 
@@ -74,7 +74,6 @@ func New(
 			"/auth", func(r chi.Router) {
 				r.Post("/register", authHandler.Register())
 				r.Post("/login", authHandler.Login())
-
 			},
 		)
 

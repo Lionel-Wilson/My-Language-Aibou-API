@@ -12,7 +12,6 @@ package mock_word
 import (
 	reflect "reflect"
 
-	openai "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -20,7 +19,6 @@ import (
 type MockService struct {
 	ctrl     *gomock.Controller
 	recorder *MockServiceMockRecorder
-	isgomock struct{}
 }
 
 // MockServiceMockRecorder is the mock recorder for MockService.
@@ -41,10 +39,10 @@ func (m *MockService) EXPECT() *MockServiceMockRecorder {
 }
 
 // GetWordDefinition mocks base method.
-func (m *MockService) GetWordDefinition(word, nativeLanguage string) (*openai.ChatCompletion, error) {
+func (m *MockService) GetWordDefinition(word, nativeLanguage string) (*string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetWordDefinition", word, nativeLanguage)
-	ret0, _ := ret[0].(*openai.ChatCompletion)
+	ret0, _ := ret[0].(*string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -56,10 +54,10 @@ func (mr *MockServiceMockRecorder) GetWordDefinition(word, nativeLanguage any) *
 }
 
 // GetWordHistory mocks base method.
-func (m *MockService) GetWordHistory(word, nativeLanguage string) (*openai.ChatCompletion, error) {
+func (m *MockService) GetWordHistory(word, nativeLanguage string) (*string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetWordHistory", word, nativeLanguage)
-	ret0, _ := ret[0].(*openai.ChatCompletion)
+	ret0, _ := ret[0].(*string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -71,10 +69,10 @@ func (mr *MockServiceMockRecorder) GetWordHistory(word, nativeLanguage any) *gom
 }
 
 // GetWordSynonyms mocks base method.
-func (m *MockService) GetWordSynonyms(word, nativeLanguage string) (*openai.ChatCompletion, error) {
+func (m *MockService) GetWordSynonyms(word, nativeLanguage string) (*string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetWordSynonyms", word, nativeLanguage)
-	ret0, _ := ret[0].(*openai.ChatCompletion)
+	ret0, _ := ret[0].(*string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

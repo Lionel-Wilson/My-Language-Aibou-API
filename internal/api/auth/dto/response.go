@@ -9,7 +9,6 @@ type UserDetailsResponse struct {
 }
 
 func ToResponse(user *entity.User) UserDetailsResponse {
-
 	return UserDetailsResponse{
 		Email: user.Email,
 	}

@@ -2,6 +2,7 @@ package word_test
 
 import (
 	"errors"
+	"github.com/coocood/freecache"
 	"net/http"
 	"testing"
 
@@ -20,8 +21,9 @@ func TestValidateWord(t *testing.T) {
 
 	mockOpenAiClient := mockopenai.NewMockClient(ctrl)
 	logger := zaptest.NewLogger(t)
+	mockCache := freecache.NewCache(1 * 1024 * 1024)
 
-	wordService := word.NewWordService(logger, mockOpenAiClient)
+	wordService := word.NewWordService(logger, mockOpenAiClient, mockCache)
 
 	testCases := []struct {
 		name        string
@@ -66,8 +68,9 @@ func TestGetWordDefinition(t *testing.T) {
 
 	mockOpenAiClient := mockopenai.NewMockClient(ctrl)
 	logger := zaptest.NewLogger(t)
+	mockCache := freecache.NewCache(1 * 1024 * 1024)
 
-	wordService := word.NewWordService(logger, mockOpenAiClient)
+	wordService := word.NewWordService(logger, mockOpenAiClient, mockCache)
 
 	testCases := []struct {
 		name             string

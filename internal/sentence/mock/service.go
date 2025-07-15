@@ -12,7 +12,6 @@ package mock_sentence
 import (
 	reflect "reflect"
 
-	openai "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -20,7 +19,6 @@ import (
 type MockService struct {
 	ctrl     *gomock.Controller
 	recorder *MockServiceMockRecorder
-	isgomock struct{}
 }
 
 // MockServiceMockRecorder is the mock recorder for MockService.
@@ -41,10 +39,10 @@ func (m *MockService) EXPECT() *MockServiceMockRecorder {
 }
 
 // GetSentenceCorrection mocks base method.
-func (m *MockService) GetSentenceCorrection(sentence, nativeLanguage string) (*openai.ChatCompletion, error) {
+func (m *MockService) GetSentenceCorrection(sentence, nativeLanguage string) (*string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetSentenceCorrection", sentence, nativeLanguage)
-	ret0, _ := ret[0].(*openai.ChatCompletion)
+	ret0, _ := ret[0].(*string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -56,10 +54,10 @@ func (mr *MockServiceMockRecorder) GetSentenceCorrection(sentence, nativeLanguag
 }
 
 // GetSentenceExplanation mocks base method.
-func (m *MockService) GetSentenceExplanation(sentence, nativeLanguage string) (*openai.ChatCompletion, error) {
+func (m *MockService) GetSentenceExplanation(sentence, nativeLanguage string) (*string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetSentenceExplanation", sentence, nativeLanguage)
-	ret0, _ := ret[0].(*openai.ChatCompletion)
+	ret0, _ := ret[0].(*string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

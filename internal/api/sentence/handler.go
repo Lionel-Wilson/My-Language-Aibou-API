@@ -67,7 +67,7 @@ func (h *handler) ExplainSentence() http.HandlerFunc {
 			return
 		}
 
-		render.Json(w, http.StatusOK, response.Choices[0].Message.Content)
+		render.Json(w, http.StatusOK, response)
 	}
 }
 
@@ -104,6 +104,6 @@ func (h *handler) CorrectSentence() http.HandlerFunc {
 			return
 		}
 
-		render.Json(w, http.StatusOK, response.Choices[0].Message.Content)
+		render.Json(w, http.StatusOK, response)
 	}
 }

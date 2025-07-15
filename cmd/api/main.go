@@ -5,11 +5,12 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/coocood/freecache"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq" // <-- Add this line to register the Postgres driver
 
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/auth"
-	userStorage "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/auth/storage"
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/auth/storage"
 	openai "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/config"
 	router "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/http/router"
@@ -41,10 +42,14 @@ func main() {
 		logger.Sugar().Fatalf("failed to run migrations: %v", err)
 	}
 
+	// In bytes, where 1024 * 1024 represents a single Megabyte, and 100 * 1024*1024 represents 100 Megabytes.
+	cacheSize := 100 * 1024 * 1024
+	cache := freecache.NewCache(cacheSize)
+
 	openAiClient := openai.NewClient(cfg.OpenAIAPIKey, logger)
 
-	wordService := word.NewWordService(logger, openAiClient)
-	sentenceService := sentence.NewSentenceService(logger, openAiClient)
+	wordService := word.NewWordService(logger, openAiClient, cache)
+	sentenceService := sentence.NewSentenceService(logger, openAiClient, cache)
 
 	userRepository := userStorage.NewUserRepository(db)
 	userService := auth.NewUserService(logger, userRepository, cfg.JwtSecret, cfg.StripeSecretKey)

@@ -67,7 +67,7 @@ func (h *handler) GetHistory() http.HandlerFunc {
 			return
 		}
 
-		render.Json(w, http.StatusOK, response.Choices[0].Message.Content)
+		render.Json(w, http.StatusOK, response)
 	}
 }
 
@@ -89,8 +89,8 @@ func (h *handler) DefineWord() http.HandlerFunc {
 
 		err := h.service.ValidateWord(spaceTrimmedWord)
 		if err != nil {
-			h.logger.Sugar().Errorw("failed to validate word", "word", spaceTrimmedWord, "native language", requestBody.NativeLanguage, "error", err)
-			render.Json(w, http.StatusBadRequest, err.Error())
+			h.logger.Sugar().Errorw("failed to validate word", "error", err, "word", spaceTrimmedWord, "native language", requestBody.NativeLanguage)
+			render.Json(w, http.StatusBadRequest, "failed to validate word")
 
 			return
 		}
@@ -103,7 +103,7 @@ func (h *handler) DefineWord() http.HandlerFunc {
 			return
 		}
 
-		render.Json(w, http.StatusOK, response.Choices[0].Message.Content)
+		render.Json(w, http.StatusOK, response)
 	}
 }
 
@@ -141,6 +141,6 @@ func (h *handler) GetSynonyms() http.HandlerFunc {
 			return
 		}
 
-		render.Json(w, http.StatusOK, response.Choices[0].Message.Content)
+		render.Json(w, http.StatusOK, response)
 	}
 }

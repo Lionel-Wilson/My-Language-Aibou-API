@@ -77,29 +77,22 @@ func (s *service) GetWordSynonyms(word string, nativeLanguage string) (*openai.C
 
 	resp, responseBody, err := s.openAiClient.MakeRequest(jsonBody)
 	if err != nil {
-		s.logger.Error(err.Error())
-
-		return &openai.ChatCompletion{}, err
+		return nil, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		s.logger.Error("OpenAI API returned non-OK status. ")
-
-		return &openai.ChatCompletion{}, err
+		return nil, fmt.Errorf("openAI API returned non-OK status: %s", err)
 	}
 
 	var OpenAIApiResponse openai.ChatCompletion
 
 	err = json.Unmarshal(responseBody, &OpenAIApiResponse)
 	if err != nil {
-		s.logger.Info("Failed to unmarshal json body")
-		return &openai.ChatCompletion{}, err
+		return nil, err
 	}
 
 	if len(OpenAIApiResponse.Choices) == 0 {
-		s.logger.Info("OpenAI API response contains no choices")
-
-		return &openai.ChatCompletion{}, fmt.Errorf("OpenAI API response contains no choices")
+		return nil, fmt.Errorf("OpenAI API response contains no choices")
 	}
 
 	s.logger.Sugar().Infof(`Prompt Tokens: %d`, OpenAIApiResponse.Usage.PromptTokens)
@@ -115,27 +108,22 @@ func (s *service) GetWordDefinition(word string, nativeLanguage string) (*openai
 
 	resp, responseBody, err := s.openAiClient.MakeRequest(jsonBody)
 	if err != nil {
-		s.logger.Error(err.Error())
-		return &openai.ChatCompletion{}, err
+		return nil, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		s.logger.Error("OpenAI API returned non-OK status. ")
-		return &openai.ChatCompletion{}, err
+		return nil, fmt.Errorf("openAI API returned non-OK status: %s", err)
 	}
 
 	var OpenAIApiResponse openai.ChatCompletion
 
 	err = json.Unmarshal(responseBody, &OpenAIApiResponse)
 	if err != nil {
-		s.logger.With(zap.Error(err)).Error("Failed to unmarshal json body")
-		return &openai.ChatCompletion{}, err
+		return nil, err
 	}
 
 	if len(OpenAIApiResponse.Choices) == 0 {
-		s.logger.Info("OpenAI API response contains no choices")
-
-		return &openai.ChatCompletion{}, fmt.Errorf("OpenAI API response contains no choices")
+		return nil, fmt.Errorf("OpenAI API response contains no choices")
 	}
 
 	s.logger.Sugar().Infof(`Prompt Tokens: %d`, OpenAIApiResponse.Usage.PromptTokens)

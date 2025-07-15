@@ -166,7 +166,7 @@ func (s *service) GetWordDefinition(word string, nativeLanguage string) (*string
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("openAI API returned non-OK status: %s", err)
+		return nil, fmt.Errorf("openAI API returned non-OK status(%s): %s", resp.StatusCode, responseBody)
 	}
 
 	var OpenAIApiResponse openai.ChatCompletion

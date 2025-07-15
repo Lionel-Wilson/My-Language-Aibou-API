@@ -1,6 +1,7 @@
 package sentence
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -65,9 +66,7 @@ func (s *service) GetSentenceCorrection(sentence string, nativeLanguage string) 
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		s.logger.Sugar().Infof("OpenAI API returned non-OK status: %d", resp.StatusCode)
-
-		return nil, err
+		return nil, fmt.Errorf("openAI API returned non-OK status(%s): %s", resp.StatusCode, responseBody)
 	}
 
 	var OpenAIApiResponse openai.ChatCompletion
@@ -191,38 +190,45 @@ func (s *service) sentenceToOpenAiExplanationRequestBody(sentence, userNativeLan
 	return strings.NewReader(body)
 }
 
-func (s *service) sentenceToOpenAiSentenceCorrectionRequestBody(sentence, userNativeLanguage string) *strings.Reader {
-	content := fmt.Sprintf(
-		"Is this sentence correct? If not, correct it and briefly explain why. Do not ask follow-up questions or encourage further conversation. Just provide the correction and explanation in a single, complete answer.\n\nSentence: '%s'",
-		sentence,
-	)
+func (s *service) sentenceToOpenAiSentenceCorrectionRequestBody(sentence, userNativeLanguage string) *bytes.Reader {
+	var content string
 
-	if userNativeLanguage != "English" {
+	if userNativeLanguage == "English" {
 		content = fmt.Sprintf(
-			"Is this sentence correct? If not, correct it and briefly explain why. Do not ask follow-up questions or encourage further conversation. Just provide the correction and explanation in a single, complete answer. Respond in %s as if you're a language teacher teaching a native %s speaker.\n\nSentence: '%s'",
+			"Is this sentence correct? If not, correct it and briefly explain why. Do not ask follow-up questions or encourage further conversation. Just provide the correction and explanation in a single, complete answer.\n\nSentence: %s",
+			sentence,
+		)
+	} else {
+		content = fmt.Sprintf(
+			"Is this sentence correct? If not, correct it and briefly explain why. Do not ask follow-up questions or encourage further conversation. Just provide the correction and explanation in a single, complete answer. Respond in %s as if you're a language teacher teaching a native %s speaker.\n\nSentence: %s",
 			userNativeLanguage,
 			userNativeLanguage,
 			sentence,
 		)
 	}
 
-	body := fmt.Sprintf(`{
+	payload := map[string]interface{}{
 		"model": "gpt-4o",
-		"messages": [
+		"messages": []map[string]string{
 			{
-				"role": "system",
-				"content": "You are a concise language assistant that explains sentence corrections in a clear and brief manner without engaging in back-and-forth conversation."
+				"role":    "system",
+				"content": "You are a concise language assistant that explains sentence corrections in a clear and brief manner without engaging in back-and-forth conversation.",
 			},
 			{
-				"role": "user",
-				"content": "%s"
-			}
-		],
+				"role":    "user",
+				"content": content,
+			},
+		},
 		"temperature": 0.4,
-		"max_tokens": 800
-	}`, content)
+		"max_tokens":  800,
+	}
+
+	jsonBody, err := json.Marshal(payload)
+	if err != nil {
+		s.logger.Error("Failed to marshal sentence correction payload", zap.Error(err))
+		return bytes.NewReader([]byte{}) // fallback to empty body
+	}
 
 	s.logger.Sugar().Infof("Sentence correction prompt: %s\n", content)
-
-	return strings.NewReader(body)
+	return bytes.NewReader(jsonBody)
 }

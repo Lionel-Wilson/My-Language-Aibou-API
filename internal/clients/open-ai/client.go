@@ -2,16 +2,14 @@ package openai
 
 import (
 	"fmt"
+	"go.uber.org/zap"
 	"io"
 	"net/http"
-	"strings"
-
-	"go.uber.org/zap"
 )
 
 //go:generate mockgen -source=client.go -destination=mock/client.go
 type Client interface {
-	MakeRequest(body *strings.Reader) (*http.Response, []byte, error)
+	MakeRequest(body io.Reader) (*http.Response, []byte, error)
 }
 
 type (
@@ -60,11 +58,11 @@ func NewClient(apiKey string, logger *zap.Logger) Client {
 	}
 }
 
-func (c openAiClient) MakeRequest(body *strings.Reader) (*http.Response, []byte, error) {
+func (c openAiClient) MakeRequest(body io.Reader) (*http.Response, []byte, error) {
 	req, err := http.NewRequest("POST", "https://api.openai.com/v1/chat/completions", body)
 	if err != nil {
 		fmt.Println("Failed to create request")
-		return &http.Response{}, []byte{}, err
+		return nil, []byte{}, err
 	}
 
 	req.Header.Add("Content-Type", `application/json`)
@@ -75,7 +73,7 @@ func (c openAiClient) MakeRequest(body *strings.Reader) (*http.Response, []byte,
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println("Failed to make request to OpenAI API")
-		return &http.Response{}, []byte{}, err
+		return nil, []byte{}, err
 	}
 
 	defer func(Body io.ReadCloser) {
@@ -87,7 +85,7 @@ func (c openAiClient) MakeRequest(body *strings.Reader) (*http.Response, []byte,
 		fmt.Println("Failed to read AI response body:")
 		fmt.Println(string(responseBody))
 
-		return &http.Response{}, []byte{}, err
+		return nil, []byte{}, err
 	}
 
 	return resp, responseBody, nil

@@ -54,7 +54,7 @@ func (h *handler) GetHistory() http.HandlerFunc {
 		err := h.service.ValidateWord(spaceTrimmedWord)
 		if err != nil {
 			h.logger.Sugar().Errorw("failed to validate word", "word", spaceTrimmedWord, "native language", requestBody.NativeLanguage, "error", err)
-			render.Json(w, http.StatusBadRequest, err.Error())
+			render.Json(w, http.StatusBadRequest, err)
 
 			return
 		}

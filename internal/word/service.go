@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 	"unicode"
 	"unicode/utf8"
 
@@ -42,8 +43,21 @@ func NewWordService(
 	}
 }
 
+var (
+	wordCacheExpiration = int(time.Hour * 24 * 90) //90 days
+)
+
 func (s *service) GetWordHistory(word string, nativeLanguage string) (*string, error) {
 	s.logger.Info("Getting word history", zap.String("word", word), zap.String("nativeLanguage", nativeLanguage))
+
+	cacheKey := []byte(fmt.Sprintf("%s word history in %s", word, nativeLanguage))
+
+	cached, err := s.cache.Get(cacheKey)
+	if err == nil {
+		cachedResponse := string(cached)
+		return &cachedResponse, err
+	}
+
 	jsonBody := s.wordToOpenAiHistoryRequestBody(word, nativeLanguage)
 
 	resp, responseBody, err := s.openAiClient.MakeRequest(jsonBody)
@@ -74,7 +88,15 @@ func (s *service) GetWordHistory(word string, nativeLanguage string) (*string, e
 	s.logger.Sugar().Infof(`Response Tokens: %d`, OpenAIApiResponse.Usage.CompletionTokens)
 	s.logger.Sugar().Infof(`Total Tokens used: %d`, OpenAIApiResponse.Usage.TotalTokens)
 
-	return &OpenAIApiResponse.Choices[0].Message.Content, nil
+	result := &OpenAIApiResponse.Choices[0].Message.Content
+
+	cacheValue := []byte(*result)
+	err = s.cache.Set(cacheKey, cacheValue, wordCacheExpiration)
+	if err != nil {
+		return nil, fmt.Errorf("failed to cache word definition: %w", err)
+	}
+
+	return result, nil
 }
 
 func (s *service) GetWordSynonyms(word string, nativeLanguage string) (*string, error) {
@@ -117,8 +139,7 @@ func (s *service) GetWordSynonyms(word string, nativeLanguage string) (*string, 
 	result := &OpenAIApiResponse.Choices[0].Message.Content
 
 	cacheValue := []byte(*result)
-	expiration := 2592000 //30 days
-	err = s.cache.Set(cacheKey, cacheValue, expiration)
+	err = s.cache.Set(cacheKey, cacheValue, wordCacheExpiration)
 	if err != nil {
 		return nil, fmt.Errorf("failed to cache word definition: %w", err)
 	}
@@ -166,8 +187,7 @@ func (s *service) GetWordDefinition(word string, nativeLanguage string) (*string
 	result := &OpenAIApiResponse.Choices[0].Message.Content
 
 	cacheValue := []byte(*result)
-	expiration := 2592000 //30 days
-	err = s.cache.Set(cacheKey, cacheValue, expiration)
+	err = s.cache.Set(cacheKey, cacheValue, wordCacheExpiration)
 	if err != nil {
 		return nil, fmt.Errorf("failed to cache word definition: %w", err)
 	}

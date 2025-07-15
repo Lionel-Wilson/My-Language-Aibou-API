@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"github.com/coocood/freecache"
@@ -41,8 +42,19 @@ func NewSentenceService(
 	}
 }
 
+var (
+	sentenceCacheExpiration = int(time.Hour * 24 * 30) //30 days
+)
+
 func (s *service) GetSentenceCorrection(sentence string, nativeLanguage string) (*string, error) {
 	s.logger.Debug("Getting sentence correction", zap.String("sentence", sentence), zap.String("nativeLanguage", nativeLanguage))
+	cacheKey := []byte(fmt.Sprintf("%s sentence correction in %s", sentence, nativeLanguage))
+
+	cached, err := s.cache.Get(cacheKey)
+	if err == nil {
+		cachedResponse := string(cached)
+		return &cachedResponse, err
+	}
 	jsonBody := s.sentenceToOpenAiSentenceCorrectionRequestBody(sentence, nativeLanguage)
 
 	resp, responseBody, err := s.openAiClient.MakeRequest(jsonBody)
@@ -73,7 +85,15 @@ func (s *service) GetSentenceCorrection(sentence string, nativeLanguage string) 
 	s.logger.Sugar().Infof("Response Tokens: %d", OpenAIApiResponse.Usage.CompletionTokens)
 	s.logger.Sugar().Infof("Total Tokens used: %d", OpenAIApiResponse.Usage.TotalTokens)
 
-	return &OpenAIApiResponse.Choices[0].Message.Content, nil
+	result := &OpenAIApiResponse.Choices[0].Message.Content
+
+	cacheValue := []byte(*result)
+	err = s.cache.Set(cacheKey, cacheValue, sentenceCacheExpiration)
+	if err != nil {
+		return nil, fmt.Errorf("failed to cache sentence correction: %w", err)
+	}
+
+	return result, nil
 }
 
 func (s *service) GetSentenceExplanation(sentence string, nativeLanguage string) (*string, error) {
@@ -116,8 +136,7 @@ func (s *service) GetSentenceExplanation(sentence string, nativeLanguage string)
 	result := &OpenAIApiResponse.Choices[0].Message.Content
 
 	cacheValue := []byte(*result)
-	expiration := 2592000 //30 days
-	err = s.cache.Set(cacheKey, cacheValue, expiration)
+	err = s.cache.Set(cacheKey, cacheValue, sentenceCacheExpiration)
 	if err != nil {
 		return nil, fmt.Errorf("failed to cache sentence explanation: %w", err)
 	}
@@ -127,11 +146,11 @@ func (s *service) GetSentenceExplanation(sentence string, nativeLanguage string)
 
 func (s *service) ValidateSentence(sentence string) error {
 	if sentence == "" {
-		return errors.New("please provide a sentence")
+		return errors.New("Please provide a sentence")
 	}
 
 	if utf8.RuneCountInString(sentence) > 100 {
-		return errors.New("the sentence must be less than 100 characters")
+		return errors.New("The sentence must be less than 100 characters.")
 	}
 
 	return nil
@@ -173,27 +192,37 @@ func (s *service) sentenceToOpenAiExplanationRequestBody(sentence, userNativeLan
 }
 
 func (s *service) sentenceToOpenAiSentenceCorrectionRequestBody(sentence, userNativeLanguage string) *strings.Reader {
-	content := fmt.Sprintf("Is this sentence correct? if not then correct it for me - '%s'", sentence)
+	content := fmt.Sprintf(
+		"Is this sentence correct? If not, correct it and briefly explain why. Do not ask follow-up questions or encourage further conversation. Just provide the correction and explanation in a single, complete answer.\n\nSentence: '%s'",
+		sentence,
+	)
 
 	if userNativeLanguage != "English" {
-		content = fmt.Sprintf("Is this sentence correct? if not then correct it for me - '%s'. Respond in %s as if you're a language teacher teaching a native %s speaker who's learning this sentence's language.", sentence, userNativeLanguage, userNativeLanguage)
+		content = fmt.Sprintf(
+			"Is this sentence correct? If not, correct it and briefly explain why. Do not ask follow-up questions or encourage further conversation. Just provide the correction and explanation in a single, complete answer. Respond in %s as if you're a language teacher teaching a native %s speaker.\n\nSentence: '%s'",
+			userNativeLanguage,
+			userNativeLanguage,
+			sentence,
+		)
 	}
 
 	body := fmt.Sprintf(`{
-	"model":"gpt-4o",
-	"messages": [{
-		"role": "system",
-		"content": "You are a helpful assistant."
-	  },
-	  {
-		"role": "user",
-		"content": "%s"
-	  }],
-	"temperature": 0.4,
-	"max_tokens": 800
+		"model": "gpt-4o",
+		"messages": [
+			{
+				"role": "system",
+				"content": "You are a concise language assistant that explains sentence corrections in a clear and brief manner without engaging in back-and-forth conversation."
+			},
+			{
+				"role": "user",
+				"content": "%s"
+			}
+		],
+		"temperature": 0.4,
+		"max_tokens": 800
 	}`, content)
 
-	s.logger.Sugar().Infof("Phrase prompt: %s\n", content)
+	s.logger.Sugar().Infof("Sentence correction prompt: %s\n", content)
 
 	return strings.NewReader(body)
 }

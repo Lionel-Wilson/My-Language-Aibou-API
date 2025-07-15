@@ -79,6 +79,15 @@ func (s *service) GetWordHistory(word string, nativeLanguage string) (*string, e
 
 func (s *service) GetWordSynonyms(word string, nativeLanguage string) (*string, error) {
 	s.logger.Info("Getting word synonyms", zap.String("word", word), zap.String("nativeLanguage", nativeLanguage))
+
+	cacheKey := []byte(fmt.Sprintf("%s word synonyms in %s", word, nativeLanguage))
+
+	cached, err := s.cache.Get(cacheKey)
+	if err == nil {
+		cachedResponse := string(cached)
+		return &cachedResponse, err
+	}
+
 	jsonBody := s.wordToOpenAiSynonymsRequestBody(word, nativeLanguage)
 
 	resp, responseBody, err := s.openAiClient.MakeRequest(jsonBody)
@@ -105,11 +114,29 @@ func (s *service) GetWordSynonyms(word string, nativeLanguage string) (*string, 
 	s.logger.Sugar().Infof(`Response Tokens: %d`, OpenAIApiResponse.Usage.CompletionTokens)
 	s.logger.Sugar().Infof(`Total Tokens used: %d`, OpenAIApiResponse.Usage.TotalTokens)
 
-	return &OpenAIApiResponse.Choices[0].Message.Content, nil
+	result := &OpenAIApiResponse.Choices[0].Message.Content
+
+	cacheValue := []byte(*result)
+	expiration := 2592000 //30 days
+	err = s.cache.Set(cacheKey, cacheValue, expiration)
+	if err != nil {
+		return nil, fmt.Errorf("failed to cache word definition: %w", err)
+	}
+
+	return result, nil
 }
 
 func (s *service) GetWordDefinition(word string, nativeLanguage string) (*string, error) {
 	s.logger.Info("Getting word definition", zap.String("word", word), zap.String("nativeLanguage", nativeLanguage))
+
+	cacheKey := []byte(fmt.Sprintf("%s word definition in %s", word, nativeLanguage))
+
+	cached, err := s.cache.Get(cacheKey)
+	if err == nil {
+		cachedResponse := string(cached)
+		return &cachedResponse, err
+	}
+
 	jsonBody := s.wordToOpenAiDefinitionRequestBody(word, nativeLanguage)
 
 	resp, responseBody, err := s.openAiClient.MakeRequest(jsonBody)
@@ -136,7 +163,16 @@ func (s *service) GetWordDefinition(word string, nativeLanguage string) (*string
 	s.logger.Sugar().Infof(`Response Tokens: %d`, OpenAIApiResponse.Usage.CompletionTokens)
 	s.logger.Sugar().Infof(`Total Tokens used: %d`, OpenAIApiResponse.Usage.TotalTokens)
 
-	return &OpenAIApiResponse.Choices[0].Message.Content, nil
+	result := &OpenAIApiResponse.Choices[0].Message.Content
+
+	cacheValue := []byte(*result)
+	expiration := 2592000 //30 days
+	err = s.cache.Set(cacheKey, cacheValue, expiration)
+	if err != nil {
+		return nil, fmt.Errorf("failed to cache word definition: %w", err)
+	}
+
+	return result, nil
 }
 
 func (s *service) ValidateWord(word string) error {

@@ -78,6 +78,13 @@ func (s *service) GetSentenceCorrection(sentence string, nativeLanguage string) 
 
 func (s *service) GetSentenceExplanation(sentence string, nativeLanguage string) (*string, error) {
 	s.logger.Info("Getting sentence explanation", zap.String("sentence", sentence), zap.String("nativeLanguage", nativeLanguage))
+	cacheKey := []byte(fmt.Sprintf("%s sentence explanation in %s", sentence, nativeLanguage))
+
+	cached, err := s.cache.Get(cacheKey)
+	if err == nil {
+		cachedResponse := string(cached)
+		return &cachedResponse, err
+	}
 	jsonBody := s.sentenceToOpenAiExplanationRequestBody(sentence, nativeLanguage)
 
 	resp, responseBody, err := s.openAiClient.MakeRequest(jsonBody)
@@ -106,7 +113,16 @@ func (s *service) GetSentenceExplanation(sentence string, nativeLanguage string)
 	s.logger.Sugar().Infof("Response Tokens: %d", OpenAIApiResponse.Usage.CompletionTokens)
 	s.logger.Sugar().Infof("Total Tokens used: %d", OpenAIApiResponse.Usage.TotalTokens)
 
-	return &OpenAIApiResponse.Choices[0].Message.Content, nil
+	result := &OpenAIApiResponse.Choices[0].Message.Content
+
+	cacheValue := []byte(*result)
+	expiration := 2592000 //30 days
+	err = s.cache.Set(cacheKey, cacheValue, expiration)
+	if err != nil {
+		return nil, fmt.Errorf("failed to cache sentence explanation: %w", err)
+	}
+
+	return result, nil
 }
 
 func (s *service) ValidateSentence(sentence string) error {

@@ -33,7 +33,12 @@ func New(
 	// Create a new Chi router.
 	router := chi.NewRouter()
 	router.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:5173", "https://my-language-aibou-prod-v2.up.railway.app"}, // your frontend URLs
+		AllowedOrigins: []string{"http://localhost:5173",
+			"https://my-language-aibou-prod-v2.up.railway.app",
+			"https://www.mylanguageaibou.co.uk",
+			"http://www.mylanguageaibou.co.uk",
+			"www.mylanguageaibou.co.uk",
+		}, // your frontend URLs
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},

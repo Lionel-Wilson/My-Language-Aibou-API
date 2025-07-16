@@ -1,6 +1,7 @@
 package word
 
 import (
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/messages"
 	"net/http"
 	"strings"
 
@@ -11,8 +12,6 @@ import (
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/render"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/request"
 )
-
-var FailedToProcessWord = "Failed to process your word. Please make sure you remove any extra spaces and special characters and try again"
 
 type Handler interface {
 	DefineWord() http.HandlerFunc
@@ -34,6 +33,8 @@ func NewWordHandler(
 		service: service,
 	}
 }
+
+var FailedToProcessWord = "Failed to process your word. Please make sure you remove any extra spaces and special characters and try again"
 
 func (h *handler) GetHistory() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -62,7 +63,7 @@ func (h *handler) GetHistory() http.HandlerFunc {
 		response, err := h.service.GetWordHistory(spaceTrimmedWord, requestBody.NativeLanguage)
 		if err != nil {
 			h.logger.Sugar().Errorw("failed to get word history", "error", err, "word", spaceTrimmedWord, "native language", requestBody.NativeLanguage)
-			render.Json(w, http.StatusBadRequest, FailedToProcessWord)
+			render.Json(w, http.StatusInternalServerError, messages.InternalServerErrorMsg)
 
 			return
 		}
@@ -90,7 +91,7 @@ func (h *handler) DefineWord() http.HandlerFunc {
 		err := h.service.ValidateWord(spaceTrimmedWord)
 		if err != nil {
 			h.logger.Sugar().Errorw("failed to validate word", "error", err, "word", spaceTrimmedWord, "native language", requestBody.NativeLanguage)
-			render.Json(w, http.StatusBadRequest, "failed to validate word")
+			render.Json(w, http.StatusBadRequest, err)
 
 			return
 		}
@@ -98,7 +99,7 @@ func (h *handler) DefineWord() http.HandlerFunc {
 		response, err := h.service.GetWordDefinition(spaceTrimmedWord, requestBody.NativeLanguage)
 		if err != nil {
 			h.logger.Sugar().Errorw("failed to define word", "error", err, "word", spaceTrimmedWord, "native language", requestBody.NativeLanguage)
-			render.Json(w, http.StatusBadRequest, FailedToProcessWord)
+			render.Json(w, http.StatusInternalServerError, messages.InternalServerErrorMsg)
 
 			return
 		}
@@ -126,7 +127,7 @@ func (h *handler) GetSynonyms() http.HandlerFunc {
 		err := h.service.ValidateWord(spaceTrimmedWord)
 		if err != nil {
 			h.logger.Sugar().Errorw("failed to validate word", "word", spaceTrimmedWord, "error", err)
-			render.Json(w, http.StatusBadRequest, err.Error())
+			render.Json(w, http.StatusBadRequest, err)
 
 			return
 		}
@@ -136,7 +137,7 @@ func (h *handler) GetSynonyms() http.HandlerFunc {
 			h.logger.Sugar().Errorw("failed to get word synonyms",
 				"word", spaceTrimmedWord, "native language", requestBody.NativeLanguage, "error", err)
 
-			render.Json(w, http.StatusInternalServerError, FailedToProcessWord)
+			render.Json(w, http.StatusInternalServerError, messages.InternalServerErrorMsg)
 
 			return
 		}

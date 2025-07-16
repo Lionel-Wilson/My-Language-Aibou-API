@@ -59,7 +59,7 @@ func (h *handler) ExplainSentence() http.HandlerFunc {
 			return
 		}
 
-		response, err := h.service.GetSentenceExplanation(trimmedSentence, requestBody.NativeLanguage)
+		response, err := h.service.GetSentenceExplanation(trimmedSentence, requestBody.NativeLanguage, requestBody.IsDetailed)
 		if err != nil {
 			h.logger.Sugar().Errorw("sentence explanation failed", "sentence", trimmedSentence,
 				"native language", requestBody.NativeLanguage, "error", err)

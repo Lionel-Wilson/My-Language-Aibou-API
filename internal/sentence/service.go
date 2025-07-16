@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -20,7 +21,7 @@ var ErrOpenAiNoChoices = errors.New("OpenAI API response contains no choices")
 
 //go:generate mockgen -source=service.go -destination=mock/service.go
 type Service interface {
-	GetSentenceExplanation(sentence string, nativeLanguage string) (*string, error)
+	GetSentenceExplanation(sentence string, nativeLanguage string, isDetailed bool) (*string, error)
 	GetSentenceCorrection(sentence string, nativeLanguage string) (*string, error)
 	ValidateSentence(sentence string) error
 }
@@ -95,7 +96,7 @@ func (s *service) GetSentenceCorrection(sentence string, nativeLanguage string) 
 	return result, nil
 }
 
-func (s *service) GetSentenceExplanation(sentence string, nativeLanguage string) (*string, error) {
+func (s *service) GetSentenceExplanation(sentence string, nativeLanguage string, isDetailed bool) (*string, error) {
 	s.logger.Info("Getting sentence explanation", zap.String("sentence", sentence), zap.String("nativeLanguage", nativeLanguage))
 	cacheKey := []byte(fmt.Sprintf("%s sentence explanation in %s", sentence, nativeLanguage))
 
@@ -104,7 +105,13 @@ func (s *service) GetSentenceExplanation(sentence string, nativeLanguage string)
 		cachedResponse := string(cached)
 		return &cachedResponse, err
 	}
-	jsonBody := s.sentenceToOpenAiExplanationRequestBody(sentence, nativeLanguage)
+
+	var jsonBody io.Reader
+	if isDetailed {
+		jsonBody = s.sentenceToOpenAiExplanationRequestBody(sentence, nativeLanguage)
+	} else {
+		jsonBody = s.sentenceToOpenAiSimpleTranslationRequestBody(sentence, nativeLanguage)
+	}
 
 	resp, responseBody, err := s.openAiClient.MakeRequest(jsonBody)
 	if err != nil {
@@ -155,18 +162,40 @@ func (s *service) ValidateSentence(sentence string) error {
 	return nil
 }
 
-func (s *service) sentenceToOpenAiExplanationRequestBody(sentence, userNativeLanguage string) *strings.Reader {
-	// var maxWordCount string
-	// var MaxTokens string
-	/*Remove tier system.
-	if userTier == "Basic" {
-		MaxTokens = "110"
-		maxWordCount = "80"
+func (s *service) sentenceToOpenAiSimpleTranslationRequestBody(sentence, userNativeLanguage string) *bytes.Reader {
+	content := fmt.Sprintf(
+		"Translate the following sentence into %s. Do not provide any explanation or context—only the translated sentence.\n\nSentence: %s",
+		userNativeLanguage,
+		sentence,
+	)
 
-	} else if userTier == "Premium" {
-		MaxTokens = "330"
-		maxWordCount = "230"
-	}*/
+	payload := map[string]interface{}{
+		"model": "gpt-4o",
+		"messages": []map[string]string{
+			{
+				"role":    "system",
+				"content": "You are a precise translator. Only return the translation without explanations.",
+			},
+			{
+				"role":    "user",
+				"content": content,
+			},
+		},
+		"temperature": 0.2,
+		"max_tokens":  300,
+	}
+
+	jsonBody, err := json.Marshal(payload)
+	if err != nil {
+		s.logger.Error("Failed to marshal simple translation payload", zap.Error(err))
+		return bytes.NewReader([]byte{})
+	}
+
+	s.logger.Sugar().Infof("Simple translation prompt: %s\n", content)
+	return bytes.NewReader(jsonBody)
+}
+
+func (s *service) sentenceToOpenAiExplanationRequestBody(sentence, userNativeLanguage string) *strings.Reader {
 	content := fmt.Sprintf("Explain the meaning & grammar used in this sentence - '%s'.Respond in %s", sentence, userNativeLanguage)
 
 	body := fmt.Sprintf(`{

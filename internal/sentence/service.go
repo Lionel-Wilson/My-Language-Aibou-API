@@ -98,7 +98,7 @@ func (s *service) GetSentenceCorrection(sentence string, nativeLanguage string) 
 
 func (s *service) GetSentenceExplanation(sentence string, nativeLanguage string, isDetailed bool) (*string, error) {
 	s.logger.Info("Getting sentence explanation", zap.String("sentence", sentence), zap.String("nativeLanguage", nativeLanguage))
-	cacheKey := []byte(fmt.Sprintf("%s sentence explanation in %s", sentence, nativeLanguage))
+	cacheKey := []byte(fmt.Sprintf("%s sentence explanation in %s(%v)", sentence, nativeLanguage, isDetailed))
 
 	cached, err := s.cache.Get(cacheKey)
 	if err == nil {

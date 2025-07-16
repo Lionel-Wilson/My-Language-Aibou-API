@@ -1,6 +1,7 @@
 package sentence
 
 import (
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/messages"
 	"net/http"
 	"strings"
 
@@ -62,7 +63,7 @@ func (h *handler) ExplainSentence() http.HandlerFunc {
 		if err != nil {
 			h.logger.Sugar().Errorw("sentence explanation failed", "sentence", trimmedSentence,
 				"native language", requestBody.NativeLanguage, "error", err)
-			render.Json(w, http.StatusInternalServerError, FailedToProcessSentence)
+			render.Json(w, http.StatusInternalServerError, messages.InternalServerErrorMsg)
 
 			return
 		}
@@ -99,7 +100,7 @@ func (h *handler) CorrectSentence() http.HandlerFunc {
 		if err != nil {
 			h.logger.Sugar().Errorw("sentence correction failed", "sentence", trimmedSentence,
 				"native language", requestBody.NativeLanguage, "error", err)
-			render.Json(w, http.StatusInternalServerError, FailedToProcessSentence)
+			render.Json(w, http.StatusInternalServerError, messages.InternalServerErrorMsg)
 
 			return
 		}

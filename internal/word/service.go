@@ -247,19 +247,7 @@ func (s *service) wordToOpenAiHistoryRequestBody(word, userNativeLanguage string
 }
 
 func (s *service) wordToOpenAiDefinitionRequestBody(word, userNativeLanguage string) *strings.Reader {
-	// var maxWordCount string
-	// var MaxTokens string
-	/*if userTier == "Basic" {
-		MaxTokens = "75"
-		maxWordCount = "40"
-		content = fmt.Sprintf("Explain the meaning of '%s', ensuring the explanation is in %s & max %s words", word, userNativeLanguage, maxWordCount)
-
-	} else if userTier == "Premium" {
-		MaxTokens = "250"
-		//maxWordCount = "180"
-
-	}*/
-	content := fmt.Sprintf("Explain the meaning of '%s'ensuring the explanation is in %s. Provide 2 example sentences using the word '%s', ensuring you translate them into %s", word, userNativeLanguage, word, userNativeLanguage)
+	content := fmt.Sprintf("Explain the meaning of '%s'ensuring the explanation is in %s. Provide 2 example sentences using the word '%s', ensuring you translate them into %s. If the word is Japanese, make sure to provide furigana.", word, userNativeLanguage, word, userNativeLanguage)
 
 	body := fmt.Sprintf(`{
 	"model":"gpt-4o",

@@ -225,7 +225,7 @@ func (s *service) ValidateWord(word string) error {
 }
 
 func (s *service) wordToOpenAiHistoryRequestBody(word, userNativeLanguage string) *strings.Reader {
-	content := fmt.Sprintf("Give me the history and origin of the word '%s', ensuring the explanation is in %s.", word, userNativeLanguage)
+	content := fmt.Sprintf("Give me the history and origin of the word '%s', ensuring the explanation is in %s. IF the word is Japanese, provide furigana rather than romaji", word, userNativeLanguage)
 
 	body := fmt.Sprintf(`{
 	"model":"gpt-4o",

@@ -155,8 +155,8 @@ func (s *service) ValidateSentence(sentence string) error {
 		return errors.New("Please provide a sentence")
 	}
 
-	if utf8.RuneCountInString(sentence) > 100 {
-		return errors.New("The sentence must be less than 100 characters.")
+	if utf8.RuneCountInString(sentence) > 120 {
+		return errors.New("The sentence must be less than 120 characters.")
 	}
 
 	return nil

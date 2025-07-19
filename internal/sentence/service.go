@@ -191,7 +191,6 @@ func (s *service) sentenceToOpenAiSimpleTranslationRequestBody(sentence, userNat
 		return bytes.NewReader([]byte{})
 	}
 
-	s.logger.Sugar().Infof("Simple translation prompt: %s\n", content)
 	return bytes.NewReader(jsonBody)
 }
 
@@ -211,10 +210,6 @@ func (s *service) sentenceToOpenAiExplanationRequestBody(sentence, userNativeLan
 	"temperature": 0.4,
 	"max_tokens": 800
 	}`, content)
-
-	// s.logger.Sugar().Infof("Tier: %s\n", userTier)
-	// s.logger.Sugar().Infof("Body: %s\n", body)
-	s.logger.Sugar().Infof("Phrase prompt: %s\n", content)
 
 	return strings.NewReader(body)
 }
@@ -258,6 +253,5 @@ func (s *service) sentenceToOpenAiSentenceCorrectionRequestBody(sentence, userNa
 		return bytes.NewReader([]byte{}) // fallback to empty body
 	}
 
-	s.logger.Sugar().Infof("Sentence correction prompt: %s\n", content)
 	return bytes.NewReader(jsonBody)
 }

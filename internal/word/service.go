@@ -241,8 +241,6 @@ func (s *service) wordToOpenAiHistoryRequestBody(word, userNativeLanguage string
 	"max_tokens": 300
 	}`, content)
 
-	s.logger.Sugar().Infof("Word prompt: %s\n", content)
-
 	return strings.NewReader(body)
 }
 
@@ -262,10 +260,6 @@ func (s *service) wordToOpenAiDefinitionRequestBody(word, userNativeLanguage str
 	"temperature": 0.4,
 	"max_tokens": 300
 	}`, content)
-
-	// s.logger.Sugar().Infof("Tier: %s\n", userTier)
-	// s.logger.Sugar().Infof("Body: %s\n", body)
-	s.logger.Sugar().Infof("Word prompt: %s\n", content)
 
 	return strings.NewReader(body)
 }
@@ -298,8 +292,6 @@ func (s *service) wordToOpenAiSynonymsRequestBody(word, userNativeLanguage strin
 		"temperature": 0.4,
 		"max_tokens": 400
 	}`, systemPrompt, content)
-
-	s.logger.Sugar().Infof("Word prompt: %s\n", content)
 
 	return strings.NewReader(body)
 }

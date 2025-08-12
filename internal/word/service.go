@@ -225,7 +225,7 @@ func (s *service) ValidateWord(word string) error {
 }
 
 func (s *service) wordToOpenAiHistoryRequestBody(word, userNativeLanguage string) *strings.Reader {
-	content := fmt.Sprintf("Give me the history and origin of the word '%s', ensuring the explanation is in %s. (If the word is Japanese, include furigana for any kanji used.)", word, userNativeLanguage)
+	content := fmt.Sprintf("Give me the history and origin of the word '%s', ensuring the explanation is in %s. (If the word is Japanese, include furigana for any kanji used, but do not mention whether it is or isn’t Japanese.)", word, userNativeLanguage)
 
 	return strings.NewReader(fmt.Sprintf(`{
 	"model":"gpt-4o",
@@ -243,7 +243,10 @@ func (s *service) wordToOpenAiHistoryRequestBody(word, userNativeLanguage string
 }
 
 func (s *service) wordToOpenAiDefinitionRequestBody(word, userNativeLanguage string) *strings.Reader {
-	content := fmt.Sprintf("Explain the meaning of '%s'ensuring the explanation is in %s. Provide 2 example sentences using the word '%s', ensuring you translate them into %s.(If the word is Japanese, include furigana for any kanji used.)", word, userNativeLanguage, word, userNativeLanguage)
+	content := fmt.Sprintf(
+		"Explain the meaning of '%s' in %s. Provide 2 example sentences using the word '%s', with translations into %s. "+
+			"If the word is Japanese, include furigana for any kanji used, but do not mention whether it is or isn’t Japanese.",
+		word, userNativeLanguage, word, userNativeLanguage)
 
 	return strings.NewReader(fmt.Sprintf(`{
 	"model":"gpt-4o",

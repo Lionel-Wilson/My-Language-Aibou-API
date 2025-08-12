@@ -227,7 +227,7 @@ func (s *service) ValidateWord(word string) error {
 func (s *service) wordToOpenAiHistoryRequestBody(word, userNativeLanguage string) *strings.Reader {
 	content := fmt.Sprintf("Give me the history and origin of the word '%s', ensuring the explanation is in %s. (If the word is Japanese, include furigana for any kanji used.)", word, userNativeLanguage)
 
-	body := fmt.Sprintf(`{
+	return strings.NewReader(fmt.Sprintf(`{
 	"model":"gpt-4o",
 	"messages": [{
 		"role": "system",
@@ -239,15 +239,13 @@ func (s *service) wordToOpenAiHistoryRequestBody(word, userNativeLanguage string
 	  }],
 	"temperature": 0.4,
 	"max_tokens": 300
-	}`, content)
-
-	return strings.NewReader(body)
+	}`, content))
 }
 
 func (s *service) wordToOpenAiDefinitionRequestBody(word, userNativeLanguage string) *strings.Reader {
 	content := fmt.Sprintf("Explain the meaning of '%s'ensuring the explanation is in %s. Provide 2 example sentences using the word '%s', ensuring you translate them into %s.(If the word is Japanese, include furigana for any kanji used.)", word, userNativeLanguage, word, userNativeLanguage)
 
-	body := fmt.Sprintf(`{
+	return strings.NewReader(fmt.Sprintf(`{
 	"model":"gpt-4o",
 	"messages": [{
 		"role": "system",
@@ -259,9 +257,7 @@ func (s *service) wordToOpenAiDefinitionRequestBody(word, userNativeLanguage str
 	  }],
 	"temperature": 0.4,
 	"max_tokens": 300
-	}`, content)
-
-	return strings.NewReader(body)
+	}`, content))
 }
 
 func (s *service) wordToOpenAiSynonymsRequestBody(word, userNativeLanguage string) *strings.Reader {
@@ -277,7 +273,7 @@ func (s *service) wordToOpenAiSynonymsRequestBody(word, userNativeLanguage strin
 	systemPrompt := "You are a helpful multilingual assistant that supports users learning foreign languages."
 
 	// Construct the full request body
-	body := fmt.Sprintf(`{
+	return strings.NewReader(fmt.Sprintf(`{
 		"model": "gpt-4o",
 		"messages": [
 			{
@@ -291,9 +287,7 @@ func (s *service) wordToOpenAiSynonymsRequestBody(word, userNativeLanguage strin
 		],
 		"temperature": 0.4,
 		"max_tokens": 400
-	}`, systemPrompt, content)
-
-	return strings.NewReader(body)
+	}`, systemPrompt, content))
 }
 
 // isNotAWord is used to check if the user is using the dictionary to define phrases as opposed to a single word

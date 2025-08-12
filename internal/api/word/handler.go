@@ -54,7 +54,11 @@ func (h *handler) GetHistory() http.HandlerFunc {
 
 		err := h.service.ValidateWord(spaceTrimmedWord)
 		if err != nil {
-			h.logger.Sugar().Errorw("failed to validate word", "word", spaceTrimmedWord, "native language", requestBody.NativeLanguage, "error", err)
+			h.logger.Sugar().Errorw(
+				"failed to validate word",
+				zap.Error(err),
+				"word", spaceTrimmedWord,
+				"native language", requestBody.NativeLanguage)
 			render.Json(w, http.StatusBadRequest, err.Error())
 
 			return
@@ -62,7 +66,11 @@ func (h *handler) GetHistory() http.HandlerFunc {
 
 		response, err := h.service.GetWordHistory(spaceTrimmedWord, requestBody.NativeLanguage)
 		if err != nil {
-			h.logger.Sugar().Errorw("failed to get word history", "error", err, "word", spaceTrimmedWord, "native language", requestBody.NativeLanguage)
+			h.logger.Sugar().Errorw(
+				"failed to get word history",
+				zap.Error(err),
+				"word", spaceTrimmedWord,
+				"native language", requestBody.NativeLanguage)
 			render.Json(w, http.StatusInternalServerError, messages.InternalServerErrorMsg)
 
 			return
@@ -79,7 +87,7 @@ func (h *handler) DefineWord() http.HandlerFunc {
 		// Validates and decodes request
 		if err := request.DecodeAndValidate(r.Body, &requestBody); err != nil {
 			h.logger.Sugar().Errorw("failed to decode and validate define word request body",
-				"error", err)
+				zap.Error(err))
 
 			render.Json(w, http.StatusBadRequest, FailedToProcessWord)
 
@@ -90,7 +98,11 @@ func (h *handler) DefineWord() http.HandlerFunc {
 
 		err := h.service.ValidateWord(spaceTrimmedWord)
 		if err != nil {
-			h.logger.Sugar().Errorw("failed to validate word", "error", err, "word", spaceTrimmedWord, "native language", requestBody.NativeLanguage)
+			h.logger.Sugar().Errorw(
+				"failed to validate word",
+				zap.Error(err),
+				"word", spaceTrimmedWord,
+				"native language", requestBody.NativeLanguage)
 			render.Json(w, http.StatusBadRequest, err.Error())
 
 			return
@@ -98,7 +110,11 @@ func (h *handler) DefineWord() http.HandlerFunc {
 
 		response, err := h.service.GetWordDefinition(spaceTrimmedWord, requestBody.NativeLanguage)
 		if err != nil {
-			h.logger.Sugar().Errorw("failed to define word", "error", err, "word", spaceTrimmedWord, "native language", requestBody.NativeLanguage)
+			h.logger.Sugar().Errorw(
+				"failed to define word",
+				zap.Error(err), "word",
+				spaceTrimmedWord, "native language",
+				requestBody.NativeLanguage)
 			render.Json(w, http.StatusInternalServerError, messages.InternalServerErrorMsg)
 
 			return
@@ -114,8 +130,7 @@ func (h *handler) GetSynonyms() http.HandlerFunc {
 
 		// Validates and decodes request
 		if err := request.DecodeAndValidate(r.Body, &requestBody); err != nil {
-			h.logger.Sugar().Errorw("failed to decode and validate define word request body",
-				"error", err)
+			h.logger.Sugar().Errorw("failed to decode and validate define word request body", zap.Error(err))
 
 			render.Json(w, http.StatusBadRequest, FailedToProcessWord)
 
@@ -126,7 +141,8 @@ func (h *handler) GetSynonyms() http.HandlerFunc {
 
 		err := h.service.ValidateWord(spaceTrimmedWord)
 		if err != nil {
-			h.logger.Sugar().Errorw("failed to validate word", "word", spaceTrimmedWord, "error", err)
+			h.logger.Sugar().Errorw(
+				"failed to validate word", zap.Error(err), "word", spaceTrimmedWord)
 			render.Json(w, http.StatusBadRequest, err.Error())
 
 			return
@@ -135,7 +151,9 @@ func (h *handler) GetSynonyms() http.HandlerFunc {
 		response, err := h.service.GetWordSynonyms(spaceTrimmedWord, requestBody.NativeLanguage)
 		if err != nil {
 			h.logger.Sugar().Errorw("failed to get word synonyms",
-				"word", spaceTrimmedWord, "native language", requestBody.NativeLanguage, "error", err)
+				zap.Error(err),
+				"word", spaceTrimmedWord,
+				"native language", requestBody.NativeLanguage)
 
 			render.Json(w, http.StatusInternalServerError, messages.InternalServerErrorMsg)
 

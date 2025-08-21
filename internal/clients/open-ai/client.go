@@ -14,28 +14,13 @@ type Client interface {
 }
 
 type (
-	// Define the structure for the choices array
-	Choice struct {
-		Index        int     `json:"index"`
-		Message      Message `json:"message"`
-		Logprobs     *string `json:"logprobs"`
-		FinishReason string  `json:"finish_reason"`
+	OpenAIRequest struct {
+		Model       string    `json:"model"`
+		Messages    []Message `json:"messages"`
+		Temperature float32   `json:"temperature"`
+		MaxTokens   int       `json:"max_tokens"`
 	}
 
-	// Define the structure for the message field within choices
-	Message struct {
-		Role    string `json:"role"`
-		Content string `json:"content"`
-	}
-
-	// Define the structure for the usage field
-	Usage struct {
-		PromptTokens     int `json:"prompt_tokens"`
-		CompletionTokens int `json:"completion_tokens"`
-		TotalTokens      int `json:"total_tokens"`
-	}
-
-	// Define the main structure
 	ChatCompletion struct {
 		ID                string   `json:"id"`
 		Object            string   `json:"object"`
@@ -44,6 +29,24 @@ type (
 		SystemFingerprint string   `json:"system_fingerprint"`
 		Choices           []Choice `json:"choices"`
 		Usage             Usage    `json:"usage"`
+	}
+
+	Choice struct {
+		Index        int     `json:"index"`
+		Message      Message `json:"message"`
+		Logprobs     *string `json:"logprobs"`
+		FinishReason string  `json:"finish_reason"`
+	}
+
+	Message struct {
+		Role    string `json:"role"`
+		Content string `json:"content"`
+	}
+
+	Usage struct {
+		PromptTokens     int `json:"prompt_tokens"`
+		CompletionTokens int `json:"completion_tokens"`
+		TotalTokens      int `json:"total_tokens"`
 	}
 )
 

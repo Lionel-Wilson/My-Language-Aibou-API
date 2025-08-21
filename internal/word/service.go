@@ -215,25 +215,24 @@ func (s *service) wordToOpenAiHistoryRequestBody(word, userNativeLanguage string
 	}`, content))
 }
 
-func (s *service) wordToOpenAiDefinitionRequestBody(word, userNativeLanguage string) *strings.Reader {
+func (s *service) wordToOpenAiDefinitionRequestBody(word, lang string) *strings.Reader {
 	content := fmt.Sprintf(
 		"Explain the meaning of '%s' in %s. Provide 2 example sentences using the word '%s', with translations into %s. "+
 			"If the word is Japanese, include furigana for any kanji used, but do not mention whether it is or isn’t Japanese.",
-		word, userNativeLanguage, word, userNativeLanguage)
+		word, lang, word, lang,
+	)
 
-	return strings.NewReader(fmt.Sprintf(`{
-	"model":"gpt-4o",
-	"messages": [{
-		"role": "system",
-		"content": "You are a helpful assistant."
-	  },
-	  {
-		"role": "user",
-		"content": "%s"
-	  }],
-	"temperature": 0.4,
-	"max_tokens": 300
-	}`, content))
+	req := openai.OpenAIRequest{
+		Model:       "gpt-4o",
+		Temperature: 0.4,
+		MaxTokens:   300,
+	}
+	req.Messages = append(req.Messages,
+		openai.Message{Role: "system", Content: "You are a helpful multilingual assistant that supports users learning foreign languages."},
+		openai.Message{Role: "user", Content: content},
+	)
+	b, _ := json.Marshal(&req)
+	return strings.NewReader(string(b))
 }
 
 func (s *service) wordToOpenAiSynonymsRequestBody(word, userNativeLanguage string) *strings.Reader {

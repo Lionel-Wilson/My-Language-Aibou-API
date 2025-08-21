@@ -82,7 +82,7 @@ func (s *service) GetWordHistory(word string, nativeLanguage string) (*string, e
 	cacheValue := []byte(OpenAIApiResponse.Choices[0].Message.Content)
 	err = s.cache.Set(cacheKey, cacheValue, wordCacheExpiration)
 	if err != nil {
-		return nil, fmt.Errorf("failed to cache word definition: %w", err)
+		s.logger.Warn("word history cache set failed", zap.Error(err))
 	}
 
 	return &OpenAIApiResponse.Choices[0].Message.Content, nil
@@ -124,7 +124,7 @@ func (s *service) GetWordSynonyms(word string, nativeLanguage string) (*string, 
 	cacheValue := []byte(*result)
 	err = s.cache.Set(cacheKey, cacheValue, wordCacheExpiration)
 	if err != nil {
-		return nil, fmt.Errorf("failed to cache word definition: %w", err)
+		s.logger.Warn("word synonyms cache set failed", zap.Error(err))
 	}
 
 	return result, nil
@@ -166,7 +166,7 @@ func (s *service) GetWordDefinition(word string, nativeLanguage string) (*string
 	cacheValue := []byte(*result)
 	err = s.cache.Set(cacheKey, cacheValue, wordCacheExpiration)
 	if err != nil {
-		return nil, fmt.Errorf("failed to cache word definition: %w", err)
+		s.logger.Warn("word definition cache set failed", zap.Error(err))
 	}
 
 	return result, nil

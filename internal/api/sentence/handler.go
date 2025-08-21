@@ -16,6 +16,7 @@ import (
 type Handler interface {
 	ExplainSentence() http.HandlerFunc
 	CorrectSentence() http.HandlerFunc
+	Simplify() http.HandlerFunc
 }
 
 type handler struct {
@@ -118,5 +119,10 @@ func (h *handler) CorrectSentence() http.HandlerFunc {
 		}
 
 		render.Json(w, http.StatusOK, response)
+	}
+}
+
+func (h *handler) Simplify() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 	}
 }

@@ -33,14 +33,14 @@ func TestDefineWordHandler(t *testing.T) {
 
 	testCases := []struct {
 		name           string
-		requestBody    dto.DefineWordRequest
+		requestBody    dto.WordRequest
 		mockSetup      func()
 		expectedStatus int
 		expectedBody   string
 	}{
 		{
 			name: "empty word",
-			requestBody: dto.DefineWordRequest{
+			requestBody: dto.WordRequest{
 				Word:           "",
 				NativeLanguage: "english",
 			},
@@ -52,7 +52,7 @@ func TestDefineWordHandler(t *testing.T) {
 		},
 		{
 			name: "valid word but API fails",
-			requestBody: dto.DefineWordRequest{
+			requestBody: dto.WordRequest{
 				Word:           "hello",
 				NativeLanguage: "english",
 			},
@@ -65,7 +65,7 @@ func TestDefineWordHandler(t *testing.T) {
 		},
 		{
 			name: "successful definition",
-			requestBody: dto.DefineWordRequest{
+			requestBody: dto.WordRequest{
 				Word:           "hello",
 				NativeLanguage: "english",
 			},

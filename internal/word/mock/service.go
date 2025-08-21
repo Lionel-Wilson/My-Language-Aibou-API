@@ -14,6 +14,8 @@ import (
 	reflect "reflect"
 
 	gomock "go.uber.org/mock/gomock"
+
+	domain "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/word/domain"
 )
 
 // MockService is a mock of Service interface.
@@ -82,6 +84,21 @@ func (m *MockService) GetWordSynonyms(ctx context.Context, word, nativeLanguage 
 func (mr *MockServiceMockRecorder) GetWordSynonyms(ctx, word, nativeLanguage any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWordSynonyms", reflect.TypeOf((*MockService)(nil).GetWordSynonyms), ctx, word, nativeLanguage)
+}
+
+// Lookup mocks base method.
+func (m *MockService) Lookup(ctx context.Context, word, nativeLanguage string) (*domain.LookupDetails, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Lookup", ctx, word, nativeLanguage)
+	ret0, _ := ret[0].(*domain.LookupDetails)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Lookup indicates an expected call of Lookup.
+func (mr *MockServiceMockRecorder) Lookup(ctx, word, nativeLanguage any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Lookup", reflect.TypeOf((*MockService)(nil).Lookup), ctx, word, nativeLanguage)
 }
 
 // ValidateWord mocks base method.

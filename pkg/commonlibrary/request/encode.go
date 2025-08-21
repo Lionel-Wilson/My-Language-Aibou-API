@@ -10,5 +10,6 @@ func JsonReader(v any) (*bytes.Reader, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return bytes.NewReader(b), nil
 }

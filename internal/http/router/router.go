@@ -135,6 +135,23 @@ func New(
 		})
 	})
 
+	router.Route(
+		"/api/v4", func(r chi.Router) {
+			r.Route(
+				"/word", func(r chi.Router) {
+					r.Post("/lookup", wordHandler.Lookup())
+				},
+			)
+			r.Route(
+				"/sentence", func(r chi.Router) {
+					r.Post("/explanation", sentenceHandler.ExplainSentence())
+					r.Post("/correction", sentenceHandler.CorrectSentence())
+					r.Post("/simplify", sentenceHandler.Simplify())
+				},
+			)
+		},
+	)
+
 	return router
 }
 

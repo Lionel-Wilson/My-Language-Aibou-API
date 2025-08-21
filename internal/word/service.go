@@ -6,7 +6,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/word/domain"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/request"
+	"golang.org/x/sync/errgroup"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -27,6 +30,7 @@ type Service interface {
 	GetWordSynonyms(ctx context.Context, word string, nativeLanguage string) (*string, error)
 	ValidateWord(word string) error
 	GetWordHistory(ctx context.Context, word string, nativeLanguage string) (*string, error)
+	Lookup(ctx context.Context, word string, nativeLanguage string) (*domain.LookupDetails, error)
 }
 
 type service struct {
@@ -49,6 +53,79 @@ func NewWordService(
 
 var wordCacheExpiration = int(time.Hour * 24 * 90) // 90 days
 
+type Details struct {
+	kind         string
+	requestBody  io.Reader
+	response     *http.Response
+	responseBody []byte
+	err          error
+}
+
+func (s *service) Lookup(ctx context.Context, word, nativeLanguage string) (*domain.LookupDetails, error) {
+	// 1) Build payloads sequentially (no races)
+	defBody, err := s.wordToOpenAiDefinitionRequestBody(word, nativeLanguage)
+	if err != nil {
+		return nil, fmt.Errorf("marshal word definition openai request: %w", err)
+	}
+	synBody, err := s.wordToOpenAiSynonymsRequestBody(word, nativeLanguage)
+	if err != nil {
+		return nil, fmt.Errorf("marshal word synonyms openai request: %w", err)
+	}
+	histBody, err := s.wordToOpenAiHistoryRequestBody(word, nativeLanguage)
+	if err != nil {
+		return nil, fmt.Errorf("marshal word history openai request: %w", err)
+	}
+
+	items := []*Details{
+		{kind: "definition", requestBody: defBody},
+		{kind: "synonyms", requestBody: synBody},
+		{kind: "history", requestBody: histBody},
+	}
+
+	// 2) Fire requests in parallel with errgroup (ctx-aware)
+	g, ctx := errgroup.WithContext(ctx)
+	for i := range items {
+		d := items[i] // capture pointer
+		g.Go(func() error {
+			resp, body, reqErr := s.openAiClient.MakeRequest(ctx, d.requestBody)
+			d.response, d.responseBody, d.err = resp, body, reqErr
+			if reqErr != nil {
+				s.logger.Error("failed to make openai request", zap.String("kind", d.kind), zap.Error(reqErr))
+				return reqErr
+			}
+			if resp.StatusCode != http.StatusOK {
+				return fmt.Errorf("openai non-OK: kind=%s status=%d body=%s", d.kind, resp.StatusCode, string(body))
+			}
+			return nil
+		})
+	}
+	if err := g.Wait(); err != nil {
+		return nil, fmt.Errorf("one or more OpenAI requests failed: %w", err)
+	}
+
+	// 3) Unmarshal each response and assemble result
+	var result domain.LookupDetails
+	for _, d := range items {
+		var comp openai.ChatCompletion
+		if err := json.Unmarshal(d.responseBody, &comp); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal %s response: %w", d.kind, err)
+		}
+		if len(comp.Choices) == 0 {
+			return nil, openaierrors.ErrNoChoicesFound
+		}
+		content := comp.Choices[0].Message.Content
+		switch d.kind {
+		case "definition":
+			result.Definition = content
+		case "synonyms":
+			result.Synonyms = content
+		case "history":
+			result.History = content
+		}
+	}
+
+	return &result, nil
+}
 func (s *service) GetWordHistory(ctx context.Context, word string, nativeLanguage string) (*string, error) {
 	cacheKey := []byte(fmt.Sprintf("%s word history in %s", word, nativeLanguage))
 

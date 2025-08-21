@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/request"
 	"io"
 	"net/http"
 	"time"
@@ -16,6 +15,7 @@ import (
 	"go.uber.org/zap"
 
 	openai "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai"
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/request"
 )
 
 var ErrOpenAiNoChoices = errors.New("OpenAI API response contains no choices")
@@ -45,9 +45,7 @@ func NewSentenceService(
 	}
 }
 
-var (
-	sentenceCacheExpiration = int(time.Hour * 24 * 30) //30 days
-)
+var sentenceCacheExpiration = int(time.Hour * 24 * 30) // 30 days
 
 func (s *service) GetSentenceCorrection(ctx context.Context, sentence string, nativeLanguage string) (*string, error) {
 	cacheKey := []byte(fmt.Sprintf("%s sentence correction in %s", sentence, nativeLanguage))
@@ -57,6 +55,7 @@ func (s *service) GetSentenceCorrection(ctx context.Context, sentence string, na
 		cachedResponse := string(cached)
 		return &cachedResponse, nil
 	}
+
 	jsonBody, err := s.sentenceToOpenAiSentenceCorrectionRequestBody(sentence, nativeLanguage)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal openai request: %w", err)
@@ -93,6 +92,7 @@ func (s *service) GetSentenceCorrection(ctx context.Context, sentence string, na
 	result := &OpenAIApiResponse.Choices[0].Message.Content
 
 	cacheValue := []byte(*result)
+
 	err = s.cache.Set(cacheKey, cacheValue, sentenceCacheExpiration)
 	if err != nil {
 		return nil, fmt.Errorf("failed to cache sentence correction: %w", err)
@@ -154,6 +154,7 @@ func (s *service) GetSentenceExplanation(ctx context.Context, sentence string, n
 	result := &OpenAIApiResponse.Choices[0].Message.Content
 
 	cacheValue := []byte(*result)
+
 	err = s.cache.Set(cacheKey, cacheValue, sentenceCacheExpiration)
 	if err != nil {
 		return nil, fmt.Errorf("failed to cache sentence explanation: %w", err)

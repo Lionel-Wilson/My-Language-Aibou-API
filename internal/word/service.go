@@ -240,17 +240,7 @@ func (s *service) wordToOpenAiHistoryRequestBody(word, userNativeLanguage string
 		word, userNativeLanguage,
 	)
 
-	req := openai.OpenAIRequest{
-		Model:       "gpt-4o",
-		Temperature: 0.4,
-		MaxTokens:   300,
-	}
-	req.Messages = append(req.Messages,
-		openai.Message{Role: "system", Content: "You are a helpful multilingual assistant that supports users learning foreign languages."},
-		openai.Message{Role: "user", Content: content},
-	)
-
-	return jsonReader(&req)
+	return jsonReader(mapToOpenAiRequest(content))
 }
 
 func (s *service) wordToOpenAiDefinitionRequestBody(word, lang string) (*bytes.Reader, error) {
@@ -260,17 +250,7 @@ func (s *service) wordToOpenAiDefinitionRequestBody(word, lang string) (*bytes.R
 		word, lang, word, lang,
 	)
 
-	req := openai.OpenAIRequest{
-		Model:       "gpt-4o",
-		Temperature: 0.4,
-		MaxTokens:   300,
-	}
-	req.Messages = append(req.Messages,
-		openai.Message{Role: "system", Content: "You are a helpful multilingual assistant that supports users learning foreign languages."},
-		openai.Message{Role: "user", Content: content},
-	)
-
-	return jsonReader(&req)
+	return jsonReader(mapToOpenAiRequest(content))
 }
 
 func (s *service) wordToOpenAiSynonymsRequestBody(word, userNativeLanguage string) (*bytes.Reader, error) {
@@ -281,17 +261,7 @@ func (s *service) wordToOpenAiSynonymsRequestBody(word, userNativeLanguage strin
 		word, userNativeLanguage,
 	)
 
-	req := openai.OpenAIRequest{
-		Model:       "gpt-4o",
-		Temperature: 0.4,
-		MaxTokens:   400,
-	}
-	req.Messages = append(req.Messages,
-		openai.Message{Role: "system", Content: "You are a helpful multilingual assistant that supports users learning foreign languages."},
-		openai.Message{Role: "user", Content: content},
-	)
-
-	return jsonReader(&req)
+	return jsonReader(mapToOpenAiRequest(content))
 }
 
 // isNotAWord is used to check if the user is using the dictionary to define phrases as opposed to a single word
@@ -334,4 +304,18 @@ func jsonReader(v any) (*bytes.Reader, error) {
 		return nil, err
 	}
 	return bytes.NewReader(b), nil
+}
+
+func mapToOpenAiRequest(content string) *openai.OpenAIRequest {
+	response := openai.OpenAIRequest{
+		Model:       "gpt-4o",
+		Temperature: 0.4,
+		MaxTokens:   400,
+	}
+	response.Messages = append(response.Messages,
+		openai.Message{Role: "system", Content: "You are a helpful multilingual assistant that supports users learning foreign languages."},
+		openai.Message{Role: "user", Content: content},
+	)
+
+	return &response
 }

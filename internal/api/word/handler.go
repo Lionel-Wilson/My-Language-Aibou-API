@@ -58,7 +58,7 @@ func (h *handler) GetHistory() http.HandlerFunc {
 				"failed to validate word",
 				zap.Error(err),
 				"word", spaceTrimmedWord,
-				"native language", requestBody.NativeLanguage)
+				"nativeLanguage", requestBody.NativeLanguage)
 
 			render.Json(w, http.StatusBadRequest, err.Error())
 
@@ -71,7 +71,7 @@ func (h *handler) GetHistory() http.HandlerFunc {
 				"failed to get word history",
 				zap.Error(err),
 				"word", spaceTrimmedWord,
-				"native language", requestBody.NativeLanguage)
+				"nativeLanguage", requestBody.NativeLanguage)
 			render.Json(w, http.StatusInternalServerError, messages.InternalServerErrorMsg)
 
 			return
@@ -103,7 +103,7 @@ func (h *handler) DefineWord() http.HandlerFunc {
 				"failed to validate word",
 				zap.Error(err),
 				"word", spaceTrimmedWord,
-				"native language", requestBody.NativeLanguage)
+				"nativeLanguage", requestBody.NativeLanguage)
 			render.Json(w, http.StatusBadRequest, err.Error())
 
 			return
@@ -114,7 +114,7 @@ func (h *handler) DefineWord() http.HandlerFunc {
 			h.logger.Sugar().Errorw(
 				"failed to define word",
 				zap.Error(err), "word",
-				spaceTrimmedWord, "native language",
+				spaceTrimmedWord, "nativeLanguage",
 				requestBody.NativeLanguage)
 			render.Json(w, http.StatusInternalServerError, messages.InternalServerErrorMsg)
 
@@ -155,7 +155,7 @@ func (h *handler) GetSynonyms() http.HandlerFunc {
 			h.logger.Sugar().Errorw("failed to get word synonyms",
 				zap.Error(err),
 				"word", spaceTrimmedWord,
-				"native language", requestBody.NativeLanguage)
+				"nativeLanguage", requestBody.NativeLanguage)
 
 			render.Json(w, http.StatusInternalServerError, messages.InternalServerErrorMsg)
 

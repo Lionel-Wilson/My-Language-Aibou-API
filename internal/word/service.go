@@ -56,7 +56,10 @@ func (s *service) GetWordHistory(ctx context.Context, word string, nativeLanguag
 		return &cachedResponse, nil
 	}
 
-	jsonBody := s.wordToOpenAiHistoryRequestBody(word, nativeLanguage)
+	jsonBody, err := s.wordToOpenAiHistoryRequestBody(word, nativeLanguage)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal openai request: %w", err)
+	}
 
 	resp, responseBody, err := s.openAiClient.MakeRequest(ctx, jsonBody)
 	if err != nil {
@@ -105,7 +108,10 @@ func (s *service) GetWordSynonyms(ctx context.Context, word string, nativeLangua
 		return &cachedResponse, nil
 	}
 
-	jsonEncodedBody := s.wordToOpenAiSynonymsRequestBody(word, nativeLanguage)
+	jsonEncodedBody, err := s.wordToOpenAiSynonymsRequestBody(word, nativeLanguage)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal openai request: %w", err)
+	}
 
 	resp, responseBody, err := s.openAiClient.MakeRequest(ctx, jsonEncodedBody)
 	if err != nil {
@@ -156,7 +162,10 @@ func (s *service) GetWordDefinition(ctx context.Context, word string, nativeLang
 		return &cachedResponse, nil
 	}
 
-	jsonEncodedBody := s.wordToOpenAiDefinitionRequestBody(word, nativeLanguage)
+	jsonEncodedBody, err := s.wordToOpenAiDefinitionRequestBody(word, nativeLanguage)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal openai request: %w", err)
+	}
 
 	resp, responseBody, err := s.openAiClient.MakeRequest(ctx, jsonEncodedBody)
 	if err != nil {
@@ -223,7 +232,7 @@ func (s *service) ValidateWord(word string) error {
 	return nil
 }
 
-func (s *service) wordToOpenAiHistoryRequestBody(word, userNativeLanguage string) *strings.Reader {
+func (s *service) wordToOpenAiHistoryRequestBody(word, userNativeLanguage string) (*strings.Reader, error) {
 	content := fmt.Sprintf(
 		"Give me the history and origin of the word '%s', ensuring the explanation is in %s. "+
 			"(If the word is Japanese, include furigana for any kanji used, but do not mention whether it is or isn’t Japanese.)",
@@ -240,11 +249,14 @@ func (s *service) wordToOpenAiHistoryRequestBody(word, userNativeLanguage string
 		openai.Message{Role: "user", Content: content},
 	)
 
-	b, _ := json.Marshal(&req)
-	return strings.NewReader(string(b))
+	b, err := json.Marshal(&req)
+	if err != nil {
+		return nil, err
+	}
+	return strings.NewReader(string(b)), nil
 }
 
-func (s *service) wordToOpenAiDefinitionRequestBody(word, lang string) *strings.Reader {
+func (s *service) wordToOpenAiDefinitionRequestBody(word, lang string) (*strings.Reader, error) {
 	content := fmt.Sprintf(
 		"Explain the meaning of '%s' in %s. Provide 2 example sentences using the word '%s', with translations into %s. "+
 			"If the word is Japanese, include furigana for any kanji used, but do not mention whether it is or isn’t Japanese.",
@@ -260,12 +272,15 @@ func (s *service) wordToOpenAiDefinitionRequestBody(word, lang string) *strings.
 		openai.Message{Role: "system", Content: "You are a helpful multilingual assistant that supports users learning foreign languages."},
 		openai.Message{Role: "user", Content: content},
 	)
-	b, _ := json.Marshal(&req)
+	b, err := json.Marshal(&req)
+	if err != nil {
+		return nil, err
+	}
 
-	return strings.NewReader(string(b))
+	return strings.NewReader(string(b)), nil
 }
 
-func (s *service) wordToOpenAiSynonymsRequestBody(word, userNativeLanguage string) *strings.Reader {
+func (s *service) wordToOpenAiSynonymsRequestBody(word, userNativeLanguage string) (*strings.Reader, error) {
 	content := fmt.Sprintf(
 		"The user has provided the word '%s'. First, detect what language this word is in. "+
 			"Then, list some simple synonyms for it in that same language. "+
@@ -283,8 +298,12 @@ func (s *service) wordToOpenAiSynonymsRequestBody(word, userNativeLanguage strin
 		openai.Message{Role: "user", Content: content},
 	)
 
-	b, _ := json.Marshal(&req)
-	return strings.NewReader(string(b))
+	b, err := json.Marshal(&req)
+	if err != nil {
+		return nil, err
+	}
+
+	return strings.NewReader(string(b)), nil
 }
 
 // isNotAWord is used to check if the user is using the dictionary to define phrases as opposed to a single word

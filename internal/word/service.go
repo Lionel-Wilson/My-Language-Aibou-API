@@ -224,21 +224,24 @@ func (s *service) ValidateWord(word string) error {
 }
 
 func (s *service) wordToOpenAiHistoryRequestBody(word, userNativeLanguage string) *strings.Reader {
-	content := fmt.Sprintf("Give me the history and origin of the word '%s', ensuring the explanation is in %s. (If the word is Japanese, include furigana for any kanji used, but do not mention whether it is or isn’t Japanese.)", word, userNativeLanguage)
+	content := fmt.Sprintf(
+		"Give me the history and origin of the word '%s', ensuring the explanation is in %s. "+
+			"(If the word is Japanese, include furigana for any kanji used, but do not mention whether it is or isn’t Japanese.)",
+		word, userNativeLanguage,
+	)
 
-	return strings.NewReader(fmt.Sprintf(`{
-	"model":"gpt-4o",
-	"messages": [{
-		"role": "system",
-		"content": "You are a helpful multilingual assistant that supports users learning foreign languages."
-	  },
-	  {
-		"role": "user",
-		"content": "%s"
-	  }],
-	"temperature": 0.4,
-	"max_tokens": 300
-	}`, content))
+	req := openai.OpenAIRequest{
+		Model:       "gpt-4o",
+		Temperature: 0.4,
+		MaxTokens:   300,
+	}
+	req.Messages = append(req.Messages,
+		openai.Message{Role: "system", Content: "You are a helpful multilingual assistant that supports users learning foreign languages."},
+		openai.Message{Role: "user", Content: content},
+	)
+
+	b, _ := json.Marshal(&req)
+	return strings.NewReader(string(b))
 }
 
 func (s *service) wordToOpenAiDefinitionRequestBody(word, lang string) *strings.Reader {
@@ -263,7 +266,6 @@ func (s *service) wordToOpenAiDefinitionRequestBody(word, lang string) *strings.
 }
 
 func (s *service) wordToOpenAiSynonymsRequestBody(word, userNativeLanguage string) *strings.Reader {
-	// Construct the dynamic content prompt
 	content := fmt.Sprintf(
 		"The user has provided the word '%s'. First, detect what language this word is in. "+
 			"Then, list some simple synonyms for it in that same language. "+
@@ -271,25 +273,18 @@ func (s *service) wordToOpenAiSynonymsRequestBody(word, userNativeLanguage strin
 		word, userNativeLanguage,
 	)
 
-	// Optionally add a more specific system instruction
-	systemPrompt := "You are a helpful multilingual assistant that supports users learning foreign languages."
+	req := openai.OpenAIRequest{
+		Model:       "gpt-4o",
+		Temperature: 0.4,
+		MaxTokens:   400,
+	}
+	req.Messages = append(req.Messages,
+		openai.Message{Role: "system", Content: "You are a helpful multilingual assistant that supports users learning foreign languages."},
+		openai.Message{Role: "user", Content: content},
+	)
 
-	// Construct the full request body
-	return strings.NewReader(fmt.Sprintf(`{
-		"model": "gpt-4o",
-		"messages": [
-			{
-				"role": "system",
-				"content": "%s"
-			},
-			{
-				"role": "user",
-				"content": "%s"
-			}
-		],
-		"temperature": 0.4,
-		"max_tokens": 400
-	}`, systemPrompt, content))
+	b, _ := json.Marshal(&req)
+	return strings.NewReader(string(b))
 }
 
 // isNotAWord is used to check if the user is using the dictionary to define phrases as opposed to a single word

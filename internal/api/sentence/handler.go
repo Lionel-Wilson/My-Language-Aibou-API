@@ -43,7 +43,7 @@ func (h *handler) ExplainSentence() http.HandlerFunc {
 
 		// Validates and decodes request
 		if err := request.DecodeAndValidate(r.Body, &requestBody); err != nil {
-			h.logger.Sugar().Infow("failed to decode and validate explain sentence request body",
+			h.logger.Sugar().Warnw("failed to decode and validate explain sentence request body",
 				"error", err)
 
 			render.Json(w, http.StatusBadRequest, FailedToProcessSentence)
@@ -65,7 +65,6 @@ func (h *handler) ExplainSentence() http.HandlerFunc {
 		response, err := h.service.GetSentenceExplanation(ctx, trimmedSentence, requestBody.NativeLanguage, requestBody.IsDetailed)
 		if err != nil {
 			h.logger.Sugar().Errorw("sentence explanation failed",
-				"context", ctx,
 				"sentence", trimmedSentence,
 				"nativeLanguage", requestBody.NativeLanguage,
 				"error", err)
@@ -86,9 +85,8 @@ func (h *handler) CorrectSentence() http.HandlerFunc {
 
 		// Validates and decodes request
 		if err := request.DecodeAndValidate(r.Body, &requestBody); err != nil {
-			h.logger.Sugar().Errorw(
+			h.logger.Sugar().Warnw(
 				"failed to decode and validate correct sentence request body",
-				"context", ctx,
 				"error", err)
 
 			render.Json(w, http.StatusBadRequest, FailedToProcessSentence)
@@ -111,7 +109,6 @@ func (h *handler) CorrectSentence() http.HandlerFunc {
 		response, err := h.service.GetSentenceCorrection(ctx, trimmedSentence, requestBody.NativeLanguage)
 		if err != nil {
 			h.logger.Sugar().Errorw("sentence correction failed",
-				"context", ctx,
 				"sentence", trimmedSentence,
 				"nativeLanguage", requestBody.NativeLanguage,
 				"error", err)

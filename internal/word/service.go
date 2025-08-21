@@ -113,7 +113,7 @@ func (s *service) GetWordSynonyms(ctx context.Context, word string, nativeLangua
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("openai API returned non-OK status responseBody=%v statusCode=%v", resp, resp.StatusCode)
+		return nil, fmt.Errorf("openai API returned non-OK status response=%v statusCode=%v", resp, resp.StatusCode)
 	}
 
 	var OpenAIApiResponse openai.ChatCompletion
@@ -164,7 +164,7 @@ func (s *service) GetWordDefinition(ctx context.Context, word string, nativeLang
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("openai api returned non-OK status responseBody=%v statusCode=%v", resp, resp.StatusCode)
+		return nil, fmt.Errorf("openai api returned non-OK status response=%v statusCode=%v", resp, resp.StatusCode)
 	}
 
 	var OpenAIApiResponse openai.ChatCompletion

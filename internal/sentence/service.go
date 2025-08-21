@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 	"time"
 	"unicode/utf8"
 
@@ -57,7 +56,10 @@ func (s *service) GetSentenceCorrection(ctx context.Context, sentence string, na
 		cachedResponse := string(cached)
 		return &cachedResponse, nil
 	}
-	jsonBody := s.sentenceToOpenAiSentenceCorrectionRequestBody(sentence, nativeLanguage)
+	jsonBody, err := s.sentenceToOpenAiSentenceCorrectionRequestBody(sentence, nativeLanguage)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal openai request: %w", err)
+	}
 
 	resp, responseBody, err := s.openAiClient.MakeRequest(ctx, jsonBody)
 	if err != nil {
@@ -109,9 +111,15 @@ func (s *service) GetSentenceExplanation(ctx context.Context, sentence string, n
 
 	var jsonBody io.Reader
 	if isDetailed {
-		jsonBody = s.sentenceToOpenAiExplanationRequestBody(sentence, nativeLanguage)
+		jsonBody, err = s.sentenceToOpenAiExplanationRequestBody(sentence, nativeLanguage)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal openai request: %w", err)
+		}
 	} else {
-		jsonBody = s.sentenceToOpenAiSimpleTranslationRequestBody(sentence, nativeLanguage)
+		jsonBody, err = s.sentenceToOpenAiSimpleTranslationRequestBody(sentence, nativeLanguage)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal openai request: %w", err)
+		}
 	}
 
 	resp, responseBody, err := s.openAiClient.MakeRequest(ctx, jsonBody)
@@ -166,61 +174,46 @@ func (s *service) ValidateSentence(sentence string) error {
 	return nil
 }
 
-func (s *service) sentenceToOpenAiSimpleTranslationRequestBody(sentence, userNativeLanguage string) *bytes.Reader {
+func (s *service) sentenceToOpenAiSimpleTranslationRequestBody(sentence, userNativeLanguage string) (*bytes.Reader, error) {
 	content := fmt.Sprintf(
 		"Translate the following sentence into %s. Do not provide any explanation or context—only the translated sentence.\n\nSentence: %s",
-		userNativeLanguage,
-		sentence,
+		userNativeLanguage, sentence,
 	)
 
-	payload := map[string]interface{}{
-		"model": "gpt-4o",
-		"messages": []map[string]string{
-			{
-				"role":    "system",
-				"content": "You are a precise translator. Only return the translation without explanations.",
-			},
-			{
-				"role":    "user",
-				"content": content,
-			},
+	req := openai.OpenAIRequest{
+		Model:       "gpt-4o",
+		Temperature: 0.2,
+		MaxTokens:   300,
+		Messages: []openai.Message{
+			{Role: "system", Content: "You are a precise translator. Only return the translation without explanations."},
+			{Role: "user", Content: content},
 		},
-		"temperature": 0.2,
-		"max_tokens":  300,
 	}
 
-	jsonBody, err := json.Marshal(payload)
-	if err != nil {
-		s.logger.Error("Failed to marshal simple translation payload", zap.Error(err))
-		return bytes.NewReader([]byte{})
+	return jsonReader(&req)
+}
+
+func (s *service) sentenceToOpenAiExplanationRequestBody(sentence, userNativeLanguage string) (*bytes.Reader, error) {
+	content := fmt.Sprintf(
+		"Explain the meaning & grammar used in this sentence - '%s'. Respond in %s",
+		sentence, userNativeLanguage,
+	)
+
+	req := openai.OpenAIRequest{
+		Model:       "gpt-4o",
+		Temperature: 0.4,
+		MaxTokens:   800,
+		Messages: []openai.Message{
+			{Role: "system", Content: "You are a helpful assistant."},
+			{Role: "user", Content: content},
+		},
 	}
 
-	return bytes.NewReader(jsonBody)
+	return jsonReader(&req)
 }
 
-func (s *service) sentenceToOpenAiExplanationRequestBody(sentence, userNativeLanguage string) *strings.Reader {
-	content := fmt.Sprintf("Explain the meaning & grammar used in this sentence - '%s'.Respond in %s", sentence, userNativeLanguage)
-
-	body := fmt.Sprintf(`{
-	"model":"gpt-4o",
-	"messages": [{
-		"role": "system",
-		"content": "You are a helpful assistant."
-	  },
-	  {
-		"role": "user",
-		"content": "%s"
-	  }],
-	"temperature": 0.4,
-	"max_tokens": 800
-	}`, content)
-
-	return strings.NewReader(body)
-}
-
-func (s *service) sentenceToOpenAiSentenceCorrectionRequestBody(sentence, userNativeLanguage string) *bytes.Reader {
+func (s *service) sentenceToOpenAiSentenceCorrectionRequestBody(sentence, userNativeLanguage string) (*bytes.Reader, error) {
 	var content string
-
 	if userNativeLanguage == "English" {
 		content = fmt.Sprintf(
 			"Is this sentence correct? If not, correct it and briefly explain why. Do not ask follow-up questions or encourage further conversation. Just provide the correction and explanation in a single, complete answer.\n\nSentence: %s",
@@ -229,33 +222,27 @@ func (s *service) sentenceToOpenAiSentenceCorrectionRequestBody(sentence, userNa
 	} else {
 		content = fmt.Sprintf(
 			"Is this sentence correct? If not, correct it and briefly explain why. Do not ask follow-up questions or encourage further conversation. Just provide the correction and explanation in a single, complete answer. Respond in %s as if you're a language teacher teaching a native %s speaker.\n\nSentence: %s",
-			userNativeLanguage,
-			userNativeLanguage,
-			sentence,
+			userNativeLanguage, userNativeLanguage, sentence,
 		)
 	}
 
-	payload := map[string]interface{}{
-		"model": "gpt-4o",
-		"messages": []map[string]string{
-			{
-				"role":    "system",
-				"content": "You are a concise language assistant that explains sentence corrections in a clear and brief manner without engaging in back-and-forth conversation.",
-			},
-			{
-				"role":    "user",
-				"content": content,
-			},
+	req := openai.OpenAIRequest{
+		Model:       "gpt-4o",
+		Temperature: 0.4,
+		MaxTokens:   800,
+		Messages: []openai.Message{
+			{Role: "system", Content: "You are a concise language assistant that explains sentence corrections in a clear and brief manner without engaging in back-and-forth conversation."},
+			{Role: "user", Content: content},
 		},
-		"temperature": 0.4,
-		"max_tokens":  800,
 	}
 
-	jsonBody, err := json.Marshal(payload)
+	return jsonReader(&req)
+}
+
+func jsonReader(v any) (*bytes.Reader, error) {
+	b, err := json.Marshal(v)
 	if err != nil {
-		s.logger.Error("Failed to marshal sentence correction payload", zap.Error(err))
-		return bytes.NewReader([]byte{}) // fallback to empty body
+		return nil, err
 	}
-
-	return bytes.NewReader(jsonBody)
+	return bytes.NewReader(b), nil
 }

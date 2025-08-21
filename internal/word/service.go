@@ -1,6 +1,7 @@
 package word
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -232,7 +233,7 @@ func (s *service) ValidateWord(word string) error {
 	return nil
 }
 
-func (s *service) wordToOpenAiHistoryRequestBody(word, userNativeLanguage string) (*strings.Reader, error) {
+func (s *service) wordToOpenAiHistoryRequestBody(word, userNativeLanguage string) (*bytes.Reader, error) {
 	content := fmt.Sprintf(
 		"Give me the history and origin of the word '%s', ensuring the explanation is in %s. "+
 			"(If the word is Japanese, include furigana for any kanji used, but do not mention whether it is or isn’t Japanese.)",
@@ -249,14 +250,10 @@ func (s *service) wordToOpenAiHistoryRequestBody(word, userNativeLanguage string
 		openai.Message{Role: "user", Content: content},
 	)
 
-	b, err := json.Marshal(&req)
-	if err != nil {
-		return nil, err
-	}
-	return strings.NewReader(string(b)), nil
+	return jsonReader(&req)
 }
 
-func (s *service) wordToOpenAiDefinitionRequestBody(word, lang string) (*strings.Reader, error) {
+func (s *service) wordToOpenAiDefinitionRequestBody(word, lang string) (*bytes.Reader, error) {
 	content := fmt.Sprintf(
 		"Explain the meaning of '%s' in %s. Provide 2 example sentences using the word '%s', with translations into %s. "+
 			"If the word is Japanese, include furigana for any kanji used, but do not mention whether it is or isn’t Japanese.",
@@ -272,15 +269,11 @@ func (s *service) wordToOpenAiDefinitionRequestBody(word, lang string) (*strings
 		openai.Message{Role: "system", Content: "You are a helpful multilingual assistant that supports users learning foreign languages."},
 		openai.Message{Role: "user", Content: content},
 	)
-	b, err := json.Marshal(&req)
-	if err != nil {
-		return nil, err
-	}
 
-	return strings.NewReader(string(b)), nil
+	return jsonReader(&req)
 }
 
-func (s *service) wordToOpenAiSynonymsRequestBody(word, userNativeLanguage string) (*strings.Reader, error) {
+func (s *service) wordToOpenAiSynonymsRequestBody(word, userNativeLanguage string) (*bytes.Reader, error) {
 	content := fmt.Sprintf(
 		"The user has provided the word '%s'. First, detect what language this word is in. "+
 			"Then, list some simple synonyms for it in that same language. "+
@@ -298,12 +291,7 @@ func (s *service) wordToOpenAiSynonymsRequestBody(word, userNativeLanguage strin
 		openai.Message{Role: "user", Content: content},
 	)
 
-	b, err := json.Marshal(&req)
-	if err != nil {
-		return nil, err
-	}
-
-	return strings.NewReader(string(b)), nil
+	return jsonReader(&req)
 }
 
 // isNotAWord is used to check if the user is using the dictionary to define phrases as opposed to a single word
@@ -338,4 +326,12 @@ func isNonsensical(s string) bool {
 	}
 
 	return false
+}
+
+func jsonReader(v any) (*bytes.Reader, error) {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return nil, err
+	}
+	return bytes.NewReader(b), nil
 }

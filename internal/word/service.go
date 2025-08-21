@@ -270,27 +270,27 @@ func isNotAWord(word string) bool {
 	return strings.Count(word, " ") > 1
 }
 
-func isNonsensical(word string) bool {
-	// Check condition 1: The string contains special characters
-	hasSpecialCharacters := false
-
-	for _, ch := range word {
-		if unicode.IsPunct(ch) || unicode.IsSymbol(ch) {
-			hasSpecialCharacters = true
-			break
+func isNonsensical(s string) bool {
+	// specials: punctuation or symbol (keep hyphen/apostrophe if you want)
+	for _, r := range s {
+		if unicode.IsPunct(r) || unicode.IsSymbol(r) {
+			if r != '-' && r != '\'' {
+				return true
+			}
 		}
 	}
-
-	// Check condition 2: The string contains the same character more than 3 times in a row
-	hasRepeatingCharacters := false
-
-	for i := 0; i < len(word)-3; i++ {
-		if word[i] == word[i+1] && word[i] == word[i+2] && word[i] == word[i+3] {
-			hasRepeatingCharacters = true
-			break
+	// repeating characters (runes)
+	var prev rune
+	count := 0
+	for i, r := range s {
+		if i == 0 || r != prev {
+			prev, count = r, 1
+			continue
+		}
+		count++
+		if count > 3 {
+			return true
 		}
 	}
-
-	// Combine all conditions to determine if the string is nonsensical
-	return hasSpecialCharacters || hasRepeatingCharacters
+	return false
 }

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/request"
 	"io"
 	"net/http"
 	"time"
@@ -190,7 +191,7 @@ func (s *service) sentenceToOpenAiSimpleTranslationRequestBody(sentence, userNat
 		},
 	}
 
-	return jsonReader(&req)
+	return request.JsonReader(&req)
 }
 
 func (s *service) sentenceToOpenAiExplanationRequestBody(sentence, userNativeLanguage string) (*bytes.Reader, error) {
@@ -209,7 +210,7 @@ func (s *service) sentenceToOpenAiExplanationRequestBody(sentence, userNativeLan
 		},
 	}
 
-	return jsonReader(&req)
+	return request.JsonReader(&req)
 }
 
 func (s *service) sentenceToOpenAiSentenceCorrectionRequestBody(sentence, userNativeLanguage string) (*bytes.Reader, error) {
@@ -236,13 +237,5 @@ func (s *service) sentenceToOpenAiSentenceCorrectionRequestBody(sentence, userNa
 		},
 	}
 
-	return jsonReader(&req)
-}
-
-func jsonReader(v any) (*bytes.Reader, error) {
-	b, err := json.Marshal(v)
-	if err != nil {
-		return nil, err
-	}
-	return bytes.NewReader(b), nil
+	return request.JsonReader(&req)
 }

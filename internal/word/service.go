@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/request"
 	"net/http"
 	"strings"
 	"time"
@@ -240,7 +241,7 @@ func (s *service) wordToOpenAiHistoryRequestBody(word, userNativeLanguage string
 		word, userNativeLanguage,
 	)
 
-	return jsonReader(mapToOpenAiRequest(content))
+	return request.JsonReader(mapToOpenAiRequest(content))
 }
 
 func (s *service) wordToOpenAiDefinitionRequestBody(word, lang string) (*bytes.Reader, error) {
@@ -250,7 +251,7 @@ func (s *service) wordToOpenAiDefinitionRequestBody(word, lang string) (*bytes.R
 		word, lang, word, lang,
 	)
 
-	return jsonReader(mapToOpenAiRequest(content))
+	return request.JsonReader(mapToOpenAiRequest(content))
 }
 
 func (s *service) wordToOpenAiSynonymsRequestBody(word, userNativeLanguage string) (*bytes.Reader, error) {
@@ -261,7 +262,7 @@ func (s *service) wordToOpenAiSynonymsRequestBody(word, userNativeLanguage strin
 		word, userNativeLanguage,
 	)
 
-	return jsonReader(mapToOpenAiRequest(content))
+	return request.JsonReader(mapToOpenAiRequest(content))
 }
 
 // isNotAWord is used to check if the user is using the dictionary to define phrases as opposed to a single word
@@ -296,14 +297,6 @@ func isNonsensical(s string) bool {
 	}
 
 	return false
-}
-
-func jsonReader(v any) (*bytes.Reader, error) {
-	b, err := json.Marshal(v)
-	if err != nil {
-		return nil, err
-	}
-	return bytes.NewReader(b), nil
 }
 
 func mapToOpenAiRequest(content string) *openai.OpenAIRequest {

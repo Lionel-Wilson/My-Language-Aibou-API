@@ -2,6 +2,7 @@ package sentence
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -21,8 +22,8 @@ var ErrOpenAiNoChoices = errors.New("OpenAI API response contains no choices")
 
 //go:generate mockgen -source=service.go -destination=mock/service.go
 type Service interface {
-	GetSentenceExplanation(sentence string, nativeLanguage string, isDetailed bool) (*string, error)
-	GetSentenceCorrection(sentence string, nativeLanguage string) (*string, error)
+	GetSentenceExplanation(ctx context.Context, sentence string, nativeLanguage string, isDetailed bool) (*string, error)
+	GetSentenceCorrection(ctx context.Context, sentence string, nativeLanguage string) (*string, error)
 	ValidateSentence(sentence string) error
 }
 
@@ -48,42 +49,43 @@ var (
 	sentenceCacheExpiration = int(time.Hour * 24 * 30) //30 days
 )
 
-func (s *service) GetSentenceCorrection(sentence string, nativeLanguage string) (*string, error) {
-	s.logger.Debug("Getting sentence correction", zap.String("sentence", sentence), zap.String("nativeLanguage", nativeLanguage))
+func (s *service) GetSentenceCorrection(ctx context.Context, sentence string, nativeLanguage string) (*string, error) {
 	cacheKey := []byte(fmt.Sprintf("%s sentence correction in %s", sentence, nativeLanguage))
 
 	cached, err := s.cache.Get(cacheKey)
 	if err == nil {
 		cachedResponse := string(cached)
-		return &cachedResponse, err
+		return &cachedResponse, nil
 	}
 	jsonBody := s.sentenceToOpenAiSentenceCorrectionRequestBody(sentence, nativeLanguage)
 
-	resp, responseBody, err := s.openAiClient.MakeRequest(jsonBody)
+	resp, responseBody, err := s.openAiClient.MakeRequest(ctx, jsonBody)
 	if err != nil {
-		s.logger.Error(err.Error())
-
-		return nil, err
+		return nil, fmt.Errorf("failed to make open ai request: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("openAI API returned non-OK status(%s): %s", resp.StatusCode, responseBody)
+		return nil, fmt.Errorf("openAI API returned non-OK status(%v): %s", resp.StatusCode, responseBody)
 	}
 
 	var OpenAIApiResponse openai.ChatCompletion
 
 	err = json.Unmarshal(responseBody, &OpenAIApiResponse)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to unmarhsal json body: %w", err)
 	}
 
 	if len(OpenAIApiResponse.Choices) == 0 {
 		return nil, ErrOpenAiNoChoices
 	}
 
-	s.logger.Sugar().Infof("Prompt Tokens: %d", OpenAIApiResponse.Usage.PromptTokens)
-	s.logger.Sugar().Infof("Response Tokens: %d", OpenAIApiResponse.Usage.CompletionTokens)
-	s.logger.Sugar().Infof("Total Tokens used: %d", OpenAIApiResponse.Usage.TotalTokens)
+	s.logger.Info("Successfully got sentence correction",
+		zap.String("sentence", sentence),
+		zap.String("nativeLanguage", nativeLanguage),
+		zap.Int("promptTokens", OpenAIApiResponse.Usage.PromptTokens),
+		zap.Int("completionTokens", OpenAIApiResponse.Usage.CompletionTokens),
+		zap.Int("totalTokens", OpenAIApiResponse.Usage.TotalTokens),
+	)
 
 	result := &OpenAIApiResponse.Choices[0].Message.Content
 
@@ -96,8 +98,7 @@ func (s *service) GetSentenceCorrection(sentence string, nativeLanguage string) 
 	return result, nil
 }
 
-func (s *service) GetSentenceExplanation(sentence string, nativeLanguage string, isDetailed bool) (*string, error) {
-	s.logger.Info("Getting sentence explanation", zap.String("sentence", sentence), zap.String("nativeLanguage", nativeLanguage))
+func (s *service) GetSentenceExplanation(ctx context.Context, sentence string, nativeLanguage string, isDetailed bool) (*string, error) {
 	cacheKey := []byte(fmt.Sprintf("%s sentence explanation in %s(%v)", sentence, nativeLanguage, isDetailed))
 
 	cached, err := s.cache.Get(cacheKey)
@@ -113,31 +114,33 @@ func (s *service) GetSentenceExplanation(sentence string, nativeLanguage string,
 		jsonBody = s.sentenceToOpenAiSimpleTranslationRequestBody(sentence, nativeLanguage)
 	}
 
-	resp, responseBody, err := s.openAiClient.MakeRequest(jsonBody)
+	resp, responseBody, err := s.openAiClient.MakeRequest(ctx, jsonBody)
 	if err != nil {
 		return nil, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		s.logger.Sugar().Infof("OpenAI API returned non-OK status: %d", resp.StatusCode)
-
-		return nil, err
+		return nil, fmt.Errorf("openai api returned non-OK statusCode=%v responseBody=%s", resp.StatusCode, responseBody)
 	}
 
 	var OpenAIApiResponse openai.ChatCompletion
 
 	err = json.Unmarshal(responseBody, &OpenAIApiResponse)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to unmarhsal json body: %w", err)
 	}
 
 	if len(OpenAIApiResponse.Choices) == 0 {
 		return nil, ErrOpenAiNoChoices
 	}
 
-	s.logger.Sugar().Infof("Prompt Tokens: %d", OpenAIApiResponse.Usage.PromptTokens)
-	s.logger.Sugar().Infof("Response Tokens: %d", OpenAIApiResponse.Usage.CompletionTokens)
-	s.logger.Sugar().Infof("Total Tokens used: %d", OpenAIApiResponse.Usage.TotalTokens)
+	s.logger.Info("Successfully got sentence explanation",
+		zap.String("sentence", sentence),
+		zap.String("nativeLanguage", nativeLanguage),
+		zap.Int("promptTokens", OpenAIApiResponse.Usage.PromptTokens),
+		zap.Int("completionTokens", OpenAIApiResponse.Usage.CompletionTokens),
+		zap.Int("totalTokens", OpenAIApiResponse.Usage.TotalTokens),
+	)
 
 	result := &OpenAIApiResponse.Choices[0].Message.Content
 
@@ -150,6 +153,7 @@ func (s *service) GetSentenceExplanation(sentence string, nativeLanguage string,
 	return result, nil
 }
 
+//todo:return actual errors and convert to user friendlt message in handler
 func (s *service) ValidateSentence(sentence string) error {
 	if sentence == "" {
 		return errors.New("Please provide a sentence")

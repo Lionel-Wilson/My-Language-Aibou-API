@@ -58,7 +58,7 @@ func TestDefineWordHandler(t *testing.T) {
 			},
 			mockSetup: func() {
 				mockService.EXPECT().ValidateWord("hello").Return(nil)
-				mockService.EXPECT().GetWordDefinition("hello", "english").Return(nil, errors.New("api error"))
+				mockService.EXPECT().GetWordDefinition(gomock.Any(), "hello", "english").Return(nil, errors.New("api error"))
 			},
 			expectedStatus: http.StatusBadRequest,
 			expectedBody:   "Failed to process your word",
@@ -71,7 +71,7 @@ func TestDefineWordHandler(t *testing.T) {
 			},
 			mockSetup: func() {
 				mockService.EXPECT().ValidateWord("hello").Return(nil)
-				mockService.EXPECT().GetWordDefinition("hello", "english").Return(&openai.ChatCompletion{
+				mockService.EXPECT().GetWordDefinition(gomock.Any(), "hello", "english").Return(&openai.ChatCompletion{
 					Choices: []openai.Choice{
 						{
 							Message: openai.Message{

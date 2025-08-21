@@ -1,10 +1,10 @@
 package word
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	openaierrors "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai/errors"
 	"net/http"
 	"strings"
 	"time"
@@ -15,15 +15,16 @@ import (
 	"go.uber.org/zap"
 
 	openai "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai"
+	openaierrors "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai/errors"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/utils"
 )
 
 //go:generate mockgen -source=service.go -destination=mock/service.go
 type Service interface {
-	GetWordDefinition(word string, nativeLanguage string) (*string, error)
-	GetWordSynonyms(word string, nativeLanguage string) (*string, error)
+	GetWordDefinition(ctx context.Context, word string, nativeLanguage string) (*string, error)
+	GetWordSynonyms(ctx context.Context, word string, nativeLanguage string) (*string, error)
 	ValidateWord(word string) error
-	GetWordHistory(word string, nativeLanguage string) (*string, error)
+	GetWordHistory(ctx context.Context, word string, nativeLanguage string) (*string, error)
 }
 
 type service struct {
@@ -44,11 +45,9 @@ func NewWordService(
 	}
 }
 
-var (
-	wordCacheExpiration = int(time.Hour * 24 * 90) //90 days
-)
+var wordCacheExpiration = int(time.Hour * 24 * 90) // 90 days
 
-func (s *service) GetWordHistory(word string, nativeLanguage string) (*string, error) {
+func (s *service) GetWordHistory(ctx context.Context, word string, nativeLanguage string) (*string, error) {
 	cacheKey := []byte(fmt.Sprintf("%s word history in %s", word, nativeLanguage))
 
 	cached, err := s.cache.Get(cacheKey)
@@ -59,7 +58,7 @@ func (s *service) GetWordHistory(word string, nativeLanguage string) (*string, e
 
 	jsonBody := s.wordToOpenAiHistoryRequestBody(word, nativeLanguage)
 
-	resp, responseBody, err := s.openAiClient.MakeRequest(jsonBody)
+	resp, responseBody, err := s.openAiClient.MakeRequest(ctx, jsonBody)
 	if err != nil {
 		return nil, fmt.Errorf("failed to make open ai request: %w", err)
 	}
@@ -80,6 +79,7 @@ func (s *service) GetWordHistory(word string, nativeLanguage string) (*string, e
 	}
 
 	cacheValue := []byte(OpenAIApiResponse.Choices[0].Message.Content)
+
 	err = s.cache.Set(cacheKey, cacheValue, wordCacheExpiration)
 	if err != nil {
 		s.logger.Warn("word history cache set failed", zap.Error(err))
@@ -88,7 +88,7 @@ func (s *service) GetWordHistory(word string, nativeLanguage string) (*string, e
 	return &OpenAIApiResponse.Choices[0].Message.Content, nil
 }
 
-func (s *service) GetWordSynonyms(word string, nativeLanguage string) (*string, error) {
+func (s *service) GetWordSynonyms(ctx context.Context, word string, nativeLanguage string) (*string, error) {
 	cacheKey := []byte(fmt.Sprintf("%s word synonyms in %s", word, nativeLanguage))
 
 	cached, err := s.cache.Get(cacheKey)
@@ -99,7 +99,7 @@ func (s *service) GetWordSynonyms(word string, nativeLanguage string) (*string, 
 
 	jsonEncodedBody := s.wordToOpenAiSynonymsRequestBody(word, nativeLanguage)
 
-	resp, responseBody, err := s.openAiClient.MakeRequest(jsonEncodedBody)
+	resp, responseBody, err := s.openAiClient.MakeRequest(ctx, jsonEncodedBody)
 	if err != nil {
 		return nil, fmt.Errorf("failed to make open ai request: %w", err)
 	}
@@ -119,9 +119,12 @@ func (s *service) GetWordSynonyms(word string, nativeLanguage string) (*string, 
 		return nil, openaierrors.ErrNoChoicesFound
 	}
 
+	// todo: log token usage in one line with all relevant fields
+
 	result := &OpenAIApiResponse.Choices[0].Message.Content
 
 	cacheValue := []byte(*result)
+
 	err = s.cache.Set(cacheKey, cacheValue, wordCacheExpiration)
 	if err != nil {
 		s.logger.Warn("word synonyms cache set failed", zap.Error(err))
@@ -130,7 +133,7 @@ func (s *service) GetWordSynonyms(word string, nativeLanguage string) (*string, 
 	return result, nil
 }
 
-func (s *service) GetWordDefinition(word string, nativeLanguage string) (*string, error) {
+func (s *service) GetWordDefinition(ctx context.Context, word string, nativeLanguage string) (*string, error) {
 	cacheKey := []byte(fmt.Sprintf("%s word definition in %s", word, nativeLanguage))
 
 	cached, err := s.cache.Get(cacheKey)
@@ -141,7 +144,7 @@ func (s *service) GetWordDefinition(word string, nativeLanguage string) (*string
 
 	jsonEncodedBody := s.wordToOpenAiDefinitionRequestBody(word, nativeLanguage)
 
-	resp, responseBody, err := s.openAiClient.MakeRequest(jsonEncodedBody)
+	resp, responseBody, err := s.openAiClient.MakeRequest(ctx, jsonEncodedBody)
 	if err != nil {
 		return nil, fmt.Errorf("failed to make open ai request: %w", err)
 	}
@@ -164,6 +167,7 @@ func (s *service) GetWordDefinition(word string, nativeLanguage string) (*string
 	result := &OpenAIApiResponse.Choices[0].Message.Content
 
 	cacheValue := []byte(*result)
+
 	err = s.cache.Set(cacheKey, cacheValue, wordCacheExpiration)
 	if err != nil {
 		s.logger.Warn("word definition cache set failed", zap.Error(err))
@@ -232,6 +236,7 @@ func (s *service) wordToOpenAiDefinitionRequestBody(word, lang string) *strings.
 		openai.Message{Role: "user", Content: content},
 	)
 	b, _ := json.Marshal(&req)
+
 	return strings.NewReader(string(b))
 }
 
@@ -281,16 +286,20 @@ func isNonsensical(s string) bool {
 	}
 	// repeating characters (runes)
 	var prev rune
+
 	count := 0
+
 	for i, r := range s {
 		if i == 0 || r != prev {
 			prev, count = r, 1
 			continue
 		}
+
 		count++
 		if count > 3 {
 			return true
 		}
 	}
+
 	return false
 }

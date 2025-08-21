@@ -1,7 +1,6 @@
 package sentence
 
 import (
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/messages"
 	"net/http"
 	"strings"
 
@@ -9,6 +8,7 @@ import (
 
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/sentence/dto"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/sentence"
+	"github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/messages"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/render"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/request"
 )
@@ -37,11 +37,13 @@ var FailedToProcessSentence = "Failed to process your sentence(s).Please make su
 
 func (h *handler) ExplainSentence() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
 		var requestBody dto.DefineSentenceRequest
 
 		// Validates and decodes request
 		if err := request.DecodeAndValidate(r.Body, &requestBody); err != nil {
-			h.logger.Sugar().Errorw("failed to decode and validate explain sentence request body",
+			h.logger.Sugar().Infow("failed to decode and validate explain sentence request body",
 				"error", err)
 
 			render.Json(w, http.StatusBadRequest, FailedToProcessSentence)
@@ -53,16 +55,20 @@ func (h *handler) ExplainSentence() http.HandlerFunc {
 
 		err := h.service.ValidateSentence(trimmedSentence)
 		if err != nil {
-			h.logger.Sugar().Errorw("sentence validation failed", "sentence", trimmedSentence, "error", err)
+			h.logger.Sugar().Infow("sentence validation failed",
+				"sentence", trimmedSentence, "error", err)
 			render.Json(w, http.StatusBadRequest, err.Error())
 
 			return
 		}
 
-		response, err := h.service.GetSentenceExplanation(trimmedSentence, requestBody.NativeLanguage, requestBody.IsDetailed)
+		response, err := h.service.GetSentenceExplanation(ctx, trimmedSentence, requestBody.NativeLanguage, requestBody.IsDetailed)
 		if err != nil {
-			h.logger.Sugar().Errorw("sentence explanation failed", "sentence", trimmedSentence,
-				"native language", requestBody.NativeLanguage, "error", err)
+			h.logger.Sugar().Errorw("sentence explanation failed",
+				"context", ctx,
+				"sentence", trimmedSentence,
+				"nativeLanguage", requestBody.NativeLanguage,
+				"error", err)
 			render.Json(w, http.StatusInternalServerError, messages.InternalServerErrorMsg)
 
 			return
@@ -74,11 +80,15 @@ func (h *handler) ExplainSentence() http.HandlerFunc {
 
 func (h *handler) CorrectSentence() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
 		var requestBody dto.DefineSentenceRequest
 
 		// Validates and decodes request
 		if err := request.DecodeAndValidate(r.Body, &requestBody); err != nil {
-			h.logger.Sugar().Errorw("failed to decode and validate correct sentence request body",
+			h.logger.Sugar().Errorw(
+				"failed to decode and validate correct sentence request body",
+				"context", ctx,
 				"error", err)
 
 			render.Json(w, http.StatusBadRequest, FailedToProcessSentence)
@@ -90,16 +100,21 @@ func (h *handler) CorrectSentence() http.HandlerFunc {
 
 		err := h.service.ValidateSentence(trimmedSentence)
 		if err != nil {
-			h.logger.Sugar().Errorw("sentence validation failed", "sentence", trimmedSentence, "error", err)
+			h.logger.Sugar().Infow(
+				"sentence validation failed",
+				"sentence", trimmedSentence, "error", err)
 			render.Json(w, http.StatusBadRequest, err.Error())
 
 			return
 		}
 
-		response, err := h.service.GetSentenceCorrection(trimmedSentence, requestBody.NativeLanguage)
+		response, err := h.service.GetSentenceCorrection(ctx, trimmedSentence, requestBody.NativeLanguage)
 		if err != nil {
-			h.logger.Sugar().Errorw("sentence correction failed", "sentence", trimmedSentence,
-				"native language", requestBody.NativeLanguage, "error", err)
+			h.logger.Sugar().Errorw("sentence correction failed",
+				"context", ctx,
+				"sentence", trimmedSentence,
+				"nativeLanguage", requestBody.NativeLanguage,
+				"error", err)
 			render.Json(w, http.StatusInternalServerError, messages.InternalServerErrorMsg)
 
 			return

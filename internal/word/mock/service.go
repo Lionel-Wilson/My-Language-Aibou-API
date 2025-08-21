@@ -10,11 +10,10 @@
 package mock_word
 
 import (
+	context "context"
 	reflect "reflect"
 
 	gomock "go.uber.org/mock/gomock"
-
-	openai "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai"
 )
 
 // MockService is a mock of Service interface.
@@ -41,48 +40,48 @@ func (m *MockService) EXPECT() *MockServiceMockRecorder {
 }
 
 // GetWordDefinition mocks base method.
-func (m *MockService) GetWordDefinition(word, nativeLanguage string) (*string, error) {
+func (m *MockService) GetWordDefinition(ctx context.Context, word, nativeLanguage string) (*string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetWordDefinition", word, nativeLanguage)
+	ret := m.ctrl.Call(m, "GetWordDefinition", ctx, word, nativeLanguage)
 	ret0, _ := ret[0].(*string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetWordDefinition indicates an expected call of GetWordDefinition.
-func (mr *MockServiceMockRecorder) GetWordDefinition(word, nativeLanguage any) *gomock.Call {
+func (mr *MockServiceMockRecorder) GetWordDefinition(ctx, word, nativeLanguage any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWordDefinition", reflect.TypeOf((*MockService)(nil).GetWordDefinition), word, nativeLanguage)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWordDefinition", reflect.TypeOf((*MockService)(nil).GetWordDefinition), ctx, word, nativeLanguage)
 }
 
 // GetWordHistory mocks base method.
-func (m *MockService) GetWordHistory(word, nativeLanguage string) (*string, error) {
+func (m *MockService) GetWordHistory(ctx context.Context, word, nativeLanguage string) (*string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetWordHistory", word, nativeLanguage)
+	ret := m.ctrl.Call(m, "GetWordHistory", ctx, word, nativeLanguage)
 	ret0, _ := ret[0].(*string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetWordHistory indicates an expected call of GetWordHistory.
-func (mr *MockServiceMockRecorder) GetWordHistory(word, nativeLanguage any) *gomock.Call {
+func (mr *MockServiceMockRecorder) GetWordHistory(ctx, word, nativeLanguage any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWordHistory", reflect.TypeOf((*MockService)(nil).GetWordHistory), word, nativeLanguage)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWordHistory", reflect.TypeOf((*MockService)(nil).GetWordHistory), ctx, word, nativeLanguage)
 }
 
 // GetWordSynonyms mocks base method.
-func (m *MockService) GetWordSynonyms(word, nativeLanguage string) (*string, error) {
+func (m *MockService) GetWordSynonyms(ctx context.Context, word, nativeLanguage string) (*string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetWordSynonyms", word, nativeLanguage)
+	ret := m.ctrl.Call(m, "GetWordSynonyms", ctx, word, nativeLanguage)
 	ret0, _ := ret[0].(*string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetWordSynonyms indicates an expected call of GetWordSynonyms.
-func (mr *MockServiceMockRecorder) GetWordSynonyms(word, nativeLanguage any) *gomock.Call {
+func (mr *MockServiceMockRecorder) GetWordSynonyms(ctx, word, nativeLanguage any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWordSynonyms", reflect.TypeOf((*MockService)(nil).GetWordSynonyms), word, nativeLanguage)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWordSynonyms", reflect.TypeOf((*MockService)(nil).GetWordSynonyms), ctx, word, nativeLanguage)
 }
 
 // ValidateWord mocks base method.

@@ -10,11 +10,10 @@
 package mock_sentence
 
 import (
+	context "context"
 	reflect "reflect"
 
 	gomock "go.uber.org/mock/gomock"
-
-	openai "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai"
 )
 
 // MockService is a mock of Service interface.
@@ -41,33 +40,33 @@ func (m *MockService) EXPECT() *MockServiceMockRecorder {
 }
 
 // GetSentenceCorrection mocks base method.
-func (m *MockService) GetSentenceCorrection(sentence, nativeLanguage string) (*string, error) {
+func (m *MockService) GetSentenceCorrection(ctx context.Context, sentence, nativeLanguage string) (*string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSentenceCorrection", sentence, nativeLanguage)
+	ret := m.ctrl.Call(m, "GetSentenceCorrection", ctx, sentence, nativeLanguage)
 	ret0, _ := ret[0].(*string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetSentenceCorrection indicates an expected call of GetSentenceCorrection.
-func (mr *MockServiceMockRecorder) GetSentenceCorrection(sentence, nativeLanguage any) *gomock.Call {
+func (mr *MockServiceMockRecorder) GetSentenceCorrection(ctx, sentence, nativeLanguage any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSentenceCorrection", reflect.TypeOf((*MockService)(nil).GetSentenceCorrection), sentence, nativeLanguage)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSentenceCorrection", reflect.TypeOf((*MockService)(nil).GetSentenceCorrection), ctx, sentence, nativeLanguage)
 }
 
 // GetSentenceExplanation mocks base method.
-func (m *MockService) GetSentenceExplanation(sentence, nativeLanguage string) (*string, error) {
+func (m *MockService) GetSentenceExplanation(ctx context.Context, sentence, nativeLanguage string, isDetailed bool) (*string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSentenceExplanation", sentence, nativeLanguage)
+	ret := m.ctrl.Call(m, "GetSentenceExplanation", ctx, sentence, nativeLanguage, isDetailed)
 	ret0, _ := ret[0].(*string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetSentenceExplanation indicates an expected call of GetSentenceExplanation.
-func (mr *MockServiceMockRecorder) GetSentenceExplanation(sentence, nativeLanguage any) *gomock.Call {
+func (mr *MockServiceMockRecorder) GetSentenceExplanation(ctx, sentence, nativeLanguage, isDetailed any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSentenceExplanation", reflect.TypeOf((*MockService)(nil).GetSentenceExplanation), sentence, nativeLanguage)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSentenceExplanation", reflect.TypeOf((*MockService)(nil).GetSentenceExplanation), ctx, sentence, nativeLanguage, isDetailed)
 }
 
 // ValidateSentence mocks base method.

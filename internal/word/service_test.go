@@ -1,11 +1,12 @@
 package word_test
 
 import (
+	"context"
 	"errors"
-	"github.com/coocood/freecache"
 	"net/http"
 	"testing"
 
+	"github.com/coocood/freecache"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap/zaptest"
@@ -87,7 +88,7 @@ func TestGetWordDefinition(t *testing.T) {
 			expectedResponse: &openai.ChatCompletion{},
 			expectedErr:      errors.New("an error"),
 			mock: func() {
-				mockOpenAiClient.EXPECT().MakeRequest(gomock.Any()).Return(&http.Response{}, []byte{}, errors.New("an error"))
+				mockOpenAiClient.EXPECT().MakeRequest(gomock.Any(), gomock.Any()).Return(&http.Response{}, []byte{}, errors.New("an error"))
 			},
 		},
 	}
@@ -95,7 +96,7 @@ func TestGetWordDefinition(t *testing.T) {
 	for _, tc := range testCases {
 		tc.mock()
 
-		response, err := wordService.GetWordDefinition(tc.word, tc.nativeLanguage)
+		response, err := wordService.GetWordDefinition(context.Background(), tc.word, tc.nativeLanguage)
 
 		// Check if the error matches the expected outcome
 		if tc.expectedErr != nil {

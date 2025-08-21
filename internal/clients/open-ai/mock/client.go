@@ -10,9 +10,10 @@
 package mock_openai
 
 import (
+	context "context"
+	io "io"
 	http "net/http"
 	reflect "reflect"
-	strings "strings"
 
 	gomock "go.uber.org/mock/gomock"
 )
@@ -41,9 +42,9 @@ func (m *MockClient) EXPECT() *MockClientMockRecorder {
 }
 
 // MakeRequest mocks base method.
-func (m *MockClient) MakeRequest(body *strings.Reader) (*http.Response, []byte, error) {
+func (m *MockClient) MakeRequest(ctx context.Context, body io.Reader) (*http.Response, []byte, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "MakeRequest", body)
+	ret := m.ctrl.Call(m, "MakeRequest", ctx, body)
 	ret0, _ := ret[0].(*http.Response)
 	ret1, _ := ret[1].([]byte)
 	ret2, _ := ret[2].(error)
@@ -51,7 +52,7 @@ func (m *MockClient) MakeRequest(body *strings.Reader) (*http.Response, []byte, 
 }
 
 // MakeRequest indicates an expected call of MakeRequest.
-func (mr *MockClientMockRecorder) MakeRequest(body any) *gomock.Call {
+func (mr *MockClientMockRecorder) MakeRequest(ctx, body any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MakeRequest", reflect.TypeOf((*MockClient)(nil).MakeRequest), body)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MakeRequest", reflect.TypeOf((*MockClient)(nil).MakeRequest), ctx, body)
 }

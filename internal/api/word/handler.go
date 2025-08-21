@@ -38,6 +38,7 @@ var FailedToProcessWord = "Failed to process your word. Please make sure you rem
 
 func (h *handler) GetHistory() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		var requestBody dto.DefineWordRequest
 
 		// Validates and decodes request
@@ -65,10 +66,11 @@ func (h *handler) GetHistory() http.HandlerFunc {
 			return
 		}
 
-		response, err := h.service.GetWordHistory(spaceTrimmedWord, requestBody.NativeLanguage)
+		response, err := h.service.GetWordHistory(ctx, spaceTrimmedWord, requestBody.NativeLanguage)
 		if err != nil {
 			h.logger.Sugar().Errorw(
 				"failed to get word history",
+				zap.Any("context", ctx),
 				zap.Error(err),
 				"word", spaceTrimmedWord,
 				"nativeLanguage", requestBody.NativeLanguage)
@@ -83,6 +85,7 @@ func (h *handler) GetHistory() http.HandlerFunc {
 
 func (h *handler) DefineWord() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		var requestBody dto.DefineWordRequest
 
 		// Validates and decodes request
@@ -101,6 +104,7 @@ func (h *handler) DefineWord() http.HandlerFunc {
 		if err != nil {
 			h.logger.Sugar().Infow(
 				"failed to validate word",
+				zap.Any("context", ctx),
 				zap.Error(err),
 				"word", spaceTrimmedWord,
 				"nativeLanguage", requestBody.NativeLanguage)
@@ -109,10 +113,11 @@ func (h *handler) DefineWord() http.HandlerFunc {
 			return
 		}
 
-		response, err := h.service.GetWordDefinition(spaceTrimmedWord, requestBody.NativeLanguage)
+		response, err := h.service.GetWordDefinition(ctx, spaceTrimmedWord, requestBody.NativeLanguage)
 		if err != nil {
 			h.logger.Sugar().Errorw(
 				"failed to define word",
+				zap.Any("context", ctx),
 				zap.Error(err), "word",
 				spaceTrimmedWord, "nativeLanguage",
 				requestBody.NativeLanguage)
@@ -128,6 +133,7 @@ func (h *handler) DefineWord() http.HandlerFunc {
 // todo: create a mapper that converts validation errorrs to user friendly responses
 func (h *handler) GetSynonyms() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		var requestBody dto.GetSynonymsRequest
 
 		// Validates and decodes request
@@ -150,9 +156,10 @@ func (h *handler) GetSynonyms() http.HandlerFunc {
 			return
 		}
 
-		response, err := h.service.GetWordSynonyms(spaceTrimmedWord, requestBody.NativeLanguage)
+		response, err := h.service.GetWordSynonyms(ctx, spaceTrimmedWord, requestBody.NativeLanguage)
 		if err != nil {
 			h.logger.Sugar().Errorw("failed to get word synonyms",
+				zap.Any("context", ctx),
 				zap.Error(err),
 				"word", spaceTrimmedWord,
 				"nativeLanguage", requestBody.NativeLanguage)

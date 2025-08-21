@@ -1,11 +1,11 @@
 package router
 
 import (
-	"github.com/go-chi/cors"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 	"go.uber.org/zap"
 
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/api/auth"
@@ -33,7 +33,8 @@ func New(
 	// Create a new Chi router.
 	router := chi.NewRouter()
 	router.Use(cors.Handler(cors.Options{
-		AllowedOrigins: []string{"http://localhost:5173",
+		AllowedOrigins: []string{
+			"http://localhost:5173",
 			"https://my-language-aibou-prod-v2.up.railway.app",
 			"https://www.mylanguageaibou.co.uk",
 			"http://www.mylanguageaibou.co.uk",
@@ -72,7 +73,7 @@ func New(
 		},
 	)
 
-	router.Route(
+	router.Route( // todo: create a v4 route that simply has 3 endpoints.the 2 sentence endpoints and /word that returns all information
 		"/api/v2", func(r chi.Router) {
 			r.Route(
 				"/word", func(r chi.Router) {

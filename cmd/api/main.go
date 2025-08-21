@@ -48,7 +48,7 @@ func main() {
 
 	openAiClient := openai.NewClient(cfg.OpenAIAPIKey, logger)
 
-	wordService := word.NewWordService(logger, openAiClient, cache) //todo: make a db to store words and sentences rather than a cache
+	wordService := word.NewWordService(logger, openAiClient, cache) // todo: make a db to store words and sentences rather than a cache
 	sentenceService := sentence.NewSentenceService(logger, openAiClient, cache)
 
 	userRepository := authStorage.NewUserRepository(db)

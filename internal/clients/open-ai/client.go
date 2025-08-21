@@ -1,16 +1,18 @@
 package openai
 
 import (
+	"context"
 	"fmt"
-	"go.uber.org/zap"
 	"io"
 	"net/http"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 //go:generate mockgen -source=client.go -destination=mock/client.go
 type Client interface {
-	MakeRequest(body io.Reader) (*http.Response, []byte, error)
+	MakeRequest(ctx context.Context, body io.Reader) (*http.Response, []byte, error)
 }
 
 type (
@@ -62,8 +64,8 @@ func NewClient(apiKey string, logger *zap.Logger) Client {
 	}
 }
 
-func (c openAiClient) MakeRequest(body io.Reader) (*http.Response, []byte, error) {
-	req, err := http.NewRequest("POST", "https://api.openai.com/v1/chat/completions", body)
+func (c openAiClient) MakeRequest(ctx context.Context, body io.Reader) (*http.Response, []byte, error) {
+	req, err := http.NewRequestWithContext(ctx, "POST", "https://api.openai.com/v1/chat/completions", body)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create post request : %w", err)
 	}

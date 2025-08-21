@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	openaierrors "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai/errors"
 	"net/http"
 	"strings"
 	"time"
@@ -48,93 +49,75 @@ var (
 )
 
 func (s *service) GetWordHistory(word string, nativeLanguage string) (*string, error) {
-	s.logger.Info("Getting word history", zap.String("word", word), zap.String("nativeLanguage", nativeLanguage))
-
 	cacheKey := []byte(fmt.Sprintf("%s word history in %s", word, nativeLanguage))
 
 	cached, err := s.cache.Get(cacheKey)
 	if err == nil {
 		cachedResponse := string(cached)
-		return &cachedResponse, err
+		return &cachedResponse, nil
 	}
 
 	jsonBody := s.wordToOpenAiHistoryRequestBody(word, nativeLanguage)
 
 	resp, responseBody, err := s.openAiClient.MakeRequest(jsonBody)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to make open ai request: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		s.logger.Error("OpenAI API returned non-OK status. ")
-		return nil, err
+		return nil, fmt.Errorf("openai API returned non-OK status responseBody=%v statusCode=%v", resp, resp.StatusCode)
 	}
 
 	var OpenAIApiResponse openai.ChatCompletion
 
 	err = json.Unmarshal(responseBody, &OpenAIApiResponse)
 	if err != nil {
-		s.logger.With(zap.Error(err)).Error("Failed to unmarshal json body")
-		return nil, err
+		return nil, fmt.Errorf("failed to unmarhsal json body: %w", err)
 	}
 
 	if len(OpenAIApiResponse.Choices) == 0 {
-		s.logger.Info("OpenAI API response contains no choices")
-
-		return nil, fmt.Errorf("OpenAI API response contains no choices")
+		return nil, openaierrors.ErrNoChoicesFound
 	}
 
-	s.logger.Sugar().Infof(`Prompt Tokens: %d`, OpenAIApiResponse.Usage.PromptTokens)
-	s.logger.Sugar().Infof(`Response Tokens: %d`, OpenAIApiResponse.Usage.CompletionTokens)
-	s.logger.Sugar().Infof(`Total Tokens used: %d`, OpenAIApiResponse.Usage.TotalTokens)
-
-	result := &OpenAIApiResponse.Choices[0].Message.Content
-
-	cacheValue := []byte(*result)
+	cacheValue := []byte(OpenAIApiResponse.Choices[0].Message.Content)
 	err = s.cache.Set(cacheKey, cacheValue, wordCacheExpiration)
 	if err != nil {
 		return nil, fmt.Errorf("failed to cache word definition: %w", err)
 	}
 
-	return result, nil
+	return &OpenAIApiResponse.Choices[0].Message.Content, nil
 }
 
 func (s *service) GetWordSynonyms(word string, nativeLanguage string) (*string, error) {
-	s.logger.Info("Getting word synonyms", zap.String("word", word), zap.String("nativeLanguage", nativeLanguage))
-
 	cacheKey := []byte(fmt.Sprintf("%s word synonyms in %s", word, nativeLanguage))
 
 	cached, err := s.cache.Get(cacheKey)
 	if err == nil {
 		cachedResponse := string(cached)
-		return &cachedResponse, err
+		return &cachedResponse, nil
 	}
 
-	jsonBody := s.wordToOpenAiSynonymsRequestBody(word, nativeLanguage)
+	jsonEncodedBody := s.wordToOpenAiSynonymsRequestBody(word, nativeLanguage)
 
-	resp, responseBody, err := s.openAiClient.MakeRequest(jsonBody)
+	resp, responseBody, err := s.openAiClient.MakeRequest(jsonEncodedBody)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to make open ai request: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("openAI API returned non-OK status: %s", err)
+		return nil, fmt.Errorf("openai API returned non-OK status responseBody=%v statusCode=%v", resp, resp.StatusCode)
 	}
 
 	var OpenAIApiResponse openai.ChatCompletion
 
 	err = json.Unmarshal(responseBody, &OpenAIApiResponse)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to unmarhsal json body: %w", err)
 	}
 
 	if len(OpenAIApiResponse.Choices) == 0 {
-		return nil, fmt.Errorf("OpenAI API response contains no choices")
+		return nil, openaierrors.ErrNoChoicesFound
 	}
-
-	s.logger.Sugar().Infof(`Prompt Tokens: %d`, OpenAIApiResponse.Usage.PromptTokens)
-	s.logger.Sugar().Infof(`Response Tokens: %d`, OpenAIApiResponse.Usage.CompletionTokens)
-	s.logger.Sugar().Infof(`Total Tokens used: %d`, OpenAIApiResponse.Usage.TotalTokens)
 
 	result := &OpenAIApiResponse.Choices[0].Message.Content
 
@@ -148,41 +131,35 @@ func (s *service) GetWordSynonyms(word string, nativeLanguage string) (*string, 
 }
 
 func (s *service) GetWordDefinition(word string, nativeLanguage string) (*string, error) {
-	s.logger.Info("Getting word definition", zap.String("word", word), zap.String("nativeLanguage", nativeLanguage))
-
 	cacheKey := []byte(fmt.Sprintf("%s word definition in %s", word, nativeLanguage))
 
 	cached, err := s.cache.Get(cacheKey)
 	if err == nil {
 		cachedResponse := string(cached)
-		return &cachedResponse, err
+		return &cachedResponse, nil
 	}
 
-	jsonBody := s.wordToOpenAiDefinitionRequestBody(word, nativeLanguage)
+	jsonEncodedBody := s.wordToOpenAiDefinitionRequestBody(word, nativeLanguage)
 
-	resp, responseBody, err := s.openAiClient.MakeRequest(jsonBody)
+	resp, responseBody, err := s.openAiClient.MakeRequest(jsonEncodedBody)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to make open ai request: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("openAI API returned non-OK status(%s): %s", resp.StatusCode, responseBody)
+		return nil, fmt.Errorf("openai api returned non-OK status responseBody=%v statusCode=%v", resp, resp.StatusCode)
 	}
 
 	var OpenAIApiResponse openai.ChatCompletion
 
 	err = json.Unmarshal(responseBody, &OpenAIApiResponse)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to unmarhsal json body responseBody=%v : %w", responseBody, err)
 	}
 
 	if len(OpenAIApiResponse.Choices) == 0 {
-		return nil, fmt.Errorf("OpenAI API response contains no choices")
+		return nil, openaierrors.ErrNoChoicesFound
 	}
-
-	s.logger.Sugar().Infof(`Prompt Tokens: %d`, OpenAIApiResponse.Usage.PromptTokens)
-	s.logger.Sugar().Infof(`Response Tokens: %d`, OpenAIApiResponse.Usage.CompletionTokens)
-	s.logger.Sugar().Infof(`Total Tokens used: %d`, OpenAIApiResponse.Usage.TotalTokens)
 
 	result := &OpenAIApiResponse.Choices[0].Message.Content
 
@@ -195,29 +172,25 @@ func (s *service) GetWordDefinition(word string, nativeLanguage string) (*string
 	return result, nil
 }
 
+// todo: return actual errors and then convert to userf friendly on handler layer
 func (s *service) ValidateWord(word string) error {
 	if word == "" {
-		s.logger.Sugar().Errorf("User didn't provide a word: %s", word)
 		return errors.New("please provide a word")
 	}
 
 	if utils.ContainsNumber(word) {
-		s.logger.Sugar().Errorf("User provided a word(%s) that contained a number.", word)
 		return errors.New("words should not contain numbers")
 	}
 
 	if utf8.RuneCountInString(word) > 30 {
-		s.logger.Sugar().Errorf("Word '%s' length too long. Must be less than 30 characters.", word)
 		return errors.New("word length too long. Must be less than 30 characters.If this is a sentence, please use the analyser")
 	}
 
 	if isNotAWord(word) {
-		s.logger.Sugar().Errorf("User provided a phrase(%s) instead of a word.", word)
 		return errors.New("this looks like a phrase. Please use the 'Analyzer'")
 	}
 
 	if isNonsensical(word) {
-		s.logger.Sugar().Errorf("User provided nonsense(%s) instead of a word.", word)
 		return errors.New("this doesn't look like a word. Please provide a valid word")
 	}
 

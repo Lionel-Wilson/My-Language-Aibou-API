@@ -42,7 +42,7 @@ func (h *handler) GetHistory() http.HandlerFunc {
 
 		// Validates and decodes request
 		if err := request.DecodeAndValidate(r.Body, &requestBody); err != nil {
-			h.logger.Sugar().Errorw("failed to decode and validate word history request body",
+			h.logger.Sugar().Infow("failed to decode and validate word history request body",
 				"error", err)
 
 			render.Json(w, http.StatusBadRequest, FailedToProcessWord)
@@ -54,11 +54,12 @@ func (h *handler) GetHistory() http.HandlerFunc {
 
 		err := h.service.ValidateWord(spaceTrimmedWord)
 		if err != nil {
-			h.logger.Sugar().Errorw(
+			h.logger.Sugar().Infow(
 				"failed to validate word",
 				zap.Error(err),
 				"word", spaceTrimmedWord,
 				"native language", requestBody.NativeLanguage)
+
 			render.Json(w, http.StatusBadRequest, err.Error())
 
 			return
@@ -86,7 +87,7 @@ func (h *handler) DefineWord() http.HandlerFunc {
 
 		// Validates and decodes request
 		if err := request.DecodeAndValidate(r.Body, &requestBody); err != nil {
-			h.logger.Sugar().Errorw("failed to decode and validate define word request body",
+			h.logger.Sugar().Infow("failed to decode and validate define word request body",
 				zap.Error(err))
 
 			render.Json(w, http.StatusBadRequest, FailedToProcessWord)
@@ -98,7 +99,7 @@ func (h *handler) DefineWord() http.HandlerFunc {
 
 		err := h.service.ValidateWord(spaceTrimmedWord)
 		if err != nil {
-			h.logger.Sugar().Errorw(
+			h.logger.Sugar().Infow(
 				"failed to validate word",
 				zap.Error(err),
 				"word", spaceTrimmedWord,
@@ -124,13 +125,14 @@ func (h *handler) DefineWord() http.HandlerFunc {
 	}
 }
 
+// todo: create a mapper that converts validation errorrs to user friendly responses
 func (h *handler) GetSynonyms() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var requestBody dto.GetSynonymsRequest
 
 		// Validates and decodes request
 		if err := request.DecodeAndValidate(r.Body, &requestBody); err != nil {
-			h.logger.Sugar().Errorw("failed to decode and validate define word request body", zap.Error(err))
+			h.logger.Sugar().Infow("failed to decode and validate define word request body", zap.Error(err))
 
 			render.Json(w, http.StatusBadRequest, FailedToProcessWord)
 
@@ -141,7 +143,7 @@ func (h *handler) GetSynonyms() http.HandlerFunc {
 
 		err := h.service.ValidateWord(spaceTrimmedWord)
 		if err != nil {
-			h.logger.Sugar().Errorw(
+			h.logger.Sugar().Infow(
 				"failed to validate word", zap.Error(err), "word", spaceTrimmedWord)
 			render.Json(w, http.StatusBadRequest, err.Error())
 

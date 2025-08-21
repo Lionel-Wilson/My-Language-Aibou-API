@@ -78,6 +78,14 @@ func (s *service) GetWordHistory(ctx context.Context, word string, nativeLanguag
 		return nil, openaierrors.ErrNoChoicesFound
 	}
 
+	s.logger.Info("Successfully got word history",
+		zap.String("word", word),
+		zap.String("nativeLanguage", nativeLanguage),
+		zap.Int("promptTokens", OpenAIApiResponse.Usage.PromptTokens),
+		zap.Int("completionTokens", OpenAIApiResponse.Usage.CompletionTokens),
+		zap.Int("totalTokens", OpenAIApiResponse.Usage.TotalTokens),
+	)
+
 	cacheValue := []byte(OpenAIApiResponse.Choices[0].Message.Content)
 
 	err = s.cache.Set(cacheKey, cacheValue, wordCacheExpiration)
@@ -119,7 +127,13 @@ func (s *service) GetWordSynonyms(ctx context.Context, word string, nativeLangua
 		return nil, openaierrors.ErrNoChoicesFound
 	}
 
-	// todo: log token usage in one line with all relevant fields
+	s.logger.Info("Successfully got word synonyms",
+		zap.String("word", word),
+		zap.String("nativeLanguage", nativeLanguage),
+		zap.Int("promptTokens", OpenAIApiResponse.Usage.PromptTokens),
+		zap.Int("completionTokens", OpenAIApiResponse.Usage.CompletionTokens),
+		zap.Int("totalTokens", OpenAIApiResponse.Usage.TotalTokens),
+	)
 
 	result := &OpenAIApiResponse.Choices[0].Message.Content
 
@@ -165,6 +179,14 @@ func (s *service) GetWordDefinition(ctx context.Context, word string, nativeLang
 	}
 
 	result := &OpenAIApiResponse.Choices[0].Message.Content
+
+	s.logger.Info("Successfully got word definition.",
+		zap.String("word", word),
+		zap.String("nativeLanguage", nativeLanguage),
+		zap.Int("promptTokens", OpenAIApiResponse.Usage.PromptTokens),
+		zap.Int("completionTokens", OpenAIApiResponse.Usage.CompletionTokens),
+		zap.Int("totalTokens", OpenAIApiResponse.Usage.TotalTokens),
+	)
 
 	cacheValue := []byte(*result)
 

@@ -99,7 +99,8 @@ func (s *service) Lookup(ctx context.Context, word, nativeLanguage string) (*dom
 			return nil
 		})
 	}
-	if err := g.Wait(); err != nil {
+	err = g.Wait()
+	if err != nil {
 		return nil, fmt.Errorf("one or more OpenAI requests failed: %w", err)
 	}
 
@@ -107,7 +108,8 @@ func (s *service) Lookup(ctx context.Context, word, nativeLanguage string) (*dom
 	var result domain.LookupDetails
 	for _, d := range items {
 		var comp openai.ChatCompletion
-		if err := json.Unmarshal(d.responseBody, &comp); err != nil {
+		err = json.Unmarshal(d.responseBody, &comp)
+		if err != nil {
 			return nil, fmt.Errorf("failed to unmarshal %s response: %w", d.kind, err)
 		}
 		if len(comp.Choices) == 0 {

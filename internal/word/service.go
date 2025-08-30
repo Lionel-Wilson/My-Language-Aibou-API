@@ -323,6 +323,8 @@ func (s *service) wordToOpenAiHistoryRequestBody(word, userNativeLanguage string
 		word, userNativeLanguage,
 	)
 
+	s.logger.Info("wordToOpenAiHistoryRequestBody", zap.String("content", content))
+
 	return request.JsonReader(mapToOpenAiRequest(content))
 }
 
@@ -332,6 +334,8 @@ func (s *service) wordToOpenAiDefinitionRequestBody(word, lang string) (*bytes.R
 			"If the word is Japanese, include furigana for any kanji used, but do not mention whether it is or isn’t Japanese.",
 		word, lang, word, lang,
 	)
+
+	s.logger.Info("wordToOpenAiDefinitionRequestBody", zap.String("content", content))
 
 	return request.JsonReader(mapToOpenAiRequest(content))
 }
@@ -343,6 +347,8 @@ func (s *service) wordToOpenAiSynonymsRequestBody(word, userNativeLanguage strin
 			"Respond in %s, but make sure the synonyms themselves are written in the original language of the word.",
 		word, userNativeLanguage,
 	)
+
+	s.logger.Info("wordToOpenAiSynonymsRequestBody", zap.String("content", content))
 
 	return request.JsonReader(mapToOpenAiRequest(content))
 }

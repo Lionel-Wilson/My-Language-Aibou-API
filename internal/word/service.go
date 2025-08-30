@@ -137,12 +137,12 @@ func (s *service) GetWordHistory(ctx context.Context, word string, nativeLanguag
 		return &cachedResponse, nil
 	}
 
-	jsonBody, err := s.wordToOpenAiHistoryRequestBody(word, nativeLanguage)
+	jsonEncodedBody, err := s.wordToOpenAiHistoryRequestBody(word, nativeLanguage)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal openai request: %w", err)
 	}
 
-	resp, responseBody, err := s.openAiClient.MakeRequest(ctx, jsonBody)
+	resp, responseBody, err := s.openAiClient.MakeRequest(ctx, jsonEncodedBody)
 	if err != nil {
 		return nil, fmt.Errorf("failed to make open ai request: %w", err)
 	}
@@ -164,6 +164,7 @@ func (s *service) GetWordHistory(ctx context.Context, word string, nativeLanguag
 
 	s.logger.Info("Successfully got word history",
 		zap.String("word", word),
+		zap.Any("jsonEncodedBody", jsonEncodedBody),
 		zap.String("nativeLanguage", nativeLanguage),
 		zap.Int("promptTokens", OpenAIApiResponse.Usage.PromptTokens),
 		zap.Int("completionTokens", OpenAIApiResponse.Usage.CompletionTokens),
@@ -217,6 +218,7 @@ func (s *service) GetWordSynonyms(ctx context.Context, word string, nativeLangua
 	s.logger.Info("Successfully got word synonyms",
 		zap.String("word", word),
 		zap.String("nativeLanguage", nativeLanguage),
+		zap.Any("jsonEncodedBody", jsonEncodedBody),
 		zap.Int("promptTokens", OpenAIApiResponse.Usage.PromptTokens),
 		zap.Int("completionTokens", OpenAIApiResponse.Usage.CompletionTokens),
 		zap.Int("totalTokens", OpenAIApiResponse.Usage.TotalTokens),
@@ -272,6 +274,7 @@ func (s *service) GetWordDefinition(ctx context.Context, word string, nativeLang
 
 	s.logger.Info("Successfully got word definition.",
 		zap.String("word", word),
+		zap.Any("jsonEncodedBody", jsonEncodedBody),
 		zap.String("nativeLanguage", nativeLanguage),
 		zap.Int("promptTokens", OpenAIApiResponse.Usage.PromptTokens),
 		zap.Int("completionTokens", OpenAIApiResponse.Usage.CompletionTokens),

@@ -19,6 +19,7 @@ import (
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/subscriptions/storage"
 )
 
+//todo:don't return entity from service. convert to domain object
 type SubscriptionService interface {
 	SubscribeUser(ctx context.Context, user *entity.User) (*entity.Subscription, error)
 	GetUserSubscription(ctx context.Context, userID *string) (*entity.Subscription, error)

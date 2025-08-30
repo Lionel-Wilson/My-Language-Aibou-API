@@ -164,7 +164,6 @@ func (s *service) GetWordHistory(ctx context.Context, word string, nativeLanguag
 
 	s.logger.Info("Successfully got word history",
 		zap.String("word", word),
-		zap.Any("jsonEncodedBody", jsonEncodedBody),
 		zap.String("nativeLanguage", nativeLanguage),
 		zap.Int("promptTokens", OpenAIApiResponse.Usage.PromptTokens),
 		zap.Int("completionTokens", OpenAIApiResponse.Usage.CompletionTokens),
@@ -218,7 +217,6 @@ func (s *service) GetWordSynonyms(ctx context.Context, word string, nativeLangua
 	s.logger.Info("Successfully got word synonyms",
 		zap.String("word", word),
 		zap.String("nativeLanguage", nativeLanguage),
-		zap.Any("jsonEncodedBody", jsonEncodedBody),
 		zap.Int("promptTokens", OpenAIApiResponse.Usage.PromptTokens),
 		zap.Int("completionTokens", OpenAIApiResponse.Usage.CompletionTokens),
 		zap.Int("totalTokens", OpenAIApiResponse.Usage.TotalTokens),
@@ -274,7 +272,6 @@ func (s *service) GetWordDefinition(ctx context.Context, word string, nativeLang
 
 	s.logger.Info("Successfully got word definition.",
 		zap.String("word", word),
-		zap.Any("jsonEncodedBody", jsonEncodedBody),
 		zap.String("nativeLanguage", nativeLanguage),
 		zap.Int("promptTokens", OpenAIApiResponse.Usage.PromptTokens),
 		zap.Int("completionTokens", OpenAIApiResponse.Usage.CompletionTokens),
@@ -323,19 +320,14 @@ func (s *service) wordToOpenAiHistoryRequestBody(word, userNativeLanguage string
 		word, userNativeLanguage,
 	)
 
-	s.logger.Info("wordToOpenAiHistoryRequestBody", zap.String("content", content))
-
 	return request.JsonReader(mapToOpenAiRequest(content))
 }
 
-func (s *service) wordToOpenAiDefinitionRequestBody(word, lang string) (*bytes.Reader, error) {
+func (s *service) wordToOpenAiDefinitionRequestBody(word, userNativeLanguage string) (*bytes.Reader, error) {
 	content := fmt.Sprintf(
-		"Explain the meaning of '%s' in %s. Provide 2 example sentences using the word '%s', with translations into %s. "+
-			"If the word is Japanese, include furigana for any kanji used, but do not mention whether it is or isn’t Japanese.",
-		word, lang, word, lang,
+		"Explain the meaning of '%s'. Provide 2 example sentences using the word '%s', with translations into %s.Make sure to respond in %s.",
+		word, word, userNativeLanguage, userNativeLanguage,
 	)
-
-	s.logger.Info("wordToOpenAiDefinitionRequestBody", zap.String("content", content))
 
 	return request.JsonReader(mapToOpenAiRequest(content))
 }
@@ -347,8 +339,6 @@ func (s *service) wordToOpenAiSynonymsRequestBody(word, userNativeLanguage strin
 			"Respond in %s, but make sure the synonyms themselves are written in the original language of the word.",
 		word, userNativeLanguage,
 	)
-
-	s.logger.Info("wordToOpenAiSynonymsRequestBody", zap.String("content", content))
 
 	return request.JsonReader(mapToOpenAiRequest(content))
 }

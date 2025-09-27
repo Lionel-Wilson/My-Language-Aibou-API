@@ -63,7 +63,7 @@ func New(
 	subscriptionsHandler := subscriptions2.NewSubscriptionsHandler(logger, subscriptionService, userService)
 	webhookHandler := webhook.NewWebhookHandler(logger, stripeWebhookSecret, subscriptionService)
 
-	router.Route( //depricated
+	router.Route( // depricated
 		"/api/v1", func(r chi.Router) {
 			r.Route(
 				"/search", func(r chi.Router) {
@@ -76,7 +76,7 @@ func New(
 		},
 	)
 
-	router.Route( //depricated
+	router.Route( // depricated
 		"/api/v2", func(r chi.Router) {
 			r.Route(
 				"/word", func(r chi.Router) {
@@ -94,7 +94,7 @@ func New(
 		},
 	)
 
-	//to be depricated
+	// to be depricated
 	router.Route("/api/v3", func(r chi.Router) {
 		r.Post("/webhooks/stripe", webhookHandler.HandleStripeWebhook())
 

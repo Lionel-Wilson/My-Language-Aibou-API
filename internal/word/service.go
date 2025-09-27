@@ -1,19 +1,15 @@
 package word
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/word/domain"
-	"github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/request"
 	"golang.org/x/sync/errgroup"
 	"io"
 	"net/http"
-	"strings"
 	"time"
-	"unicode"
 	"unicode/utf8"
 
 	"github.com/coocood/freecache"
@@ -62,20 +58,26 @@ type Details struct {
 }
 
 func (s *service) Lookup(ctx context.Context, word, nativeLanguage string) (*domain.LookupDetails, error) {
+	//0) figure out word language.
+	wordLanguage, err := s.detectWordLanguage(ctx, word)
+	if err != nil {
+		return nil, fmt.Errorf("failed to detect word language: %w", err)
+	}
+
 	// 1) Build payloads sequentially (no races)
-	defBody, err := s.wordToOpenAiDefinitionRequestBody(word, nativeLanguage)
+	defBody, err := s.wordToOpenAiDefinitionRequestBody(word, nativeLanguage, wordLanguage)
 	if err != nil {
 		return nil, fmt.Errorf("marshal word definition openai request: %w", err)
 	}
-	contextualUsageBody, err := s.wordToOpenAiContextualUsageRequestBody(word, nativeLanguage)
+	contextualUsageBody, err := s.wordToOpenAiContextualUsageRequestBody(word, nativeLanguage, wordLanguage)
 	if err != nil {
 		return nil, fmt.Errorf("marshal word context usage openai request: %w", err)
 	}
-	synBody, err := s.wordToOpenAiSynonymsRequestBody(word, nativeLanguage)
+	synBody, err := s.wordToOpenAiSynonymsRequestBody(word, nativeLanguage, wordLanguage)
 	if err != nil {
 		return nil, fmt.Errorf("marshal word synonyms openai request: %w", err)
 	}
-	histBody, err := s.wordToOpenAiHistoryRequestBody(word, nativeLanguage)
+	histBody, err := s.wordToOpenAiHistoryRequestBody(word, nativeLanguage, wordLanguage)
 	if err != nil {
 		return nil, fmt.Errorf("marshal word history openai request: %w", err)
 	}
@@ -144,7 +146,12 @@ func (s *service) GetWordHistory(ctx context.Context, word string, nativeLanguag
 		return &cachedResponse, nil
 	}
 
-	jsonEncodedBody, err := s.wordToOpenAiHistoryRequestBody(word, nativeLanguage)
+	wordLanguage, err := s.detectWordLanguage(ctx, word)
+	if err != nil {
+		return nil, fmt.Errorf("failed to detect word language: %w", err)
+	}
+
+	jsonEncodedBody, err := s.wordToOpenAiHistoryRequestBody(word, nativeLanguage, wordLanguage)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal openai request: %w", err)
 	}
@@ -196,7 +203,12 @@ func (s *service) GetWordSynonyms(ctx context.Context, word string, nativeLangua
 		return &cachedResponse, nil
 	}
 
-	jsonEncodedBody, err := s.wordToOpenAiSynonymsRequestBody(word, nativeLanguage)
+	wordLanguage, err := s.detectWordLanguage(ctx, word)
+	if err != nil {
+		return nil, fmt.Errorf("failed to detect word language: %w", err)
+	}
+
+	jsonEncodedBody, err := s.wordToOpenAiSynonymsRequestBody(word, nativeLanguage, wordLanguage)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal openai request: %w", err)
 	}
@@ -250,7 +262,12 @@ func (s *service) GetWordDefinition(ctx context.Context, word string, nativeLang
 		return &cachedResponse, nil
 	}
 
-	jsonEncodedBody, err := s.wordToOpenAiDefinitionRequestBody(word, nativeLanguage)
+	wordLanguage, err := s.detectWordLanguage(ctx, word)
+	if err != nil {
+		return nil, fmt.Errorf("failed to detect word language: %w", err)
+	}
+
+	jsonEncodedBody, err := s.wordToOpenAiDefinitionRequestBody(word, nativeLanguage, wordLanguage)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal openai request: %w", err)
 	}
@@ -320,89 +337,22 @@ func (s *service) ValidateWord(word string) error {
 	return nil
 }
 
-func (s *service) wordToOpenAiHistoryRequestBody(word, userNativeLanguage string) (*bytes.Reader, error) {
-	content := fmt.Sprintf(
-		"Give me the history and origin of the word '%s', ensuring the explanation is in %s. "+
-			"(If the word is Japanese, include furigana for any kanji used, but do not mention whether it is or isn’t Japanese.)",
-		word, userNativeLanguage,
-	)
-
-	return request.JsonReader(mapToOpenAiRequest(content))
-}
-
-func (s *service) wordToOpenAiContextualUsageRequestBody(word, userNativeLanguage string) (*bytes.Reader, error) {
-	content := fmt.Sprintf(
-		"Explain the contextual usage of '%s'. e.g. whether it's formal/casual, who would say this and to whom, when would you say this etc. Make sure to respond in %s.",
-		word, userNativeLanguage,
-	)
-
-	return request.JsonReader(mapToOpenAiRequest(content))
-}
-
-func (s *service) wordToOpenAiDefinitionRequestBody(word, userNativeLanguage string) (*bytes.Reader, error) {
-	content := fmt.Sprintf(
-		"Explain the meaning of '%s'. Provide 2 example sentences using the word '%s', with translations into %s.Make sure to respond in %s.",
-		word, word, userNativeLanguage, userNativeLanguage,
-	)
-
-	return request.JsonReader(mapToOpenAiRequest(content))
-}
-
-func (s *service) wordToOpenAiSynonymsRequestBody(word, userNativeLanguage string) (*bytes.Reader, error) {
-	content := fmt.Sprintf(
-		"The user has provided the word '%s'. First, detect what language this word is in. "+
-			"Then, list some simple synonyms for it in that same language. "+
-			"Respond in %s, but make sure the synonyms themselves are written in the original language of the word.",
-		word, userNativeLanguage,
-	)
-
-	return request.JsonReader(mapToOpenAiRequest(content))
-}
-
-// isNotAWord is used to check if the user is using the dictionary to define phrases as opposed to a single word
-func isNotAWord(word string) bool {
-	return strings.Count(word, " ") > 1
-}
-
-func isNonsensical(s string) bool {
-	// specials: punctuation or symbol (keep hyphen/apostrophe if you want)
-	for _, r := range s {
-		if unicode.IsPunct(r) || unicode.IsSymbol(r) {
-			if r != '-' && r != '\'' {
-				return true
-			}
-		}
+func (s *service) detectWordLanguage(ctx context.Context, word string) (string, error) {
+	wordLanguageRequestBody, err := s.wordToOpenAiWordLanguageRequestBody(word)
+	if err != nil {
+		return "", fmt.Errorf("marshal word language openai request: %w", err)
 	}
-	// repeating characters (runes)
-	var prev rune
-
-	count := 0
-
-	for i, r := range s {
-		if i == 0 || r != prev {
-			prev, count = r, 1
-			continue
-		}
-
-		count++
-		if count > 3 {
-			return true
-		}
+	resp, body, err := s.openAiClient.MakeRequest(ctx, wordLanguageRequestBody)
+	if err != nil {
+		return "", fmt.Errorf("failed to make open ai request: %w", err)
 	}
-
-	return false
-}
-
-func mapToOpenAiRequest(content string) *openai.OpenAIRequest {
-	response := openai.OpenAIRequest{
-		Model:       "gpt-4o",
-		Temperature: 0.4,
-		MaxTokens:   400,
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("openai API returned non-OK status response=%v statusCode=%v", resp, resp.StatusCode)
 	}
-	response.Messages = append(response.Messages,
-		openai.Message{Role: "system", Content: "You are a helpful multilingual assistant that supports users learning foreign languages."},
-		openai.Message{Role: "user", Content: content},
-	)
-
-	return &response
+	var comp openai.ChatCompletion
+	err = json.Unmarshal(body, &comp)
+	if err != nil {
+		return "", fmt.Errorf("failed to unmarshal %s response: %w", body, err)
+	}
+	return comp.Choices[0].Message.Content, nil
 }

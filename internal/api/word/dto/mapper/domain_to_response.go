@@ -14,5 +14,6 @@ func MapToLookUpResponse(details *domain.LookupDetails) dto.LookupResponse {
 		Definition: details.Definition,
 		Synonyms:   details.Synonyms,
 		History:    details.History,
+		Context:    details.Context,
 	}
 }

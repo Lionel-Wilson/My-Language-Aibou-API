@@ -4,4 +4,5 @@ type LookupDetails struct {
 	Definition string
 	Synonyms   string
 	History    string
+	Context    string
 }

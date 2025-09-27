@@ -67,6 +67,10 @@ func (s *service) Lookup(ctx context.Context, word, nativeLanguage string) (*dom
 	if err != nil {
 		return nil, fmt.Errorf("marshal word definition openai request: %w", err)
 	}
+	contextualUsageBody, err := s.wordToOpenAiContextualUsageRequestBody(word, nativeLanguage)
+	if err != nil {
+		return nil, fmt.Errorf("marshal word context usage openai request: %w", err)
+	}
 	synBody, err := s.wordToOpenAiSynonymsRequestBody(word, nativeLanguage)
 	if err != nil {
 		return nil, fmt.Errorf("marshal word synonyms openai request: %w", err)
@@ -80,6 +84,7 @@ func (s *service) Lookup(ctx context.Context, word, nativeLanguage string) (*dom
 		{kind: "definition", requestBody: defBody},
 		{kind: "synonyms", requestBody: synBody},
 		{kind: "history", requestBody: histBody},
+		{kind: "context", requestBody: contextualUsageBody},
 	}
 
 	// 2) Fire requests in parallel with errgroup (ctx-aware)
@@ -123,6 +128,8 @@ func (s *service) Lookup(ctx context.Context, word, nativeLanguage string) (*dom
 			result.Synonyms = content
 		case "history":
 			result.History = content
+		case "context":
+			result.Context = content
 		}
 	}
 
@@ -317,6 +324,15 @@ func (s *service) wordToOpenAiHistoryRequestBody(word, userNativeLanguage string
 	content := fmt.Sprintf(
 		"Give me the history and origin of the word '%s', ensuring the explanation is in %s. "+
 			"(If the word is Japanese, include furigana for any kanji used, but do not mention whether it is or isn’t Japanese.)",
+		word, userNativeLanguage,
+	)
+
+	return request.JsonReader(mapToOpenAiRequest(content))
+}
+
+func (s *service) wordToOpenAiContextualUsageRequestBody(word, userNativeLanguage string) (*bytes.Reader, error) {
+	content := fmt.Sprintf(
+		"Explain the contextual usage of '%s'. e.g. whether it's formal/casual, who would say this and to whom, when would you say this etc. Make sure to respond in %s.",
 		word, userNativeLanguage,
 	)
 

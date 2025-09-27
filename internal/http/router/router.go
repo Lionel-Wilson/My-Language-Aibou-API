@@ -35,6 +35,9 @@ func New(
 	router.Use(cors.Handler(cors.Options{
 		AllowedOrigins: []string{
 			"http://localhost:5173",
+			"localhost:5173",
+			"http://localhost:5175",
+			"localhost:5175",
 			"https://my-language-aibou-prod-v2.up.railway.app",
 			"https://www.mylanguageaibou.co.uk",
 			"http://www.mylanguageaibou.co.uk",

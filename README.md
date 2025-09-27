@@ -18,7 +18,7 @@ The API for the "My Language Aibou" application. The AI Powered language learnin
 PORT=8080
 OPENAI_API_KEY=<your own>
 SECRET=<your own>
-ENV=dev
+ENV=local
 LOG_LEVEL=debug
 DATABASE_URL=<your own>
 JWT_SECRET=<your own>

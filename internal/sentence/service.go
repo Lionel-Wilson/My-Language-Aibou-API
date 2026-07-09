@@ -218,13 +218,13 @@ func (s *service) sentenceToOpenAiSentenceCorrectionRequestBody(sentence, userNa
 	var content string
 	if userNativeLanguage == "English" {
 		content = fmt.Sprintf(
-			"Is this sentence correct? If not, correct it and briefly explain why. Do not ask follow-up questions or encourage further conversation. Just provide the correction and explanation in a single, complete answer.\n\nSentence: %s",
+			"Is this sentence correct? If not, correct it and briefly explain why. First, infer what the user is trying to say and express it in English using this format: \"Assuming you're trying to say '...'\". Do not ask follow-up questions or encourage further conversation. Just provide the assumed meaning, correction, and explanation in a single, complete answer.\n\nSentence: %s",
 			sentence,
 		)
 	} else {
 		content = fmt.Sprintf(
-			"Is this sentence correct? If not, correct it and briefly explain why. Do not ask follow-up questions or encourage further conversation. Just provide the correction and explanation in a single, complete answer. Respond in %s as if you're a language teacher teaching a native %s speaker.\n\nSentence: %s",
-			userNativeLanguage, userNativeLanguage, sentence,
+			"Is this sentence correct? If not, correct it and briefly explain why. First, infer what the user is trying to say and express it in %s using this format: \"Assuming you're trying to say '...'\" (translated naturally into %s). Do not ask follow-up questions or encourage further conversation. Just provide the assumed meaning, correction, and explanation in a single, complete answer. Respond in %s as if you're a language teacher teaching a native %s speaker.\n\nSentence: %s",
+			userNativeLanguage, userNativeLanguage, userNativeLanguage, userNativeLanguage, sentence,
 		)
 	}
 

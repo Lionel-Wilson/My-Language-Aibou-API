@@ -197,7 +197,7 @@ func (s *service) sentenceToOpenAiSimpleTranslationRequestBody(sentence, userNat
 
 func (s *service) sentenceToOpenAiExplanationRequestBody(sentence, userNativeLanguage string) (*bytes.Reader, error) {
 	content := fmt.Sprintf(
-		"Explain the meaning & grammar used in this sentence - '%s'. Respond in %s",
+		"Explain the meaning and how this sentence works - '%s'. Respond in %s. Use plain, everyday language that a non-linguist can follow. Avoid technical grammar terms such as 'imperative', 'subjunctive', 'indicative', 'direct object pronoun', and similar jargon. When a technical term is genuinely useful, immediately follow it with a simple synonym in brackets, e.g. 'formal command (imperative)' or 'statement of fact (indicative)'.",
 		sentence, userNativeLanguage,
 	)
 
@@ -206,7 +206,7 @@ func (s *service) sentenceToOpenAiExplanationRequestBody(sentence, userNativeLan
 		Temperature: 0.4,
 		MaxTokens:   800,
 		Messages: []openai.Message{
-			{Role: "system", Content: "You are a helpful assistant."},
+			{Role: "system", Content: "You are a friendly language tutor explaining sentences to everyday learners. Prefer plain, everyday language over linguistic terminology. If you must use a grammar term, always add an easy-to-understand synonym in brackets right after it."},
 			{Role: "user", Content: content},
 		},
 	}

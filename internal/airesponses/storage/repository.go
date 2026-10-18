@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
@@ -43,7 +44,7 @@ func (r *repository) Get(ctx context.Context, kind Kind, input, nativeLanguage s
 	`
 	var response string
 	err := r.db.GetContext(ctx, &response, q, string(kind), input, nativeLanguage, promptVersion)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return "", false, nil
 	}
 	if err != nil {
@@ -56,7 +57,7 @@ func (r *repository) Upsert(ctx context.Context, kind Kind, input, nativeLanguag
 	const q = `
 		INSERT INTO ai_responses (kind, input, native_language, prompt_version, response)
 		VALUES ($1, $2, $3, $4, $5)
-		ON CONFLICT ON CONSTRAINT uq_ai_responses_lookup
+		ON CONFLICT (kind, input, native_language, prompt_version)
 		DO UPDATE SET response = EXCLUDED.response, updated_at = now()
 	`
 	_, err := r.db.ExecContext(ctx, q, string(kind), input, nativeLanguage, promptVersion, response)

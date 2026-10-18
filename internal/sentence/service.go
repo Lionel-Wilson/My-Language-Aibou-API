@@ -52,18 +52,11 @@ const (
 )
 
 func (s *service) getCachedResponse(ctx context.Context, kind airesponses.Kind, input, nativeLanguage string, promptVersion int) (string, bool) {
-	response, found, err := s.responses.Get(ctx, kind, input, nativeLanguage, promptVersion)
-	if err != nil {
-		s.logger.Warn("ai response get failed", zap.String("kind", string(kind)), zap.Error(err))
-		return "", false
-	}
-	return response, found
+	return airesponses.GetCached(ctx, s.logger, s.responses, kind, input, nativeLanguage, promptVersion)
 }
 
 func (s *service) storeCachedResponse(ctx context.Context, kind airesponses.Kind, input, nativeLanguage string, promptVersion int, response string) {
-	if err := s.responses.Upsert(ctx, kind, input, nativeLanguage, promptVersion, response); err != nil {
-		s.logger.Warn("ai response upsert failed", zap.String("kind", string(kind)), zap.Error(err))
-	}
+	airesponses.StoreCached(ctx, s.logger, s.responses, kind, input, nativeLanguage, promptVersion, response)
 }
 
 func (s *service) GetSentenceCorrection(ctx context.Context, sentence string, nativeLanguage string) (*string, error) {

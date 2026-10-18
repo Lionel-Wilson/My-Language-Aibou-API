@@ -195,10 +195,23 @@ func (s *service) sentenceToOpenAiSimpleTranslationRequestBody(sentence, userNat
 	return request.JsonReader(&req)
 }
 
+const (
+	plainLanguageRule = "Use plain, everyday language that a non-linguist can follow. Avoid technical grammar terms (such as imperative, subjunctive, indicative or direct object pronoun) and similar jargon. If a technical term is genuinely useful, immediately follow it with a simple, easy-to-understand synonym in brackets."
+
+	responseLanguageSystemRule = "Always write your entire response, including all labels, headings and introductory phrases, in the language the user asks you to respond in. Only quoted words or sentences from the sentence being discussed may stay in their original language."
+)
+
+func nativeLanguageRule(userNativeLanguage string) string {
+	return fmt.Sprintf(
+		"The user only understands %[1]s. Write your ENTIRE response in %[1]s, including every introductory phrase, label and heading, and any grammar terms. Do not use any language other than %[1]s, except when quoting the original sentence, a corrected sentence, or words taken from them.",
+		userNativeLanguage,
+	)
+}
+
 func (s *service) sentenceToOpenAiExplanationRequestBody(sentence, userNativeLanguage string) (*bytes.Reader, error) {
 	content := fmt.Sprintf(
-		"Explain the meaning and how this sentence works - '%s'. Respond in %s. Use plain, everyday language that a non-linguist can follow. Avoid technical grammar terms such as 'imperative', 'subjunctive', 'indicative', 'direct object pronoun', and similar jargon. When a technical term is genuinely useful, immediately follow it with a simple synonym in brackets, e.g. 'formal command (imperative)' or 'statement of fact (indicative)'.",
-		sentence, userNativeLanguage,
+		"Explain the meaning and how this sentence works.\n\n%s\n\n%s\n\nSentence: %s",
+		nativeLanguageRule(userNativeLanguage), plainLanguageRule, sentence,
 	)
 
 	req := openai.OpenAIRequest{
@@ -206,7 +219,7 @@ func (s *service) sentenceToOpenAiExplanationRequestBody(sentence, userNativeLan
 		Temperature: 0.4,
 		MaxTokens:   800,
 		Messages: []openai.Message{
-			{Role: "system", Content: "You are a friendly language tutor explaining sentences to everyday learners. Prefer plain, everyday language over linguistic terminology. If you must use a grammar term, always add an easy-to-understand synonym in brackets right after it."},
+			{Role: "system", Content: "You are a friendly language tutor explaining sentences to everyday learners. " + responseLanguageSystemRule},
 			{Role: "user", Content: content},
 		},
 	}
@@ -215,25 +228,17 @@ func (s *service) sentenceToOpenAiExplanationRequestBody(sentence, userNativeLan
 }
 
 func (s *service) sentenceToOpenAiSentenceCorrectionRequestBody(sentence, userNativeLanguage string) (*bytes.Reader, error) {
-	var content string
-	if userNativeLanguage == "English" {
-		content = fmt.Sprintf(
-			"Is this sentence correct? If not, correct it and briefly explain why. First, infer what the user is trying to say and express it in English using this format: \"Assuming you're trying to say '...'\". Do not ask follow-up questions or encourage further conversation. Just provide the assumed meaning, correction, and explanation in a single, complete answer.\n\nSentence: %s",
-			sentence,
-		)
-	} else {
-		content = fmt.Sprintf(
-			"Is this sentence correct? If not, correct it and briefly explain why. First, state what you assume the user is trying to say, with a short introductory phrase meaning \"Assuming you're trying to say\". Do not ask follow-up questions or encourage further conversation. Just provide the assumed meaning, correction, and explanation in a single, complete answer, as if you're a language teacher teaching a native %[1]s speaker.\n\nThe user only understands %[1]s. Write your ENTIRE response in %[1]s, including every introductory phrase, label and heading (such as the assumed-meaning line, the corrected-sentence label and the explanation label). Do not write any English or any other language, except when quoting the original sentence, the corrected sentence, or words taken from them.\n\nSentence: %[2]s",
-			userNativeLanguage, sentence,
-		)
-	}
+	content := fmt.Sprintf(
+		"Is this sentence correct? If not, correct it and briefly explain why. First, state what you assume the user is trying to say, with a short introductory phrase meaning \"Assuming you're trying to say\". Do not ask follow-up questions or encourage further conversation. Just provide the assumed meaning, correction, and explanation in a single, complete answer, as if you're a language teacher teaching a native %s speaker.\n\n%s\n\n%s\n\nSentence: %s",
+		userNativeLanguage, nativeLanguageRule(userNativeLanguage), plainLanguageRule, sentence,
+	)
 
 	req := openai.OpenAIRequest{
 		Model:       "gpt-4o",
 		Temperature: 0.4,
 		MaxTokens:   800,
 		Messages: []openai.Message{
-			{Role: "system", Content: "You are a concise language assistant that explains sentence corrections in a clear and brief manner without engaging in back-and-forth conversation. Always write your entire response, including all labels and introductory phrases, in the language the user asks you to respond in. Only quoted words or sentences from the sentence being corrected may stay in their original language."},
+			{Role: "system", Content: "You are a concise language assistant that explains sentence corrections in a clear and brief manner without engaging in back-and-forth conversation. " + responseLanguageSystemRule},
 			{Role: "user", Content: content},
 		},
 	}

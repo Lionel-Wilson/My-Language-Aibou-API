@@ -37,6 +37,7 @@ func main() {
 	if err != nil {
 		logger.Sugar().Fatalf("failed to connect to database: %v", err)
 	}
+	defer db.Close()
 
 	if err := commonDb.RunMigrations(db.DB); err != nil {
 		logger.Sugar().Fatalf("failed to run migrations: %v", err)

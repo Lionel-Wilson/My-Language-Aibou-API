@@ -223,8 +223,8 @@ func (s *service) sentenceToOpenAiSentenceCorrectionRequestBody(sentence, userNa
 		)
 	} else {
 		content = fmt.Sprintf(
-			"Is this sentence correct? If not, correct it and briefly explain why. First, infer what the user is trying to say and express it in %s using this format: \"Assuming you're trying to say '...'\" (translated naturally into %s). Do not ask follow-up questions or encourage further conversation. Just provide the assumed meaning, correction, and explanation in a single, complete answer. Respond in %s as if you're a language teacher teaching a native %s speaker.\n\nSentence: %s",
-			userNativeLanguage, userNativeLanguage, userNativeLanguage, userNativeLanguage, sentence,
+			"Is this sentence correct? If not, correct it and briefly explain why. First, state what you assume the user is trying to say, with a short introductory phrase meaning \"Assuming you're trying to say\". Do not ask follow-up questions or encourage further conversation. Just provide the assumed meaning, correction, and explanation in a single, complete answer, as if you're a language teacher teaching a native %[1]s speaker.\n\nThe user only understands %[1]s. Write your ENTIRE response in %[1]s, including every introductory phrase, label and heading (such as the assumed-meaning line, the corrected-sentence label and the explanation label). Do not write any English or any other language, except when quoting the original sentence, the corrected sentence, or words taken from them.\n\nSentence: %[2]s",
+			userNativeLanguage, sentence,
 		)
 	}
 
@@ -233,7 +233,7 @@ func (s *service) sentenceToOpenAiSentenceCorrectionRequestBody(sentence, userNa
 		Temperature: 0.4,
 		MaxTokens:   800,
 		Messages: []openai.Message{
-			{Role: "system", Content: "You are a concise language assistant that explains sentence corrections in a clear and brief manner without engaging in back-and-forth conversation."},
+			{Role: "system", Content: "You are a concise language assistant that explains sentence corrections in a clear and brief manner without engaging in back-and-forth conversation. Always write your entire response, including all labels and introductory phrases, in the language the user asks you to respond in. Only quoted words or sentences from the sentence being corrected may stay in their original language."},
 			{Role: "user", Content: content},
 		},
 	}

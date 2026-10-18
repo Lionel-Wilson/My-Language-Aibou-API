@@ -8,12 +8,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"time"
 	"unicode/utf8"
 
-	"github.com/coocood/freecache"
 	"go.uber.org/zap"
 
+	airesponses "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/airesponses/storage"
 	openai "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/pkg/commonlibrary/request"
 )
@@ -30,30 +29,46 @@ type Service interface {
 type service struct {
 	logger       *zap.Logger
 	openAiClient openai.Client
-	cache        *freecache.Cache
+	responses    airesponses.Repository
 }
 
 func NewSentenceService(
 	logger *zap.Logger,
 	openAiClient openai.Client,
-	cache *freecache.Cache,
+	responses airesponses.Repository,
 ) Service {
 	return &service{
 		logger:       logger,
 		openAiClient: openAiClient,
-		cache:        cache,
+		responses:    responses,
 	}
 }
 
-var sentenceCacheExpiration = int(time.Hour * 24 * 30) // 30 days
+// Bump the matching constant when the prompt for that kind changes.
+const (
+	promptVersionExplanation = 1
+	promptVersionTranslation = 1
+	promptVersionCorrection  = 1
+)
+
+func (s *service) getCachedResponse(ctx context.Context, kind airesponses.Kind, input, nativeLanguage string, promptVersion int) (string, bool) {
+	response, found, err := s.responses.Get(ctx, kind, input, nativeLanguage, promptVersion)
+	if err != nil {
+		s.logger.Warn("ai response get failed", zap.String("kind", string(kind)), zap.Error(err))
+		return "", false
+	}
+	return response, found
+}
+
+func (s *service) storeCachedResponse(ctx context.Context, kind airesponses.Kind, input, nativeLanguage string, promptVersion int, response string) {
+	if err := s.responses.Upsert(ctx, kind, input, nativeLanguage, promptVersion, response); err != nil {
+		s.logger.Warn("ai response upsert failed", zap.String("kind", string(kind)), zap.Error(err))
+	}
+}
 
 func (s *service) GetSentenceCorrection(ctx context.Context, sentence string, nativeLanguage string) (*string, error) {
-	cacheKey := []byte(fmt.Sprintf("%s sentence correction in %s", sentence, nativeLanguage))
-
-	cached, err := s.cache.Get(cacheKey)
-	if err == nil {
-		cachedResponse := string(cached)
-		return &cachedResponse, nil
+	if cached, ok := s.getCachedResponse(ctx, airesponses.KindCorrection, sentence, nativeLanguage, promptVersionCorrection); ok {
+		return &cached, nil
 	}
 
 	jsonBody, err := s.sentenceToOpenAiSentenceCorrectionRequestBody(sentence, nativeLanguage)
@@ -90,27 +105,25 @@ func (s *service) GetSentenceCorrection(ctx context.Context, sentence string, na
 	)
 
 	result := &OpenAIApiResponse.Choices[0].Message.Content
-
-	cacheValue := []byte(*result)
-
-	err = s.cache.Set(cacheKey, cacheValue, sentenceCacheExpiration)
-	if err != nil {
-		return nil, fmt.Errorf("failed to cache sentence correction: %w", err)
-	}
+	s.storeCachedResponse(ctx, airesponses.KindCorrection, sentence, nativeLanguage, promptVersionCorrection, *result)
 
 	return result, nil
 }
 
 func (s *service) GetSentenceExplanation(ctx context.Context, sentence string, nativeLanguage string, isDetailed bool) (*string, error) {
-	cacheKey := []byte(fmt.Sprintf("%s sentence explanation in %s(%v)", sentence, nativeLanguage, isDetailed))
+	kind := airesponses.KindTranslation
+	promptVersion := promptVersionTranslation
+	if isDetailed {
+		kind = airesponses.KindExplanation
+		promptVersion = promptVersionExplanation
+	}
 
-	cached, err := s.cache.Get(cacheKey)
-	if err == nil {
-		cachedResponse := string(cached)
-		return &cachedResponse, err
+	if cached, ok := s.getCachedResponse(ctx, kind, sentence, nativeLanguage, promptVersion); ok {
+		return &cached, nil
 	}
 
 	var jsonBody io.Reader
+	var err error
 	if isDetailed {
 		jsonBody, err = s.sentenceToOpenAiExplanationRequestBody(sentence, nativeLanguage)
 		if err != nil {
@@ -152,13 +165,7 @@ func (s *service) GetSentenceExplanation(ctx context.Context, sentence string, n
 	)
 
 	result := &OpenAIApiResponse.Choices[0].Message.Content
-
-	cacheValue := []byte(*result)
-
-	err = s.cache.Set(cacheKey, cacheValue, sentenceCacheExpiration)
-	if err != nil {
-		return nil, fmt.Errorf("failed to cache sentence explanation: %w", err)
-	}
+	s.storeCachedResponse(ctx, kind, sentence, nativeLanguage, promptVersion, *result)
 
 	return result, nil
 }

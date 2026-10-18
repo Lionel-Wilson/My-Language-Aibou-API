@@ -9,12 +9,11 @@ import (
 	"golang.org/x/sync/errgroup"
 	"io"
 	"net/http"
-	"time"
 	"unicode/utf8"
 
-	"github.com/coocood/freecache"
 	"go.uber.org/zap"
 
+	airesponses "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/airesponses/storage"
 	openai "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai"
 	openaierrors "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai/errors"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/utils"
@@ -32,22 +31,43 @@ type Service interface {
 type service struct {
 	logger       *zap.Logger
 	openAiClient openai.Client
-	cache        *freecache.Cache
+	responses    airesponses.Repository
 }
 
 func NewWordService(
 	logger *zap.Logger,
 	openAiClient openai.Client,
-	cache *freecache.Cache,
+	responses airesponses.Repository,
 ) Service {
 	return &service{
 		logger:       logger,
 		openAiClient: openAiClient,
-		cache:        cache,
+		responses:    responses,
 	}
 }
 
-var wordCacheExpiration = int(time.Hour * 24 * 90) // 90 days
+// Bump the matching constant when the prompt for that kind changes.
+const (
+	promptVersionDefinition = 1
+	promptVersionSynonyms   = 1
+	promptVersionHistory    = 1
+	promptVersionContext    = 1
+)
+
+func (s *service) getCachedResponse(ctx context.Context, kind airesponses.Kind, input, nativeLanguage string, promptVersion int) (string, bool) {
+	response, found, err := s.responses.Get(ctx, kind, input, nativeLanguage, promptVersion)
+	if err != nil {
+		s.logger.Warn("ai response get failed", zap.String("kind", string(kind)), zap.Error(err))
+		return "", false
+	}
+	return response, found
+}
+
+func (s *service) storeCachedResponse(ctx context.Context, kind airesponses.Kind, input, nativeLanguage string, promptVersion int, response string) {
+	if err := s.responses.Upsert(ctx, kind, input, nativeLanguage, promptVersion, response); err != nil {
+		s.logger.Warn("ai response upsert failed", zap.String("kind", string(kind)), zap.Error(err))
+	}
+}
 
 type Details struct {
 	kind         string
@@ -58,41 +78,58 @@ type Details struct {
 }
 
 func (s *service) Lookup(ctx context.Context, word, nativeLanguage string) (*domain.LookupDetails, error) {
-	//0) figure out word language.
+	var result domain.LookupDetails
+
+	lookupParts := []struct {
+		detailKind     string
+		storageKind    airesponses.Kind
+		promptVersion  int
+		dest           *string
+	}{
+		{"definition", airesponses.KindDefinition, promptVersionDefinition, &result.Definition},
+		{"synonyms", airesponses.KindSynonyms, promptVersionSynonyms, &result.Synonyms},
+		{"history", airesponses.KindHistory, promptVersionHistory, &result.History},
+		{"context", airesponses.KindContext, promptVersionContext, &result.Context},
+	}
+
+	var items []*Details
+	for _, part := range lookupParts {
+		if cached, ok := s.getCachedResponse(ctx, part.storageKind, word, nativeLanguage, part.promptVersion); ok {
+			*part.dest = cached
+			continue
+		}
+		items = append(items, &Details{kind: part.detailKind})
+	}
+
+	if len(items) == 0 {
+		return &result, nil
+	}
+
 	wordLanguage, err := s.detectWordLanguage(ctx, word)
 	if err != nil {
 		return nil, fmt.Errorf("failed to detect word language: %w", err)
 	}
 
-	// 1) Build payloads sequentially (no races)
-	defBody, err := s.wordToOpenAiDefinitionRequestBody(word, nativeLanguage, wordLanguage)
-	if err != nil {
-		return nil, fmt.Errorf("marshal word definition openai request: %w", err)
-	}
-	contextualUsageBody, err := s.wordToOpenAiContextualUsageRequestBody(word, nativeLanguage, wordLanguage)
-	if err != nil {
-		return nil, fmt.Errorf("marshal word context usage openai request: %w", err)
-	}
-	synBody, err := s.wordToOpenAiSynonymsRequestBody(word, nativeLanguage, wordLanguage)
-	if err != nil {
-		return nil, fmt.Errorf("marshal word synonyms openai request: %w", err)
-	}
-	histBody, err := s.wordToOpenAiHistoryRequestBody(word, nativeLanguage, wordLanguage)
-	if err != nil {
-		return nil, fmt.Errorf("marshal word history openai request: %w", err)
-	}
-
-	items := []*Details{
-		{kind: "definition", requestBody: defBody},
-		{kind: "synonyms", requestBody: synBody},
-		{kind: "history", requestBody: histBody},
-		{kind: "context", requestBody: contextualUsageBody},
+	for _, d := range items {
+		var bodyErr error
+		switch d.kind {
+		case "definition":
+			d.requestBody, bodyErr = s.wordToOpenAiDefinitionRequestBody(word, nativeLanguage, wordLanguage)
+		case "synonyms":
+			d.requestBody, bodyErr = s.wordToOpenAiSynonymsRequestBody(word, nativeLanguage, wordLanguage)
+		case "history":
+			d.requestBody, bodyErr = s.wordToOpenAiHistoryRequestBody(word, nativeLanguage, wordLanguage)
+		case "context":
+			d.requestBody, bodyErr = s.wordToOpenAiContextualUsageRequestBody(word, nativeLanguage, wordLanguage)
+		}
+		if bodyErr != nil {
+			return nil, fmt.Errorf("marshal word %s openai request: %w", d.kind, bodyErr)
+		}
 	}
 
-	// 2) Fire requests in parallel with errgroup (ctx-aware)
 	g, ctx := errgroup.WithContext(ctx)
 	for i := range items {
-		d := items[i] // capture pointer
+		d := items[i]
 		g.Go(func() error {
 			resp, body, reqErr := s.openAiClient.MakeRequest(ctx, d.requestBody)
 			d.response, d.responseBody, d.err = resp, body, reqErr
@@ -106,17 +143,13 @@ func (s *service) Lookup(ctx context.Context, word, nativeLanguage string) (*dom
 			return nil
 		})
 	}
-	err = g.Wait()
-	if err != nil {
+	if err := g.Wait(); err != nil {
 		return nil, fmt.Errorf("one or more OpenAI requests failed: %w", err)
 	}
 
-	// 3) Unmarshal each response and assemble result
-	var result domain.LookupDetails
 	for _, d := range items {
 		var comp openai.ChatCompletion
-		err = json.Unmarshal(d.responseBody, &comp)
-		if err != nil {
+		if err := json.Unmarshal(d.responseBody, &comp); err != nil {
 			return nil, fmt.Errorf("failed to unmarshal %s response: %w", d.kind, err)
 		}
 		if len(comp.Choices) == 0 {
@@ -126,24 +159,24 @@ func (s *service) Lookup(ctx context.Context, word, nativeLanguage string) (*dom
 		switch d.kind {
 		case "definition":
 			result.Definition = content
+			s.storeCachedResponse(ctx, airesponses.KindDefinition, word, nativeLanguage, promptVersionDefinition, content)
 		case "synonyms":
 			result.Synonyms = content
+			s.storeCachedResponse(ctx, airesponses.KindSynonyms, word, nativeLanguage, promptVersionSynonyms, content)
 		case "history":
 			result.History = content
+			s.storeCachedResponse(ctx, airesponses.KindHistory, word, nativeLanguage, promptVersionHistory, content)
 		case "context":
 			result.Context = content
+			s.storeCachedResponse(ctx, airesponses.KindContext, word, nativeLanguage, promptVersionContext, content)
 		}
 	}
 
 	return &result, nil
 }
 func (s *service) GetWordHistory(ctx context.Context, word string, nativeLanguage string) (*string, error) {
-	cacheKey := []byte(fmt.Sprintf("%s word history in %s", word, nativeLanguage))
-
-	cached, err := s.cache.Get(cacheKey)
-	if err == nil {
-		cachedResponse := string(cached)
-		return &cachedResponse, nil
+	if cached, ok := s.getCachedResponse(ctx, airesponses.KindHistory, word, nativeLanguage, promptVersionHistory); ok {
+		return &cached, nil
 	}
 
 	wordLanguage, err := s.detectWordLanguage(ctx, word)
@@ -184,23 +217,15 @@ func (s *service) GetWordHistory(ctx context.Context, word string, nativeLanguag
 		zap.Int("totalTokens", OpenAIApiResponse.Usage.TotalTokens),
 	)
 
-	cacheValue := []byte(OpenAIApiResponse.Choices[0].Message.Content)
+	content := OpenAIApiResponse.Choices[0].Message.Content
+	s.storeCachedResponse(ctx, airesponses.KindHistory, word, nativeLanguage, promptVersionHistory, content)
 
-	err = s.cache.Set(cacheKey, cacheValue, wordCacheExpiration)
-	if err != nil {
-		s.logger.Warn("word history cache set failed", zap.Error(err))
-	}
-
-	return &OpenAIApiResponse.Choices[0].Message.Content, nil
+	return &content, nil
 }
 
 func (s *service) GetWordSynonyms(ctx context.Context, word string, nativeLanguage string) (*string, error) {
-	cacheKey := []byte(fmt.Sprintf("%s word synonyms in %s", word, nativeLanguage))
-
-	cached, err := s.cache.Get(cacheKey)
-	if err == nil {
-		cachedResponse := string(cached)
-		return &cachedResponse, nil
+	if cached, ok := s.getCachedResponse(ctx, airesponses.KindSynonyms, word, nativeLanguage, promptVersionSynonyms); ok {
+		return &cached, nil
 	}
 
 	wordLanguage, err := s.detectWordLanguage(ctx, word)
@@ -242,24 +267,14 @@ func (s *service) GetWordSynonyms(ctx context.Context, word string, nativeLangua
 	)
 
 	result := &OpenAIApiResponse.Choices[0].Message.Content
-
-	cacheValue := []byte(*result)
-
-	err = s.cache.Set(cacheKey, cacheValue, wordCacheExpiration)
-	if err != nil {
-		s.logger.Warn("word synonyms cache set failed", zap.Error(err))
-	}
+	s.storeCachedResponse(ctx, airesponses.KindSynonyms, word, nativeLanguage, promptVersionSynonyms, *result)
 
 	return result, nil
 }
 
 func (s *service) GetWordDefinition(ctx context.Context, word string, nativeLanguage string) (*string, error) {
-	cacheKey := []byte(fmt.Sprintf("%s word definition in %s", word, nativeLanguage))
-
-	cached, err := s.cache.Get(cacheKey)
-	if err == nil {
-		cachedResponse := string(cached)
-		return &cachedResponse, nil
+	if cached, ok := s.getCachedResponse(ctx, airesponses.KindDefinition, word, nativeLanguage, promptVersionDefinition); ok {
+		return &cached, nil
 	}
 
 	wordLanguage, err := s.detectWordLanguage(ctx, word)
@@ -302,12 +317,7 @@ func (s *service) GetWordDefinition(ctx context.Context, word string, nativeLang
 		zap.Int("totalTokens", OpenAIApiResponse.Usage.TotalTokens),
 	)
 
-	cacheValue := []byte(*result)
-
-	err = s.cache.Set(cacheKey, cacheValue, wordCacheExpiration)
-	if err != nil {
-		s.logger.Warn("word definition cache set failed", zap.Error(err))
-	}
+	s.storeCachedResponse(ctx, airesponses.KindDefinition, word, nativeLanguage, promptVersionDefinition, *result)
 
 	return result, nil
 }

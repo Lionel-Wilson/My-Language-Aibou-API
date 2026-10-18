@@ -6,13 +6,14 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/coocood/freecache"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap/zaptest"
 
 	openai "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai"
 	mockopenai "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/clients/open-ai/mock"
+	mockairesponses "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/airesponses/storage/mock"
+	airesponses "github.com/Lionel-Wilson/My-Language-Aibou-API/internal/airesponses/storage"
 	"github.com/Lionel-Wilson/My-Language-Aibou-API/internal/word"
 )
 
@@ -22,9 +23,9 @@ func TestValidateWord(t *testing.T) {
 
 	mockOpenAiClient := mockopenai.NewMockClient(ctrl)
 	logger := zaptest.NewLogger(t)
-	mockCache := freecache.NewCache(1 * 1024 * 1024)
+	mockResponses := mockairesponses.NewMockRepository(ctrl)
 
-	wordService := word.NewWordService(logger, mockOpenAiClient, mockCache)
+	wordService := word.NewWordService(logger, mockOpenAiClient, mockResponses)
 
 	testCases := []struct {
 		name        string
@@ -69,9 +70,9 @@ func TestGetWordDefinition(t *testing.T) {
 
 	mockOpenAiClient := mockopenai.NewMockClient(ctrl)
 	logger := zaptest.NewLogger(t)
-	mockCache := freecache.NewCache(1 * 1024 * 1024)
+	mockResponses := mockairesponses.NewMockRepository(ctrl)
 
-	wordService := word.NewWordService(logger, mockOpenAiClient, mockCache)
+	wordService := word.NewWordService(logger, mockOpenAiClient, mockResponses)
 
 	testCases := []struct {
 		name             string
@@ -88,6 +89,9 @@ func TestGetWordDefinition(t *testing.T) {
 			expectedResponse: &openai.ChatCompletion{},
 			expectedErr:      errors.New("an error"),
 			mock: func() {
+				mockResponses.EXPECT().
+					Get(gomock.Any(), airesponses.KindDefinition, "어떻게", "english", gomock.Any()).
+					Return("", false, nil)
 				mockOpenAiClient.EXPECT().MakeRequest(gomock.Any(), gomock.Any()).Return(&http.Response{}, []byte{}, errors.New("an error"))
 			},
 		},

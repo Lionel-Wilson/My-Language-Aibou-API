@@ -48,7 +48,7 @@ func NewSentenceService(
 const (
 	promptVersionExplanation = 1
 	promptVersionTranslation = 1
-	promptVersionCorrection  = 1
+	promptVersionCorrection  = 2
 )
 
 func (s *service) getCachedResponse(ctx context.Context, kind airesponses.Kind, input, nativeLanguage string, promptVersion int) (string, bool) {
@@ -229,7 +229,7 @@ func (s *service) sentenceToOpenAiExplanationRequestBody(sentence, userNativeLan
 
 func (s *service) sentenceToOpenAiSentenceCorrectionRequestBody(sentence, userNativeLanguage string) (*bytes.Reader, error) {
 	content := fmt.Sprintf(
-		"Is this sentence correct? If not, correct it and briefly explain why. First, state what you assume the user is trying to say, with a short introductory phrase meaning \"Assuming you're trying to say\". Do not ask follow-up questions or encourage further conversation. Just provide the assumed meaning, correction, and explanation in a single, complete answer, as if you're a language teacher teaching a native %s speaker.\n\n%s\n\n%s\n\nSentence: %s",
+		"Is this sentence correct? If not, correct it and briefly explain why. First, state what you assume the user is trying to say, with a short introductory phrase meaning \"Assuming you're trying to say\". Do not ask follow-up questions or encourage further conversation. Just provide the assumed meaning, correction, and explanation in a single, complete answer, as if you're a language teacher teaching a native %[1]s speaker.\n\n%[2]s\n\n%[3]s\n\nThe user is practising the language the sentence is written in. The corrected sentence MUST stay in that same language: fix only its grammar, spelling, accents, punctuation and word choice, and never translate it into %[1]s. Being written in a language other than %[1]s is not a mistake. If the sentence is already correct, say so and do not change it. Only the assumed meaning and the explanation are written in %[1]s.\n\nSentence: %[4]s",
 		userNativeLanguage, nativeLanguageRule(userNativeLanguage), plainLanguageRule, sentence,
 	)
 
@@ -238,7 +238,7 @@ func (s *service) sentenceToOpenAiSentenceCorrectionRequestBody(sentence, userNa
 		Temperature: 0.4,
 		MaxTokens:   800,
 		Messages: []openai.Message{
-			{Role: "system", Content: "You are a concise language assistant that explains sentence corrections in a clear and brief manner without engaging in back-and-forth conversation. " + responseLanguageSystemRule},
+			{Role: "system", Content: "You are a concise language assistant that explains sentence corrections in a clear and brief manner without engaging in back-and-forth conversation. You correct sentences in the language they are written in and never translate them. " + responseLanguageSystemRule},
 			{Role: "user", Content: content},
 		},
 	}
